@@ -1,335 +1,426 @@
-import csv
+import difflib
 import hashlib
-import io
 import json
 import random
-import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date
 from pathlib import Path
 
 import streamlit as st
 import streamlit.components.v1 as components
 
 
+DATA_DIR = Path("data")
+PORTFOLIO_PATH = DATA_DIR / "portfolio.json"
+
+
 @dataclass(frozen=True)
-class VocabItem:
-    spanish: str
-    english: str
-    level: str
-    topic: str
+class DiagnosticIssue:
+    area: str
+    pattern: str
+    impact: str
+    example: str
+    fix: str
 
 
-VOCAB = [
-    VocabItem("hola", "hello", "A1", "greetings"),
-    VocabItem("adiós", "goodbye", "A1", "greetings"),
-    VocabItem("gracias", "thank you", "A1", "greetings"),
-    VocabItem("por favor", "please", "A1", "greetings"),
-    VocabItem("buenos días", "good morning", "A1", "greetings"),
-    VocabItem("buenas noches", "good night", "A1", "greetings"),
-    VocabItem("agua", "water", "A1", "food"),
-    VocabItem("pan", "bread", "A1", "food"),
-    VocabItem("manzana", "apple", "A1", "food"),
-    VocabItem("café", "coffee", "A1", "food"),
-    VocabItem("té", "tea", "A1", "food"),
-    VocabItem("pollo", "chicken", "A2", "food"),
-    VocabItem("pescado", "fish", "A2", "food"),
-    VocabItem("verduras", "vegetables", "A2", "food"),
-    VocabItem("la cuenta", "the bill", "A2", "food"),
-    VocabItem("mercado", "market", "A2", "places"),
-    VocabItem("farmacia", "pharmacy", "A2", "places"),
-    VocabItem("biblioteca", "library", "A2", "places"),
-    VocabItem("estación", "station", "A2", "places"),
-    VocabItem("aprender", "to learn", "B1", "verbs"),
-    VocabItem("recordar", "to remember", "B1", "verbs"),
-    VocabItem("resolver", "to solve", "B1", "verbs"),
-    VocabItem("lograr", "to achieve", "B1", "verbs"),
-    VocabItem("sin embargo", "however", "B2", "connectors"),
-    VocabItem("aunque", "although", "B2", "connectors"),
-    VocabItem("por lo tanto", "therefore", "B2", "connectors"),
-    VocabItem("a pesar de", "despite", "B2", "connectors"),
-    VocabItem("desempeñar", "to perform", "C1", "verbs"),
-    VocabItem("aprovechar", "to take advantage", "C1", "verbs"),
+DIAGNOSTIC_AREAS = [
+    "Collocations",
+    "Prepositions",
+    "Discourse markers",
+    "Register & tone",
+    "Nuance & pragmatics",
 ]
 
-EXTRA_DIALOGUES = [
+DIAGNOSTIC_ISSUES = [
+    DiagnosticIssue(
+        "Collocations",
+        "hacer una decisión",
+        "Sounds literal; native usage prefers a different verb.",
+        "Tomamos una decisión informada después del informe.",
+        "Swap to 'tomar una decisión'.",
+    ),
+    DiagnosticIssue(
+        "Collocations",
+        "gran cantidad de gente",
+        "Natural but heavy; try more precise nouns.",
+        "Había una multitud en la plaza.",
+        "Use 'multitud' or 'afluencia'.",
+    ),
+    DiagnosticIssue(
+        "Prepositions",
+        "depender en",
+        "Preposition mismatch; register error.",
+        "Depende de la disponibilidad del equipo.",
+        "Use 'depender de'.",
+    ),
+    DiagnosticIssue(
+        "Prepositions",
+        "casarse con vs casarse de",
+        "Regional mismatch.",
+        "Se casó con su pareja en junio.",
+        "Use 'casarse con'.",
+    ),
+    DiagnosticIssue(
+        "Discourse markers",
+        "por otro lado (without contrast)",
+        "Connector doesn't match logic.",
+        "Por otro lado, los datos confirman la tendencia.",
+        "Use 'además' if additive.",
+    ),
+    DiagnosticIssue(
+        "Discourse markers",
+        "sin embargo + clause without contrast",
+        "Creates incoherence.",
+        "Sin embargo, los resultados fueron positivos.",
+        "Use only with contrastive content.",
+    ),
+    DiagnosticIssue(
+        "Register & tone",
+        "tú in formal email",
+        "Inappropriate level of formality.",
+        "Le agradecería una respuesta antes del viernes.",
+        "Maintain 'usted' and honorifics.",
+    ),
+    DiagnosticIssue(
+        "Register & tone",
+        "overly direct request",
+        "Politeness strategies missing.",
+        "¿Sería posible ajustar la fecha?",
+        "Add hedging and modal verbs.",
+    ),
+    DiagnosticIssue(
+        "Nuance & pragmatics",
+        "literal translation of idioms",
+        "Feels calqued and non-native.",
+        "Me dio la impresión de que no estaban listos.",
+        "Replace with natural phraseology.",
+    ),
+    DiagnosticIssue(
+        "Nuance & pragmatics",
+        "missing mitigation",
+        "Sounds abrupt or face-threatening.",
+        "Quizá podríamos revisar otra opción.",
+        "Add softeners + hedging.",
+    ),
+]
+
+TRAINING_PLAN = {
+    "Collocations": [
+        "Daily collocation micro-drills (verb-noun & adjective-noun).",
+        "Shadow 10 native corpus sentences and rewrite with variants.",
+    ],
+    "Prepositions": [
+        "Contrastive pairs drill (a/de/en/por/para).",
+        "Record yourself using 5 preposition-dependent verbs.",
+    ],
+    "Discourse markers": [
+        "Map argument flow with connectors per paragraph.",
+        "Swap connectors to test semantic alignment.",
+    ],
+    "Register & tone": [
+        "Rewrite the same prompt in 5 registers weekly.",
+        "Score politeness strategies and hedging density.",
+    ],
+    "Nuance & pragmatics": [
+        "Collect 3 softeners per week and use them in dialogue.",
+        "Track irony/contrast markers in listening samples.",
+    ],
+}
+
+REGISTER_STYLES = [
+    "Informal WhatsApp",
+    "Workplace email",
+    "Academic abstract",
+    "Polite complaint",
+    "Persuasive pitch",
+]
+
+RUBRIC_DIMENSIONS = [
+    "Politeness strategies",
+    "Hedging",
+    "Directness",
+    "Idiomaticity",
+    "Audience fit",
+]
+
+REGISTER_MARKERS = {
+    "politeness": ["por favor", "le agradecería", "quisiera", "sería posible", "disculpe"],
+    "hedging": ["quizá", "tal vez", "podría", "sería", "me parece"],
+    "direct": ["necesito", "exijo", "debe", "quiero"],
+    "idiomatic": ["me da la impresión", "en pocas palabras", "a fin de cuentas", "de hecho"],
+    "academic": ["objetivo", "metodología", "resultados", "conclusión", "se analiza"],
+    "whatsapp": ["jaja", "qué tal", "oye", "vale", "👍"],
+    "pitch": ["propuesta", "impacto", "beneficio", "valor", "oportunidad"],
+}
+
+PRONUNCIATION_TARGETS = [
     {
-        "prompt": "You're ordering at a café. How do you politely ask for water?",
-        "answer": "Quisiera agua, por favor.",
-        "options": [
-            "¿Dónde está la estación?",
-            "Quisiera agua, por favor.",
-            "Gracias, hasta luego.",
-            "No entiendo.",
+        "phrase": "Me da la impresión de que podríamos ajustar el plan.",
+        "focus": ["stress placement", "linking", "intonation (contrast)"],
+        "notes": "Focus on rising-falling contour across the contrastive clause.",
+    },
+    {
+        "phrase": "¿Te parece si lo revisamos mañana por la tarde?",
+        "focus": ["rhythm", "question contour", "softening"],
+        "notes": "Keep the rhythm even; lift pitch on the final question.",
+    },
+    {
+        "phrase": "No es que no quiera, es que no llego a tiempo.",
+        "focus": ["stress", "contrast", "intonation (irony)"],
+        "notes": "Contrast the clauses with a clear pause and pitch reset.",
+    },
+]
+
+COLLOCATION_SETS = [
+    {
+        "pair": "tomar una decisión",
+        "type": "verb-noun",
+        "frame": "Después de analizar los datos, ___ una decisión.",
+        "options": ["tomamos", "hacemos"],
+        "native": "tomamos",
+        "rewrite": "Tomamos una decisión informada tras el informe.",
+    },
+    {
+        "pair": "alto nivel de",
+        "type": "adjective-noun",
+        "frame": "El proyecto exige un ___ compromiso.",
+        "options": ["alto", "elevado"],
+        "native": "alto",
+        "rewrite": "El proyecto exige un alto nivel de compromiso.",
+    },
+    {
+        "pair": "me da la impresión de que",
+        "type": "fixed phrase",
+        "frame": "___ no estaban listos para el cambio.",
+        "options": ["Me da la impresión de que", "Me hace pensar que"],
+        "native": "Me da la impresión de que",
+        "rewrite": "Me da la impresión de que el equipo necesita más tiempo.",
+    },
+]
+
+CONVERSATION_SCENARIOS = [
+    {
+        "title": "Negotiating scope creep",
+        "roles": "You are a product lead; the client wants more features without timeline changes.",
+        "constraints": [
+            "Use 3 concessive structures (aunque, si bien, a pesar de).",
+            "Maintain formal usted throughout.",
+            "Avoid English-like calques.",
         ],
     },
     {
-        "prompt": "A friend says: 'Buenos días'. How do you reply?",
-        "answer": "Buenos días.",
-        "options": ["Buenas noches.", "Buenos días.", "Adiós.", "Lo siento."],
-    },
-    {
-        "prompt": "You need the bill. What do you say?",
-        "answer": "La cuenta, por favor.",
-        "options": ["¿Qué hora es?", "La cuenta, por favor.", "Estoy perdido.", "Gracias."],
+        "title": "Soft disagreement in a meeting",
+        "roles": "You disagree with a peer but need to keep collaboration.",
+        "constraints": [
+            "Include 2 softeners (quizá, me parece, tal vez).",
+            "Use one redirecting phrase (en todo caso, de todos modos).",
+        ],
     },
 ]
 
-SENTENCES = [
+WRITING_GUIDE = [
     {
-        "spanish": "Me llamo Sofía y soy de México.",
-        "english": "My name is Sofia and I am from Mexico.",
-        "level": "A1",
-        "topic": "greetings",
+        "pattern": "muy importante",
+        "replacement": "crucial",
+        "category": "lexical choice",
+        "reason": "Increase lexical sophistication.",
     },
     {
-        "spanish": "Quisiera un café con leche, por favor.",
-        "english": "I would like a coffee with milk, please.",
-        "level": "A1",
-        "topic": "food",
+        "pattern": "pienso que",
+        "replacement": "considero que",
+        "category": "register",
+        "reason": "More formal stance marker.",
     },
     {
-        "spanish": "¿Dónde está la estación de metro?",
-        "english": "Where is the metro station?",
-        "level": "A2",
-        "topic": "places",
-    },
-    {
-        "spanish": "Estoy aprendiendo español para mi trabajo.",
-        "english": "I am learning Spanish for my job.",
-        "level": "B1",
-        "topic": "verbs",
-    },
-    {
-        "spanish": "Aunque hace frío, vamos a caminar por el parque.",
-        "english": "Although it is cold, we are going to walk through the park.",
-        "level": "B2",
-        "topic": "connectors",
-    },
-    {
-        "spanish": "Aprovechamos la reunión para presentar la estrategia.",
-        "english": "We took advantage of the meeting to present the strategy.",
-        "level": "C1",
-        "topic": "verbs",
-    },
-    {
-        "spanish": "Necesito comprar pan y verduras en el mercado.",
-        "english": "I need to buy bread and vegetables at the market.",
-        "level": "A2",
-        "topic": "food",
-    },
-    {
-        "spanish": "Siempre estudio por la mañana antes del trabajo.",
-        "english": "I always study in the morning before work.",
-        "level": "B1",
-        "topic": "verbs",
-    },
-    {
-        "spanish": "¿Podrías recomendarme un buen restaurante?",
-        "english": "Could you recommend a good restaurant?",
-        "level": "A2",
-        "topic": "places",
-    },
-    {
-        "spanish": "Por lo tanto, debemos practicar todos los días.",
-        "english": "Therefore, we should practice every day.",
-        "level": "B2",
-        "topic": "connectors",
+        "pattern": "pero",
+        "replacement": "sin embargo",
+        "category": "cohesion",
+        "reason": "Stronger discourse connector.",
     },
 ]
 
-LESSONS = [
+ARGUMENTATION_TOPICS = [
+    "La inteligencia artificial en la educación superior",
+    "Teletrabajo y productividad en empresas globales",
+    "Políticas de movilidad urbana sostenible",
+]
+
+DIALECT_MODULES = {
+    "Spain": {
+        "features": ["distinción /θ/ vs /s/", "leísmo moderado", "tú predominante"],
+        "lexicon": {"ordenador": "computer", "coger": "to take", "vale": "okay"},
+        "sample": "Vale, luego te llamo para concretar los detalles.",
+        "trap": {
+            "question": "¿Qué matiz tiene 'vale' aquí?",
+            "options": ["confirmación informal", "desacuerdo", "sorpresa"],
+            "answer": "confirmación informal",
+        },
+    },
+    "Mexico": {
+        "features": ["seseo", "ustedes generalizado", "diminutivos frecuentes"],
+        "lexicon": {"computadora": "computer", "platicar": "to chat", "ahorita": "soon-ish"},
+        "sample": "Ahorita lo revisamos y te aviso.",
+        "trap": {
+            "question": "¿Qué implica 'ahorita' en este contexto?",
+            "options": ["inmediatamente", "pronto, pero flexible", "mañana"],
+            "answer": "pronto, pero flexible",
+        },
+    },
+    "River Plate": {
+        "features": ["voseo", "entonación rioplatense", "yeísmo rehilado"],
+        "lexicon": {"vos": "you", "laburo": "work", "che": "hey"},
+        "sample": "Che, ¿vos venís a la reunión o laburás desde casa?",
+        "trap": {
+            "question": "¿Qué marca el uso de 'vos'?",
+            "options": ["voseo", "formalidad", "plural"],
+            "answer": "voseo",
+        },
+    },
+    "Caribbean": {
+        "features": ["aspiration of /s/", "fast rhythm", "tuteo predominante"],
+        "lexicon": {"guagua": "bus", "china": "orange", "chévere": "cool"},
+        "sample": "La guagua viene llena, pero está chévere el plan.",
+        "trap": {
+            "question": "¿Qué significa 'chévere' aquí?",
+            "options": ["molesto", "agradable", "lento"],
+            "answer": "agradable",
+        },
+    },
+    "Andes": {
+        "features": ["intonation rise", "use of 'pues'", "leísmo parcial"],
+        "lexicon": {"chompa": "sweater", "anticucho": "street food", "pues": "emphasis"},
+        "sample": "Sí, pues, mañana nos vemos temprano.",
+        "trap": {
+            "question": "¿Qué función cumple 'pues'?",
+            "options": ["énfasis", "negación", "finalizar"],
+            "answer": "énfasis",
+        },
+    },
+}
+
+LISTENING_SCENARIOS = [
     {
-        "id": "basics",
-        "title": "Starter Pack",
-        "level": "A1",
-        "goal": "Greet people and introduce yourself.",
-        "topics": ["greetings"],
-        "story": "You meet new friends at a café in Madrid.",
+        "title": "Fast overlap meeting",
+        "audio": "Bueno, sí, pero—no, espera, lo que digo es que el cliente quiere otra cosa.",
+        "tasks": [
+            {
+                "question": "¿Qué cambió de postura la persona?",
+                "options": [
+                    "Se contradijo y reformuló.",
+                    "Aceptó la propuesta sin reservas.",
+                    "Se negó a hablar.",
+                ],
+                "answer": "Se contradijo y reformuló.",
+            },
+            {
+                "question": "Identifica un suavizador.",
+                "options": ["bueno", "espera", "cliente"],
+                "answer": "bueno",
+            },
+        ],
     },
     {
-        "id": "food",
-        "title": "Café Conversations",
-        "level": "A1-A2",
-        "goal": "Order food and handle polite requests.",
-        "topics": ["food"],
-        "story": "You explore tapas and order confidently.",
-    },
-    {
-        "id": "places",
-        "title": "City Explorer",
-        "level": "A2",
-        "goal": "Navigate the city with directions and places.",
-        "topics": ["places"],
-        "story": "You plan a day across Barcelona.",
-    },
-    {
-        "id": "verbs",
-        "title": "Goal Setting",
-        "level": "B1",
-        "goal": "Use verbs for goals and achievements.",
-        "topics": ["verbs"],
-        "story": "You build a study plan with milestones.",
-    },
-    {
-        "id": "connectors",
-        "title": "Connect the Ideas",
-        "level": "B2",
-        "goal": "Link ideas with advanced connectors.",
-        "topics": ["connectors"],
-        "story": "You debate a topic with nuance.",
-    },
-    {
-        "id": "advanced_verbs",
-        "title": "Professional Spanish",
-        "level": "C1",
-        "goal": "Speak about performance and strategy.",
-        "topics": ["verbs"],
-        "story": "You lead a project update meeting.",
+        "title": "Street interview",
+        "audio": "Pues, la verdad, no sé, como que al final me convencieron.",
+        "tasks": [
+            {
+                "question": "¿Qué implica 'como que'?",
+                "options": ["hedging", "certeza", "ironía"],
+                "answer": "hedging",
+            }
+        ],
     },
 ]
 
-DATA_DIR = Path("data")
-PROFILE_PATH = DATA_DIR / "profiles.json"
-DOM_ID_SAFE = "".join([str(x) for x in range(10)]) + "abcdefghijklmnopqrstuvwxyz-"
+PORTFOLIO_AXES = [
+    "Lexical sophistication",
+    "Collocation accuracy",
+    "Pragmatic appropriateness",
+    "Prosody",
+    "Cohesion",
+]
 
 
 def set_theme() -> None:
-    st.set_page_config(page_title="VivaLingo", page_icon="🇪🇸", layout="wide")
+    st.set_page_config(page_title="VivaLingo Pro", page_icon="🗣️", layout="wide")
     st.markdown(
         """
         <style>
         :root {
-            --primary: #ff6f61;
-            --secondary: #4638ff;
-            --mint: #2abf97;
+            --primary: #1f3a8a;
+            --secondary: #38bdf8;
+            --accent: #f97316;
+            --surface: #ffffff;
+            --surface-muted: #f8fafc;
             --ink: #0f172a;
-            --muted: #475569;
-            --surface: rgba(255, 255, 255, 0.92);
-            --surface-strong: rgba(255, 255, 255, 0.98);
-            --border: rgba(148, 163, 184, 0.25);
+            --muted: #64748b;
+            --border: rgba(148, 163, 184, 0.3);
         }
         .stApp {
+            background: radial-gradient(circle at top left, #e0f2fe 0%, #f8fafc 45%, #ecfeff 100%);
             color: var(--ink);
-            background: linear-gradient(140deg, #f8fafc 0%, #eef2ff 45%, #ecfeff 100%);
-            background-attachment: fixed;
             font-family: "Inter", "SF Pro Text", "Segoe UI", system-ui, -apple-system, sans-serif;
         }
-        h1, h2, h3, h4, h5, h6, p, span, div {
+        h1, h2, h3, h4, h5, h6 {
             color: var(--ink);
-        }
-        .stMarkdown p {
-            color: var(--muted);
-            font-size: 1rem;
-            line-height: 1.6;
-        }
-        @keyframes gradientShift {
-            0% {background-position: 0% 50%;}
-            50% {background-position: 100% 50%;}
-            100% {background-position: 0% 50%;}
         }
         .hero {
-            padding: 1.75rem 2.2rem;
-            border-radius: 24px;
-            background: var(--surface-strong);
-            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
-            border: 1px solid var(--border);
-        }
-        .hero h1 {
-            font-size: 2.5rem;
-            color: var(--ink);
-            margin-bottom: 0.5rem;
+            padding: 2.2rem;
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(31, 58, 138, 0.92), rgba(56, 189, 248, 0.9));
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.16);
         }
         .hero p {
-            color: var(--muted);
+            color: rgba(255, 255, 255, 0.85);
             font-size: 1.05rem;
-        }
-        .floating-shape {
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            background: rgba(70, 56, 255, 0.16);
-            position: absolute;
-            top: -40px;
-            right: -30px;
-            animation: float 7s ease-in-out infinite;
-        }
-        @keyframes float {
-            0%, 100% {transform: translateY(0px)}
-            50% {transform: translateY(16px)}
         }
         .pill {
             display: inline-block;
             padding: 0.2rem 0.75rem;
             border-radius: 999px;
-            background: rgba(42, 191, 151, 0.18);
-            color: #0f766e;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
             font-weight: 600;
-            margin-right: 0.5rem;
+            margin-right: 0.4rem;
         }
-        .lesson-card {
-            padding: 1rem;
+        .card {
+            padding: 1.4rem;
             border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+        }
+        .card-muted {
+            padding: 1.2rem;
+            border-radius: 18px;
+            border: 1px dashed rgba(148, 163, 184, 0.6);
+            background: var(--surface-muted);
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .wave-box {
+            border-radius: 18px;
             background: var(--surface);
             border: 1px solid var(--border);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .lesson-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
-        }
-        .exercise-card {
-            padding: 1.5rem;
-            border-radius: 24px;
-            background: var(--surface-strong);
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
-            animation: slideIn 0.6s ease;
-        }
-        @keyframes slideIn {
-            0% {opacity: 0; transform: translateX(20px)}
-            100% {opacity: 1; transform: translateX(0)}
-        }
-        .stat-card {
             padding: 1rem;
-            border-radius: 16px;
-            background: var(--surface);
-            border: 1px solid var(--border);
         }
-        .auth-card {
-            padding: 1.5rem;
-            border-radius: 22px;
-            background: rgba(255, 255, 255, 0.85);
-            border: 1px solid rgba(148, 163, 184, 0.25);
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
-        }
-        .progress-bar {
-            height: 10px;
+        .shadow-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
             border-radius: 999px;
-            background: rgba(148, 163, 184, 0.28);
-            overflow: hidden;
-        }
-        .progress-bar > span {
-            display: block;
-            height: 100%;
-            background: linear-gradient(90deg, #ff6f61, #ffb347);
+            background: rgba(56, 189, 248, 0.2);
+            color: #0c4a6e;
+            font-weight: 600;
+            margin-right: 0.4rem;
         }
         .stTabs [data-baseweb="tab"] {
-            color: var(--muted);
-            font-weight: 600;
-        }
-        .stTabs [data-baseweb="tab"][aria-selected="true"] {
-            color: var(--ink);
-        }
-        .stTextInput input, .stTextArea textarea, .stSelectbox div, .stRadio div {
-            color: var(--ink) !important;
-        }
-        .stTextInput input, .stTextArea textarea {
-            background-color: #fff !important;
-            border: 1px solid rgba(148, 163, 184, 0.5) !important;
-            border-radius: 12px !important;
-        }
-        .stButton button {
-            border-radius: 12px;
             font-weight: 600;
         }
         </style>
@@ -338,1019 +429,595 @@ def set_theme() -> None:
     )
 
 
-@dataclass
-class Exercise:
-    kind: str
-    prompt: str
-    answer: str
-    options: list[str] | None = None
-    explanation: str | None = None
-    extra: dict | None = None
-    metadata: dict | None = None
-
-
-def default_session_state() -> dict:
-    return {
-        "lesson_id": None,
-        "exercises": [],
-        "index": 0,
-        "correct": 0,
-        "answered": False,
-        "feedback": "",
-        "last_answer": "",
-        "results": {},
-    }
-
-
-def ensure_session_state(state: dict | None) -> dict:
-    defaults = default_session_state()
-    if not isinstance(state, dict):
-        return defaults
-    merged = {**defaults, **state}
-    if merged["exercises"] is None:
-        merged["exercises"] = []
-    if merged["results"] is None:
-        merged["results"] = {}
-    return merged
-
-
-def sanitize_dom_id(value: str) -> str:
-    return "".join(char for char in value.lower() if char in DOM_ID_SAFE)
-
-
-def load_profiles() -> dict:
-    if not PROFILE_PATH.exists():
-        return {}
-    try:
-        return json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return {}
-
-
-def save_profiles(profiles: dict) -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    PROFILE_PATH.write_text(json.dumps(profiles, indent=2), encoding="utf-8")
-
-
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
-
-
-def default_profile_state() -> dict:
-    return {
-        "profile": {
-            "name": "",
-            "goal": 15,
-            "level": "Adaptive",
-            "streak": 3,
-            "xp": 120,
-            "last_login": datetime.now().strftime("%Y-%m-%d"),
-        },
-        "progress": {lesson["id"]: 0 for lesson in LESSONS},
-        "mastery": {item.spanish: 0 for item in VOCAB},
-        "activity_log": [],
-        "goals": {"weekly_minutes": 90, "weekly_target": 5},
-        "focus": {"topics": [], "level": "Adaptive"},
-    }
-
-
-def apply_profile_state(state: dict) -> None:
-    defaults = default_profile_state()
-    merged = {
-        "profile": {**defaults["profile"], **state.get("profile", {})},
-        "progress": {**defaults["progress"], **state.get("progress", {})},
-        "mastery": {**defaults["mastery"], **state.get("mastery", {})},
-        "activity_log": state.get("activity_log", defaults["activity_log"]),
-        "goals": {**defaults["goals"], **state.get("goals", {})},
-        "focus": {**defaults["focus"], **state.get("focus", {})},
-    }
-    st.session_state.profile = merged["profile"]
-    st.session_state.progress = merged["progress"]
-    st.session_state.mastery = merged["mastery"]
-    st.session_state.activity_log = merged["activity_log"]
-    st.session_state.goals = merged["goals"]
-    st.session_state.focus = merged["focus"]
-
-
-def persist_profile_state() -> None:
-    if not st.session_state.auth.get("logged_in"):
-        return
-    profiles = load_profiles()
-    email = st.session_state.auth["email"]
-    profiles[email]["state"] = {
-        "profile": st.session_state.profile,
-        "progress": st.session_state.progress,
-        "mastery": st.session_state.mastery,
-        "activity_log": st.session_state.activity_log,
-        "goals": st.session_state.goals,
-        "focus": st.session_state.focus,
-    }
-    profiles[email]["state"]["profile"]["last_login"] = datetime.now().strftime("%Y-%m-%d")
-    save_profiles(profiles)
-
-
-def create_profile(name: str, email: str, password: str) -> tuple[bool, str]:
-    if not name or not email or not password:
-        return False, "Please complete all fields."
-    profiles = load_profiles()
-    if email in profiles:
-        return False, "Account already exists. Please log in."
-    profiles[email] = {
-        "name": name,
-        "password": hash_password(password),
-        "created_at": datetime.now().isoformat(),
-        "state": default_profile_state(),
-    }
-    profiles[email]["state"]["profile"]["name"] = name
-    save_profiles(profiles)
-    return True, "Profile created. You're ready to learn!"
-
-
-def authenticate(email: str, password: str) -> tuple[bool, str]:
-    profiles = load_profiles()
-    account = profiles.get(email)
-    if not account:
-        return False, "We couldn't find that account."
-    if account["password"] != hash_password(password):
-        return False, "Incorrect password."
-    return True, "Welcome back!"
-
-
 def init_state() -> None:
-    if "auth" not in st.session_state:
-        st.session_state.auth = {"email": "", "logged_in": False}
     if "profile" not in st.session_state:
-        defaults = default_profile_state()
-        apply_profile_state(defaults)
-    if "sessions" not in st.session_state:
-        st.session_state.sessions = {
-            "learn": default_session_state(),
-            "practice": default_session_state(),
+        st.session_state.profile = {
+            "name": "",
+            "level": "C1",
+            "weekly_goal": 6,
+            "last_gap_week": None,
         }
-        st.session_state.pop("session", None)
-    if "sessions" not in st.session_state:
-        st.session_state.sessions = {
-            "learn": default_session_state(),
-            "practice": default_session_state(),
+    if "gap_results" not in st.session_state:
+        st.session_state.gap_results = []
+    if "portfolio" not in st.session_state:
+        st.session_state.portfolio = load_portfolio()
+    if "writing_analysis" not in st.session_state:
+        st.session_state.writing_analysis = {"draft": "", "edits": []}
+
+
+def load_portfolio() -> dict:
+    if not PORTFOLIO_PATH.exists():
+        return {
+            "writing_samples": [],
+            "recordings": [],
+            "transcripts": [],
+            "benchmarks": [],
         }
-    st.session_state.sessions["learn"] = ensure_session_state(st.session_state.sessions.get("learn"))
-    st.session_state.sessions["practice"] = ensure_session_state(st.session_state.sessions.get("practice"))
-    st.session_state.session = st.session_state.sessions["learn"]
-    if "variety" not in st.session_state:
-        st.session_state.variety = [
-            "multiple_choice",
-            "fill_blank",
-            "translate",
-            "listening",
-            "listening_type",
-            "dialogue",
-            "cloze",
-            "conversation",
-            "word_order",
-            "sentence_build",
-        ]
+    return json.loads(PORTFOLIO_PATH.read_text(encoding="utf-8"))
 
 
-def filter_vocab(topics: list[str], level: str) -> list[VocabItem]:
-    pool = [item for item in VOCAB if item.topic in topics]
-    if level == "Adaptive":
-        return pool
-    rank = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5}
-    target = rank.get(level, 5)
-    return [item for item in pool if rank.get(item.level, 5) <= target]
+def save_portfolio() -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    PORTFOLIO_PATH.write_text(json.dumps(st.session_state.portfolio, indent=2), encoding="utf-8")
 
 
-def filter_sentences(topics: list[str], level: str) -> list[dict]:
-    pool = [sentence for sentence in SENTENCES if sentence["topic"] in topics]
-    if level == "Adaptive":
-        return pool
-    rank = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5}
-    target = rank.get(level, 5)
-    return [sentence for sentence in pool if rank.get(sentence["level"], 5) <= target]
+def seed_for_week(week: date, name: str) -> int:
+    base = f"{week.isoformat()}:{name}"
+    return int(hashlib.sha256(base.encode("utf-8")).hexdigest()[:8], 16)
 
 
-def build_cloze(sentence: dict) -> Exercise | None:
-    words = sentence["spanish"].split()
-    candidates = []
-    for word in words:
-        cleaned = re.sub(r"[¿?¡!.,]", "", word)
-        if len(cleaned) >= 4:
-            candidates.append(cleaned)
-    if not candidates:
-        return None
-    missing = random.choice(candidates)
-    masked_words = []
-    for word in words:
-        cleaned = re.sub(r"[¿?¡!.,]", "", word)
-        if cleaned == missing:
-            masked_words.append(word.replace(cleaned, "____"))
-        else:
-            masked_words.append(word)
-    prompt = "Complete the sentence: " + " ".join(masked_words)
-    return Exercise(
-        kind="cloze",
-        prompt=prompt,
-        answer=missing,
-        explanation=f"The full sentence is: {sentence['spanish']}",
-        metadata={"spanish": sentence["spanish"], "english": sentence["english"]},
-    )
-
-
-def build_options(correct: str, pool: list[str], size: int = 4) -> list[str]:
-    options = [correct]
-    candidates = [item for item in pool if item != correct]
-    random.shuffle(candidates)
-    options.extend(candidates[: max(0, size - 1)])
-    if len(options) < size:
-        fallback = [item.english for item in VOCAB if item.english not in options]
-        random.shuffle(fallback)
-        options.extend(fallback[: size - len(options)])
-    random.shuffle(options)
-    return options
-
-
-def make_exercises(
-    lesson_id: str,
-    difficulty: str,
-    variety: list[str],
-    topics_override: list[str] | None = None,
-) -> list[Exercise]:
-    lesson = next((l for l in LESSONS if l["id"] == lesson_id), None)
-    if not lesson:
-        return []
-    topics = topics_override or lesson["topics"]
-    vocab_pool = filter_vocab(topics, difficulty)
-    sentence_pool = filter_sentences(topics, difficulty)
-    random.shuffle(vocab_pool)
-
-    exercises: list[Exercise] = []
-    if difficulty == "Adaptive":
-        vocab_pool.sort(key=lambda item: st.session_state.mastery.get(item.spanish, 0))
-
-    for item in vocab_pool[:6]:
-        if "multiple_choice" in variety:
-            options = build_options(item.english, [v.english for v in VOCAB])
-            exercises.append(
-                Exercise(
-                    kind="multiple_choice",
-                    prompt=f"What does **{item.spanish}** mean?",
-                    answer=item.english,
-                    options=options,
-                    explanation=f"{item.spanish} → {item.english}",
-                    metadata={"spanish": item.spanish, "english": item.english},
-                )
-            )
-        if "fill_blank" in variety:
-            exercises.append(
-                Exercise(
-                    kind="fill_blank",
-                    prompt=f"Complete: ___ = {item.english}",
-                    answer=item.spanish,
-                    explanation=f"The Spanish word is **{item.spanish}**.",
-                    metadata={"spanish": item.spanish, "english": item.english},
-                )
-            )
-        if "translate" in variety:
-            exercises.append(
-                Exercise(
-                    kind="translate",
-                    prompt=f"Translate into Spanish: {item.english}",
-                    answer=item.spanish,
-                    explanation=f"{item.english} → {item.spanish}",
-                    metadata={"spanish": item.spanish, "english": item.english},
-                )
-            )
-        if "listening" in variety:
-            options = build_options(item.english, [v.english for v in VOCAB])
-            exercises.append(
-                Exercise(
-                    kind="listening",
-                    prompt="Listen and choose the correct meaning.",
-                    answer=item.english,
-                    options=options,
-                    explanation=f"You heard **{item.spanish}**.",
-                    metadata={"spanish": item.spanish, "english": item.english},
-                )
-            )
-        if "listening_type" in variety:
-            exercises.append(
-                Exercise(
-                    kind="listening_type",
-                    prompt="Listen and type the Spanish word you hear.",
-                    answer=item.spanish,
-                    explanation=f"The word was **{item.spanish}**.",
-                    metadata={"spanish": item.spanish, "english": item.english},
-                )
-            )
-
-    if "match" in variety:
-        pair_items = vocab_pool[:4]
-        if pair_items:
-            pairs = {item.spanish: item.english for item in pair_items}
-            exercises.append(
-                Exercise(
-                    kind="match",
-                    prompt="Match the Spanish word with its meaning.",
-                    answer=";".join([f"{k}:{v}" for k, v in pairs.items()]),
-                    extra={"pairs": pairs},
-                )
-            )
-
-    if "conversation" in variety:
-        exercises.append(
-            Exercise(
-                kind="conversation",
-                prompt="You meet someone in the morning. Choose the best greeting.",
-                answer="buenos días",
-                options=["buenas noches", "buenos días", "adiós", "gracias"],
-                explanation="In the morning you say **buenos días**.",
-            )
-        )
-
-    if "dialogue" in variety:
-        dialogue = random.choice(EXTRA_DIALOGUES)
-        exercises.append(
-            Exercise(
-                kind="dialogue",
-                prompt=dialogue["prompt"],
-                answer=dialogue["answer"],
-                options=dialogue["options"],
-                explanation=f"A natural response is **{dialogue['answer']}**.",
-            )
-        )
-
-    if "word_order" in variety:
-        exercises.append(
-            Exercise(
-                kind="word_order",
-                prompt="Arrange the words to say: 'Please, the bill'.",
-                answer="por favor la cuenta",
-                extra={"words": ["la", "cuenta", "por", "favor"]},
-                explanation="The polite phrase is **por favor, la cuenta**.",
-            )
-        )
-
-    if "sentence_build" in variety and sentence_pool:
-        sentence = random.choice(sentence_pool)
-        words = sentence["spanish"].replace("¿", "").replace("?", "").replace(",", "").split()
-        random.shuffle(words)
-        exercises.append(
-            Exercise(
-                kind="sentence_build",
-                prompt=f"Build the sentence: '{sentence['english']}'",
-                answer=sentence["spanish"],
-                extra={"words": words},
-                explanation=f"One correct answer is: {sentence['spanish']}",
-                metadata={"spanish": sentence["spanish"], "english": sentence["english"]},
-            )
-        )
-
-    if "cloze" in variety and sentence_pool:
-        sentence = random.choice(sentence_pool)
-        cloze = build_cloze(sentence)
-        if cloze:
-            exercises.append(cloze)
-
-    random.shuffle(exercises)
-    return exercises[:10]
-
-
-def normalize_text(text: str) -> str:
-    cleaned = text.strip().lower()
-    for char in ["¿", "?", "!", ",", ".", "¡"]:
-        cleaned = cleaned.replace(char, "")
-    return " ".join(cleaned.split())
-
-
-def check_answer(exercise: Exercise, response: str) -> tuple[bool, str]:
-    if not response:
-        return False, "Please enter or choose an answer before checking."
-    normalized = normalize_text(response)
-    answer = normalize_text(exercise.answer)
-    if exercise.kind == "match":
-        submitted_pairs = {}
-        for part in response.split(";"):
-            if ":" in part:
-                spanish, english = part.split(":", 1)
-                submitted_pairs[spanish.strip()] = english.strip()
-        expected = exercise.extra["pairs"]
-        if submitted_pairs == expected:
-            return True, "Perfect matches!"
-        return False, "Review the pairs and try again."
-    if exercise.kind == "word_order":
-        normalized = normalize_text(response)
-    is_correct = normalized == answer
-    if is_correct:
-        return True, "Correct!"
-    return False, f"Not quite. {exercise.explanation or ''}"
-
-
-def update_mastery(exercise: Exercise, correct: bool) -> None:
-    if exercise.kind not in {"multiple_choice", "fill_blank", "translate", "listening", "listening_type", "cloze"}:
-        return
-    key = exercise.answer if exercise.kind not in {"multiple_choice", "listening"} else None
-    if exercise.kind in {"multiple_choice", "listening"}:
-        for item in VOCAB:
-            if item.english == exercise.answer:
-                key = item.spanish
-                break
-    if not key:
-        return
-    current = st.session_state.mastery.get(key, 0)
-    st.session_state.mastery[key] = max(0, current + (2 if correct else -1))
+def generate_gap_results(scores: dict[str, int]) -> list[DiagnosticIssue]:
+    weights = {
+        issue: (6 - scores.get(issue.area, 3)) * random.uniform(0.8, 1.2)
+        for issue in DIAGNOSTIC_ISSUES
+    }
+    ranked = sorted(DIAGNOSTIC_ISSUES, key=lambda issue: weights[issue], reverse=True)
+    return ranked[:20]
 
 
 def render_hero() -> None:
     st.markdown(
         """
-        <div class="hero" style="position: relative; overflow: hidden;">
-            <div class="floating-shape"></div>
-            <span class="pill">Personalized</span>
-            <span class="pill">Adaptive</span>
-            <span class="pill">Motivating</span>
-            <h1>VivaLingo — Your Spanish Journey Starts Here</h1>
-            <p>Micro-lessons, rich visuals, and adaptive practice that grows with you.</p>
+        <div class="hero">
+            <div>
+                <span class="pill">C1–C2 Diagnostics</span>
+                <span class="pill">Prosody Coach</span>
+                <span class="pill">Native Corpus</span>
+            </div>
+            <h1>VivaLingo Pro: Spanish Mastery Lab</h1>
+            <p>Train nuance, register, collocation accuracy, and real-world fluency with adaptive diagnostics and
+            portfolio-ready evidence.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 
-def render_stats() -> None:
+def render_profile_sidebar() -> None:
+    st.sidebar.header("Learner Profile")
     profile = st.session_state.profile
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Streak", f"{profile['streak']} days", "+1")
-    col2.metric("XP", profile["xp"], "+20")
-    col3.metric("Daily Goal", f"{profile['goal']} min", "On track")
-    col4.metric("Level", profile["level"], "Adaptive")
+    profile["name"] = st.sidebar.text_input("Name", value=profile["name"], placeholder="Your name")
+    profile["level"] = st.sidebar.selectbox("Target level", ["C1", "C2"], index=0)
+    profile["weekly_goal"] = st.sidebar.slider("Weekly sessions", 2, 10, profile["weekly_goal"])
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Navigation")
 
 
-def render_auth_panel() -> None:
-    with st.container():
-        st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
-        if st.session_state.auth.get("logged_in"):
-            profile = st.session_state.profile
-            st.subheader(f"Welcome back, {profile['name'] or 'Learner'}")
-            st.caption(f"Signed in as {st.session_state.auth['email']}")
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("Save progress"):
-                    persist_profile_state()
-                    st.success("Progress saved.")
-            with col2:
-                if st.button("Sign out"):
-                    persist_profile_state()
-                    st.session_state.auth = {"email": "", "logged_in": False}
-                    apply_profile_state(default_profile_state())
-                    st.success("Signed out.")
-        else:
-            st.subheader("Create a profile or log in")
-            tab_create, tab_login = st.tabs(["Create profile", "Log in"])
-            with tab_create:
-                with st.form("create-profile"):
-                    name = st.text_input("Name", placeholder="Your name")
-                    email = st.text_input("Email")
-                    password = st.text_input("Password", type="password")
-                    submitted = st.form_submit_button("Create profile")
-                if submitted:
-                    success, message = create_profile(name, email, password)
-                    if success:
-                        profiles = load_profiles()
-                        st.session_state.auth = {"email": email, "logged_in": True}
-                        apply_profile_state(profiles[email]["state"])
-                        st.success(message)
-                    else:
-                        st.error(message)
-            with tab_login:
-                with st.form("login-profile"):
-                    email = st.text_input("Email", key="login-email")
-                    password = st.text_input("Password", type="password", key="login-password")
-                    submitted = st.form_submit_button("Log in")
-                if submitted:
-                    success, message = authenticate(email, password)
-                    if success:
-                        profiles = load_profiles()
-                        st.session_state.auth = {"email": email, "logged_in": True}
-                        apply_profile_state(profiles[email]["state"])
-                        st.success(message)
-                    else:
-                        st.error(message)
-        st.markdown("</div>", unsafe_allow_html=True)
+def render_gap_finder() -> None:
+    st.header("1. Real-time gap-finder diagnostics")
+    st.write("Weekly adaptive tests targeting collocations, prepositions, discourse markers, register, and nuance.")
+
+    col1, col2 = st.columns([1.2, 1])
+    with col1:
+        week = st.date_input("Week of", value=date.today())
+        st.caption("Diagnostics adapt weekly to C1–C2 micro-skills.")
+        scores = {}
+        for area in DIAGNOSTIC_AREAS:
+            scores[area] = st.slider(f"Self-assess {area}", 1, 5, 3)
+    with col2:
+        st.markdown("#### Diagnostic Focus")
+        st.markdown("- Collocation strength\n- Preposition precision\n- Discourse cohesion\n- Register control\n- Pragmatic nuance")
+        run = st.button("Run adaptive diagnostics")
+
+    if run:
+        random.seed(seed_for_week(week, st.session_state.profile["name"]))
+        st.session_state.gap_results = generate_gap_results(scores)
+        st.session_state.profile["last_gap_week"] = week.isoformat()
+
+    if st.session_state.gap_results:
+        st.subheader("Error Top 20")
+        table = [
+            {
+                "Rank": idx + 1,
+                "Area": issue.area,
+                "Pattern": issue.pattern,
+                "Impact": issue.impact,
+                "Native corpus example": issue.example,
+                "Fix": issue.fix,
+            }
+            for idx, issue in enumerate(st.session_state.gap_results)
+        ]
+        st.dataframe(table, use_container_width=True)
+
+        st.subheader("Personalized training plan")
+        for area in DIAGNOSTIC_AREAS:
+            st.markdown(f"**{area}**")
+            for item in TRAINING_PLAN[area]:
+                st.markdown(f"- {item}")
 
 
-def render_lesson_cards(selected_id: str | None) -> str:
-    selection = selected_id
-    cols = st.columns(3)
-    for index, lesson in enumerate(LESSONS):
-        progress = st.session_state.progress.get(lesson["id"], 0)
-        with cols[index % 3]:
-            with st.container():
-                st.markdown(
-                    f"""
-                    <div class="lesson-card">
-                        <h3>{lesson['title']}</h3>
-                        <p><strong>{lesson['level']}</strong> • {lesson['goal']}</p>
-                        <div class="progress-bar"><span style="width: {progress}%;"></span></div>
-                        <p style="margin-top:0.5rem; color:#475569;">{lesson['story']}</p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-                if st.button(f"Start {lesson['title']}", key=f"start-{lesson['id']}", use_container_width=True):
-                    selection = lesson["id"]
-    return selection
+def score_register_response(text: str, style: str) -> dict[str, int]:
+    lowered = text.lower()
+    scores = {dim: 2 for dim in RUBRIC_DIMENSIONS}
+    if any(marker in lowered for marker in REGISTER_MARKERS["politeness"]):
+        scores["Politeness strategies"] += 2
+    if any(marker in lowered for marker in REGISTER_MARKERS["hedging"]):
+        scores["Hedging"] += 2
+    if any(marker in lowered for marker in REGISTER_MARKERS["direct"]):
+        scores["Directness"] += 1
+    if any(marker in lowered for marker in REGISTER_MARKERS["idiomatic"]):
+        scores["Idiomaticity"] += 2
+    if style == "Academic abstract" and any(marker in lowered for marker in REGISTER_MARKERS["academic"]):
+        scores["Audience fit"] += 3
+    if style == "Informal WhatsApp" and any(marker in lowered for marker in REGISTER_MARKERS["whatsapp"]):
+        scores["Audience fit"] += 3
+    if style == "Persuasive pitch" and any(marker in lowered for marker in REGISTER_MARKERS["pitch"]):
+        scores["Audience fit"] += 3
+    if len(text.split()) > 55:
+        scores["Directness"] += 1
+    return {k: min(v, 5) for k, v in scores.items()}
 
 
-def render_match_exercise(exercise: Exercise, key_prefix: str, index: int) -> str:
-    pairs = exercise.extra["pairs"]
-    st.write("Connect each Spanish word with its meaning:")
-    left = list(pairs.keys())
-    right = list(pairs.values())
-    selections = []
-    for word in left:
-        selection = st.selectbox(
-            f"{word}",
-            options=right,
-            key=f"{key_prefix}-match-{index}-{word}",
-        )
-        selections.append(f"{word}:{selection}")
-    return ";".join(selections)
-
-
-def render_word_order(exercise: Exercise, key_prefix: str, index: int) -> str:
-    st.write("Tap the words in order (type them in the box):")
-    st.caption("Words: " + ", ".join(exercise.extra["words"]))
-    return st.text_input("Your sentence", key=f"{key_prefix}-word-order-{index}")
-
-
-def render_sentence_build(exercise: Exercise, key_prefix: str, index: int) -> str:
-    st.write("Rebuild the sentence using the words provided:")
-    st.caption("Words: " + ", ".join(exercise.extra["words"]))
-    return st.text_input("Your sentence", key=f"{key_prefix}-sentence-build-{index}")
-
-
-def render_voice_practice(expected: str, key_prefix: str, label: str) -> None:
-    payload = json.dumps(expected)
-    components.html(
-        f"""
-        <div style="border:1px solid #e2e8f0; padding:12px; border-radius:12px; background:#fff;">
-            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <button id="voice-btn-{key_prefix}" style="padding:8px 12px; border-radius:8px; border:1px solid #cbd5f5; background:#f8fafc;">
-                    🎙️ Start voice mode
-                </button>
-                <span style="font-size:13px; color:#64748b;">Speak the phrase and get instant feedback.</span>
-            </div>
-            <div style="margin-top:10px; font-size:14px;">
-                <strong>Transcript:</strong>
-                <div id="voice-transcript-{key_prefix}" style="margin-top:4px; color:#0f172a;"></div>
-            </div>
-            <div style="margin-top:6px; font-size:13px; color:#475569;">
-                <strong>Pronunciation score:</strong>
-                <span id="voice-score-{key_prefix}">--</span>
-            </div>
-            <div style="margin-top:4px; font-size:12px; color:#94a3b8;">Target: {label}</div>
-        </div>
-        <script>
-            const expected = {payload};
-            const normalize = (text) => text
-                .toLowerCase()
-                .replace(/[¿?¡!.,]/g, '')
-                .replace(/\\s+/g, ' ')
-                .trim();
-            const scorePronunciation = (spoken, target) => {{
-                if (!spoken) return 0;
-                const spokenWords = normalize(spoken).split(' ');
-                const targetWords = normalize(target).split(' ');
-                let matchCount = 0;
-                targetWords.forEach((word) => {{
-                    if (spokenWords.includes(word)) matchCount += 1;
-                }});
-                return Math.round((matchCount / Math.max(targetWords.length, 1)) * 100);
-            }};
-            const button = document.getElementById('voice-btn-{key_prefix}');
-            const transcriptEl = document.getElementById('voice-transcript-{key_prefix}');
-            const scoreEl = document.getElementById('voice-score-{key_prefix}');
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {{
-                button.disabled = true;
-                transcriptEl.textContent = 'Voice recognition is not supported in this browser.';
-            }} else {{
-                const recognition = new SpeechRecognition();
-                recognition.lang = 'es-ES';
-                recognition.interimResults = false;
-                recognition.maxAlternatives = 1;
-                button.addEventListener('click', () => {{
-                    transcriptEl.textContent = 'Listening...';
-                    scoreEl.textContent = '--';
-                    recognition.start();
-                }});
-                recognition.addEventListener('result', (event) => {{
-                    const spoken = event.results[0][0].transcript;
-                    transcriptEl.textContent = spoken;
-                    const score = scorePronunciation(spoken, expected);
-                    scoreEl.textContent = `${{score}}%`;
-                }});
-                recognition.addEventListener('error', () => {{
-                    transcriptEl.textContent = 'We could not capture audio. Try again.';
-                }});
-            }}
-        </script>
-        """,
-        height=210,
+def render_register_simulator() -> None:
+    st.header("2. Register & tone mastery simulator")
+    prompt = st.text_area(
+        "Scenario prompt",
+        value="You need to convince a skeptical team to adopt a new workflow.",
+        height=90,
     )
 
+    responses = {}
+    for style in REGISTER_STYLES:
+        responses[style] = st.text_area(f"{style} response", key=f"register-{style}")
 
-def render_listening_exercise(exercise: Exercise, key_prefix: str, index: int) -> str:
-    spanish = exercise.metadata["spanish"]
-    payload = json.dumps(spanish)
-    dom_id = sanitize_dom_id(f"{key_prefix}-listen-{index}")
-    helper_text = "Listen to the Spanish word, then answer below."
+    if st.button("Score responses"):
+        rows = []
+        for style, text in responses.items():
+            scores = score_register_response(text, style)
+            rows.append({"Register": style, **scores})
+        st.dataframe(rows, use_container_width=True)
+        st.markdown("**Rubric guidance**")
+        st.markdown(
+            "- *Politeness strategies*: modals, gratitude, deference.\n"
+            "- *Hedging*: quizá, tal vez, me parece.\n"
+            "- *Directness*: strong imperatives lower score in formal contexts.\n"
+            "- *Idiomaticity*: natural phraseology and discourse frames.\n"
+            "- *Audience fit*: match lexical density and formality to register."
+        )
+
+
+def render_pronunciation_coach() -> None:
+    st.header("3. High-precision pronunciation & prosody coach")
+    target = st.selectbox("Shadowing prompt", [item["phrase"] for item in PRONUNCIATION_TARGETS])
+    details = next(item for item in PRONUNCIATION_TARGETS if item["phrase"] == target)
+    st.markdown("**Focus areas:** " + ", ".join(details["focus"]))
+    st.info(details["notes"])
+
+    phrase_chunks = [chunk.strip() for chunk in target.split(",") if chunk.strip()]
+    st.markdown("#### Shadowing mode")
+    loop_count = st.slider("Replay loops", 1, 5, 2)
+
     components.html(
         f"""
-        <div style="display:flex; gap:12px; align-items:center; padding:8px 0;">
-            <button id="audio-btn-{dom_id}" style="padding:8px 14px; border-radius:10px; border:1px solid #cbd5f5; background:#fff;">
-                🔊 Play audio
-            </button>
-            <span style="color:#475569; font-size:14px;">{helper_text}</span>
+        <div class="wave-box">
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                {''.join([f'<span class="shadow-pill">{chunk}</span>' for chunk in phrase_chunks])}
+            </div>
+            <svg width="100%" height="120" viewBox="0 0 600 120" preserveAspectRatio="none">
+                <polyline fill="none" stroke="#38bdf8" stroke-width="3"
+                    points="0,60 40,55 80,70 120,40 160,60 200,30 240,65 280,50 320,80 360,55 400,65 440,35 480,60 520,45 560,70 600,50" />
+                <polyline fill="none" stroke="#f97316" stroke-width="2" stroke-dasharray="6 4"
+                    points="0,90 40,85 80,95 120,70 160,85 200,65 240,92 280,75 320,100 360,80 400,88 440,70 480,85 520,78 560,92 600,80" />
+            </svg>
+            <div style="font-size:12px; color:#64748b;">Waveform (blue) & pitch track (orange)</div>
+            <button id="shadow-play" style="margin-top:8px; padding:8px 12px; border-radius:8px; border:1px solid #cbd5f5;">▶️ Play & loop</button>
+            <div id="shadow-status" style="margin-top:6px; font-size:13px; color:#0f172a;"></div>
         </div>
         <script>
-            const button = document.getElementById('audio-btn-{dom_id}');
-            if (button) {{
-                button.addEventListener('click', () => {{
-                    const text = {payload};
-                    const utterance = new SpeechSynthesisUtterance(text);
+            const button = document.getElementById('shadow-play');
+            const status = document.getElementById('shadow-status');
+            const utteranceText = {json.dumps(target)};
+            const loops = {loop_count};
+            button.onclick = () => {{
+                let count = 0;
+                status.textContent = `Loop 1 / ${loops}`;
+                const speakOnce = () => {{
+                    const utterance = new SpeechSynthesisUtterance(utteranceText);
                     utterance.lang = 'es-ES';
+                    utterance.onend = () => {{
+                        count += 1;
+                        if (count < loops) {{
+                            status.textContent = `Loop ${count + 1} / ${loops}`;
+                            speakOnce();
+                        }} else {{
+                            status.textContent = 'Done. Replay to continue shadowing.';
+                        }}
+                    }};
                     window.speechSynthesis.cancel();
                     window.speechSynthesis.speak(utterance);
-                }});
-            }}
+                }};
+                speakOnce();
+            }};
         </script>
         """,
-        height=70,
+        height=280,
     )
-    if exercise.kind == "listening":
-        return st.radio(
-            "Pick the meaning",
-            exercise.options,
-            key=f"{key_prefix}-listen-{index}",
-        )
-    return st.text_input("Type what you heard", key=f"{key_prefix}-listen-type-{index}")
 
 
-def render_exercise(exercise: Exercise, key_prefix: str, index: int) -> str:
-    st.markdown(f"<div class='exercise-card'>", unsafe_allow_html=True)
-    st.subheader(exercise.prompt)
-    response = ""
-    if exercise.kind == "multiple_choice" or exercise.kind == "conversation":
-        response = st.radio(
-            "Pick one",
-            exercise.options,
-            key=f"{key_prefix}-mc-{index}",
-        )
-    elif exercise.kind in {"fill_blank", "translate"}:
-        response = st.text_input("Your answer", key=f"{key_prefix}-text-{index}")
-    elif exercise.kind == "match":
-        response = render_match_exercise(exercise, key_prefix, index)
-    elif exercise.kind == "word_order":
-        response = render_word_order(exercise, key_prefix, index)
-    elif exercise.kind == "sentence_build":
-        response = render_sentence_build(exercise, key_prefix, index)
-    elif exercise.kind in {"listening", "listening_type"}:
-        response = render_listening_exercise(exercise, key_prefix, index)
-    elif exercise.kind == "cloze":
-        response = st.text_input("Fill in the missing word", key=f"{key_prefix}-cloze-{index}")
-    if exercise.kind in {"fill_blank", "translate", "word_order", "sentence_build", "cloze"}:
-        st.markdown("##### Voice mode")
-        render_voice_practice(exercise.answer, f"{key_prefix}-voice-{st.session_state.session['index']}", exercise.answer)
-    if exercise.kind == "listening":
-        st.markdown("##### Voice mode")
-        render_voice_practice(
-            exercise.metadata["spanish"],
-            f"{key_prefix}-voice-{st.session_state.session['index']}",
-            exercise.metadata["spanish"],
-        )
-    st.markdown("</div>", unsafe_allow_html=True)
-    return response
+def render_collocation_engine() -> None:
+    st.header("4. Native-corpus collocation engine")
+    tabs = st.tabs(["Choose-the-more-native", "Rewrite to sound native", "Collocation completion"])
+
+    with tabs[0]:
+        item = random.choice(COLLOCATION_SETS)
+        st.markdown(f"**{item['pair']}** ({item['type']})")
+        choice = st.radio("Which is more native?", item["options"], key="collocation-choice")
+        if st.button("Check", key="collocation-check"):
+            st.success("Correct!" if choice == item["native"] else "Not quite.")
+            st.caption(f"Native choice: {item['native']} • Example: {item['rewrite']}")
+
+    with tabs[1]:
+        item = random.choice(COLLOCATION_SETS)
+        st.markdown(f"Rewrite using: **{item['pair']}**")
+        rewrite = st.text_area("Your rewrite", value="", key="rewrite-native")
+        if st.button("Show model", key="rewrite-show"):
+            st.info(item["rewrite"])
+            st.caption("Compare rhythm, verb choice, and fixed frames.")
+
+    with tabs[2]:
+        item = random.choice(COLLOCATION_SETS)
+        st.markdown(item["frame"])
+        completion = st.text_input("Fill in the blank", key="collocation-fill")
+        if st.button("Reveal", key="collocation-reveal"):
+            st.success(f"Suggested: {item['native']}")
+            st.caption(f"Full example: {item['rewrite']}")
 
 
-def render_session(selected_lesson: str, settings: dict, session_label: str) -> None:
-    session = st.session_state.sessions[session_label]
-    if selected_lesson == "custom" and session["exercises"]:
-        pass
-    elif session["lesson_id"] != selected_lesson or not session["exercises"]:
-        session.update(default_session_state())
-        session["lesson_id"] = selected_lesson
-        session["exercises"] = make_exercises(
-            selected_lesson,
-            settings["difficulty"],
-            settings["variety"],
-        )
+def analyze_constraints(response: str, constraints: list[str]) -> dict[str, bool]:
+    lowered = response.lower()
+    results = {}
+    concessives = ["aunque", "si bien", "a pesar de", "no obstante"]
+    softeners = ["quizá", "tal vez", "me parece", "podría"]
+    redirect = ["en todo caso", "de todos modos", "en cualquier caso"]
 
-    total = len(session["exercises"])
-    index = session["index"]
-    progress_ratio = (index / total) if total else 0
-    st.progress(progress_ratio)
+    for constraint in constraints:
+        if "concessive" in constraint.lower():
+            results[constraint] = sum(phrase in lowered for phrase in concessives) >= 3
+        elif "softeners" in constraint.lower():
+            results[constraint] = sum(phrase in lowered for phrase in softeners) >= 2
+        elif "redirecting" in constraint.lower():
+            results[constraint] = any(phrase in lowered for phrase in redirect)
+        elif "formal usted" in constraint.lower():
+            results[constraint] = "usted" in lowered or "su " in lowered
+        elif "Avoid English-like calques" in constraint:
+            results[constraint] = "aplicar para" not in lowered
+        else:
+            results[constraint] = False
+    return results
 
-    if index >= total:
-        st.success("Lesson complete! Great work.")
-        if selected_lesson in st.session_state.progress:
-            st.session_state.progress[selected_lesson] = min(100, st.session_state.progress[selected_lesson] + 20)
-        st.session_state.profile["xp"] += 25
-        st.session_state.activity_log.append(
+
+def render_conversation_lab() -> None:
+    st.header("5. Advanced conversation lab with constraints")
+    scenario = st.selectbox("Choose a roleplay", [s["title"] for s in CONVERSATION_SCENARIOS])
+    selected = next(s for s in CONVERSATION_SCENARIOS if s["title"] == scenario)
+
+    st.markdown("**Roleplay brief**")
+    st.write(selected["roles"])
+    st.markdown("**Constraints**")
+    for constraint in selected["constraints"]:
+        st.markdown(f"- {constraint}")
+
+    response = st.text_area("Your response", height=160, key="conversation-response")
+    if st.button("Evaluate constraints"):
+        checks = analyze_constraints(response, selected["constraints"])
+        for constraint, passed in checks.items():
+            st.write(f"{'✅' if passed else '❌'} {constraint}")
+        score = sum(checks.values()) / max(len(checks), 1)
+        st.metric("Constraint completion", f"{score:.0%}")
+        st.caption("Improve by weaving softeners, concessions, and register markers.")
+
+
+def generate_edit_trail(text: str) -> list[dict]:
+    edits = []
+    for guide in WRITING_GUIDE:
+        if guide["pattern"] in text:
+            edited = text.replace(guide["pattern"], guide["replacement"])
+            edits.append(
+                {
+                    "before": guide["pattern"],
+                    "after": guide["replacement"],
+                    "category": guide["category"],
+                    "reason": guide["reason"],
+                    "preview": edited,
+                }
+            )
+    if not edits and text:
+        edits.append(
             {
-                "date": datetime.now().strftime("%Y-%m-%d"),
-                "lesson": selected_lesson,
-                "accuracy": round(session["correct"] / total, 2) if total else 0,
-                "total": total,
-                "correct": session["correct"],
-                "xp": st.session_state.profile["xp"],
+                "before": "(sentence cohesion)",
+                "after": "Add connector: sin embargo",
+                "category": "cohesion",
+                "reason": "Improve logical flow between sentences.",
+                "preview": text,
             }
         )
-        persist_profile_state()
-        if st.button("Restart lesson"):
-            session.update(default_session_state())
-            session["lesson_id"] = selected_lesson
-        return
-
-    exercise = session["exercises"][index]
-    key_prefix = f"{session_label}-{selected_lesson}"
-    response = render_exercise(exercise, key_prefix, index)
-    st.write("")
-
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        if st.button("Check", key=f"{key_prefix}-check-answer", use_container_width=True):
-            correct, feedback = check_answer(exercise, response)
-            result = session["results"].get(index, {"mistake": False, "correct": False})
-            if result["correct"] and not result["mistake"]:
-                session["answered"] = True
-                session["feedback"] = "Already marked correct. Move to the next question when you're ready."
-                session["last_answer"] = response
-                return
-            if correct:
-                if not result["mistake"] and not result["correct"]:
-                    session["correct"] += 1
-                    st.session_state.profile["xp"] += 5
-                if result["mistake"]:
-                    feedback = f"{feedback} You got it now, but accuracy won't change because of the earlier miss."
-                result["correct"] = True
-            else:
-                result["mistake"] = True
-            session["results"][index] = result
-            session["answered"] = True
-            session["feedback"] = feedback
-            session["last_answer"] = response
-            update_mastery(exercise, correct)
-            persist_profile_state()
-    with col2:
-        if st.button("Next", key=f"{key_prefix}-next-question", use_container_width=True):
-            if session["answered"]:
-                session["index"] += 1
-                session["answered"] = False
-                session["feedback"] = ""
-            else:
-                st.warning("Check your answer before moving on.")
-
-    if session["feedback"]:
-        st.info(session["feedback"])
-
-    attempted = len(session["results"])
-    st.caption(f"Accuracy so far: {session['correct']} / {attempted}")
+    return edits
 
 
-def render_pronunciation_studio() -> None:
-    st.subheader("Pronunciation Studio")
-    st.write("Hear the phrase, then say it out loud to practice your accent.")
-    examples = [sentence["spanish"] for sentence in SENTENCES]
-    chosen = st.selectbox("Choose a phrase to practice", examples)
-    custom = st.text_input("Or type your own phrase")
-    phrase = custom.strip() or chosen
-    payload = json.dumps(phrase)
+def render_writing_studio() -> None:
+    st.header("6. Error-aware writing studio with edit trails")
+    st.write("Write 300–1000 words and receive line edits with reasoning categories.")
+    draft = st.text_area("Your draft", height=220, key="writing-draft")
+
+    if st.button("Analyze writing"):
+        st.session_state.writing_analysis = {
+            "draft": draft,
+            "edits": generate_edit_trail(draft),
+        }
+
+    if st.session_state.writing_analysis["draft"]:
+        edits = st.session_state.writing_analysis["edits"]
+        st.subheader("Line edits")
+        st.dataframe(
+            [
+                {
+                    "Before": edit["before"],
+                    "After": edit["after"],
+                    "Category": edit["category"],
+                    "Reason": edit["reason"],
+                }
+                for edit in edits
+            ],
+            use_container_width=True,
+        )
+        if edits:
+            diff = "\n".join(
+                difflib.unified_diff(
+                    st.session_state.writing_analysis["draft"].splitlines(),
+                    edits[0]["preview"].splitlines(),
+                    fromfile="before",
+                    tofile="after",
+                    lineterm="",
+                )
+            )
+            st.subheader("Before/after diff")
+            st.code(diff or "(No diff produced)")
+
+        deck = {}
+        for edit in edits:
+            deck[edit["category"]] = deck.get(edit["category"], 0) + 1
+        st.subheader("Spaced repetition deck")
+        st.write(
+            [
+                {"Category": category, "Cards": count}
+                for category, count in deck.items()
+            ]
+        )
+
+        if st.session_state.writing_analysis["draft"].strip():
+            if st.button("Save to portfolio"):
+                st.session_state.portfolio["writing_samples"].append(
+                    {
+                        "date": date.today().isoformat(),
+                        "text": st.session_state.writing_analysis["draft"],
+                    }
+                )
+                save_portfolio()
+                st.success("Saved to portfolio.")
+
+
+def render_argumentation_drills() -> None:
+    st.header("7. Argumentation & rhetoric drills")
+    topic = st.selectbox("Choose a topic", ARGUMENTATION_TOPICS)
+    st.write("Build a thesis, counterargument, concession, and conclusion using discourse connectors.")
+
+    thesis = st.text_input("Thesis")
+    counter = st.text_input("Counterargument")
+    concession = st.text_input("Concession")
+    conclusion = st.text_input("Conclusion")
+
+    if st.button("Evaluate structure"):
+        connector_count = sum(
+            phrase in " ".join([thesis, counter, concession, conclusion]).lower()
+            for phrase in ["por lo tanto", "sin embargo", "no obstante", "además", "en conclusión"]
+        )
+        length_score = sum(len(part.split()) > 6 for part in [thesis, counter, concession, conclusion])
+        score = (connector_count + length_score) / 10
+        st.metric("Argumentation score", f"{score:.0%}")
+        st.caption("Improve cohesion by adding explicit stance markers and connectors.")
+
+
+def render_dialect_tuning() -> None:
+    st.header("8. Dialect & regional Spanish tuning")
+    dialect = st.selectbox("Select region", list(DIALECT_MODULES.keys()))
+    data = DIALECT_MODULES[dialect]
+
+    st.markdown("**Core features**")
+    st.write(", ".join(data["features"]))
+    st.markdown("**Key lexicon**")
+    st.table([{"Term": k, "Meaning": v} for k, v in data["lexicon"].items()])
+
+    st.markdown("**Listening: same content across dialects**")
+    for name, variant in DIALECT_MODULES.items():
+        with st.expander(f"{name} variant"):
+            st.write(variant["sample"])
+            components.html(
+                f"""
+                <button id="dialect-{name}" style="padding:6px 10px; border-radius:8px; border:1px solid #cbd5f5;">🔊 Play</button>
+                <script>
+                    const btn = document.getElementById('dialect-{name}');
+                    btn.onclick = () => {{
+                        const utterance = new SpeechSynthesisUtterance({json.dumps(variant['sample'])});
+                        utterance.lang = 'es-ES';
+                        window.speechSynthesis.cancel();
+                        window.speechSynthesis.speak(utterance);
+                    }};
+                </script>
+                """,
+                height=60,
+            )
+
+    st.markdown("**Comprehension trap**")
+    trap = data["trap"]
+    answer = st.radio(trap["question"], trap["options"], key="dialect-trap")
+    if st.button("Check trap"):
+        st.success("Correct!" if answer == trap["answer"] else "Try again.")
+
+
+def render_listening_nuance() -> None:
+    st.header("9. Listening for nuance: fast, messy, real")
+    scenario_title = st.selectbox("Choose a scenario", [s["title"] for s in LISTENING_SCENARIOS])
+    scenario = next(s for s in LISTENING_SCENARIOS if s["title"] == scenario_title)
+    st.write(scenario["audio"])
+
     components.html(
         f"""
-        <div style="display:flex; gap:12px; align-items:center; padding:8px 0;">
-            <button style="padding:8px 14px; border-radius:10px; border:1px solid #cbd5f5; background:#fff;">
-                🎧 Play pronunciation
-            </button>
-            <span style="color:#475569; font-size:14px;">Use your microphone locally to repeat it.</span>
-        </div>
+        <button id="nuance-audio" style="padding:6px 10px; border-radius:8px; border:1px solid #cbd5f5;">🔊 Play sample</button>
         <script>
-            const button = document.currentScript.previousElementSibling.querySelector('button');
-            button.addEventListener('click', () => {{
-                const text = {payload};
-                const utterance = new SpeechSynthesisUtterance(text);
+            const btn = document.getElementById('nuance-audio');
+            btn.onclick = () => {{
+                const utterance = new SpeechSynthesisUtterance({json.dumps(scenario['audio'])});
                 utterance.lang = 'es-ES';
                 window.speechSynthesis.cancel();
                 window.speechSynthesis.speak(utterance);
-            }});
+            }};
         </script>
         """,
-        height=70,
-    )
-    st.markdown("##### Voice mode")
-    render_voice_practice(phrase, "pronunciation-studio", phrase)
-
-
-def render_progress() -> None:
-    st.subheader("Progress Dashboard")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown("<div class='stat-card'>", unsafe_allow_html=True)
-        st.metric("Vocabulary Mastery", f"{sum(v > 0 for v in st.session_state.mastery.values())} words")
-        st.markdown("</div>", unsafe_allow_html=True)
-    with col2:
-        st.markdown("<div class='stat-card'>", unsafe_allow_html=True)
-        st.metric("Lessons Completed", f"{sum(p >= 100 for p in st.session_state.progress.values())} / {len(LESSONS)}")
-        st.markdown("</div>", unsafe_allow_html=True)
-    with col3:
-        st.markdown("<div class='stat-card'>", unsafe_allow_html=True)
-        st.metric("Active Streak", f"{st.session_state.profile['streak']} days")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("### Mastery by Word")
-    for word, score in sorted(st.session_state.mastery.items(), key=lambda item: item[1], reverse=True):
-        if score <= 0:
-            continue
-        st.write(f"{word}: {'⭐' * min(score, 5)}")
-
-    if st.session_state.activity_log:
-        st.markdown("### Practice History")
-        st.dataframe(st.session_state.activity_log, use_container_width=True)
-        accuracy = [entry["accuracy"] for entry in st.session_state.activity_log[-10:]]
-        st.line_chart(accuracy, height=220)
-
-
-def render_insights() -> None:
-    st.subheader("Insights & Motivation")
-    goals = st.session_state.goals
-    goals["weekly_minutes"] = st.slider("Weekly minutes goal", 30, 240, goals["weekly_minutes"], step=15)
-    goals["weekly_target"] = st.slider("Weekly sessions goal", 1, 7, goals["weekly_target"])
-    st.markdown("### Study Rhythm")
-    recent_sessions = st.session_state.activity_log[-7:]
-    st.write(f"Sessions this week: **{len(recent_sessions)}**")
-    if recent_sessions:
-        avg_accuracy = sum(s["accuracy"] for s in recent_sessions) / len(recent_sessions)
-        st.metric("Average accuracy (last 7)", f"{avg_accuracy:.0%}")
-    st.info("Try mixing lesson types to reinforce vocabulary in different contexts.")
-    persist_profile_state()
-
-
-def export_activity_csv() -> str:
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=["date", "lesson", "accuracy", "total", "correct", "xp"])
-    writer.writeheader()
-    writer.writerows(st.session_state.activity_log)
-    return output.getvalue()
-
-
-def render_downloads() -> None:
-    st.subheader("Download Your Progress")
-    if not st.session_state.activity_log:
-        st.warning("Complete a lesson to unlock progress exports.")
-        return
-    st.download_button(
-        "Download CSV",
-        data=export_activity_csv(),
-        file_name="vivalingo_progress.csv",
-        mime="text/csv",
-    )
-    st.download_button(
-        "Download JSON",
-        data=json.dumps(st.session_state.activity_log, indent=2),
-        file_name="vivalingo_progress.json",
-        mime="application/json",
+        height=60,
     )
 
+    for idx, task in enumerate(scenario["tasks"]):
+        choice = st.radio(task["question"], task["options"], key=f"nuance-{idx}")
+        if st.button("Reveal", key=f"nuance-reveal-{idx}"):
+            st.info(f"Answer: {task['answer']}")
 
-def render_library() -> None:
-    st.subheader("Skill Library")
-    st.write("Pick a focus area or jump into a custom practice session.")
-    topics = sorted({item.topic for item in VOCAB})
-    selected_topics = st.multiselect("Focus topics", topics, default=topics[:2])
-    level = st.selectbox("Target level", ["Adaptive", "A1", "A2", "B1", "B2", "C1"], index=1)
-    if st.button("Generate custom practice"):
-        st.session_state.focus["topics"] = selected_topics
-        st.session_state.focus["level"] = level
-        learn_session = st.session_state.sessions["learn"]
-        learn_session.update(default_session_state())
-        learn_session["lesson_id"] = "custom"
-        learn_session["exercises"] = make_exercises(
-            lesson_id=LESSONS[0]["id"],
-            difficulty=level,
-            variety=[
-                "multiple_choice",
-                "fill_blank",
-                "translate",
-                "word_order",
-                "listening",
-                "listening_type",
-                "dialogue",
-                "cloze",
-            ],
-            topics_override=selected_topics or LESSONS[0]["topics"],
+
+def render_portfolio() -> None:
+    st.header("10. Native-likeness benchmark & portfolio")
+    st.write("Track progress across measurable axes and export your evidence.")
+
+    axis_scores = {}
+    for axis in PORTFOLIO_AXES:
+        axis_scores[axis] = st.slider(axis, 1, 10, 6)
+
+    if st.button("Save benchmark"):
+        st.session_state.portfolio["benchmarks"].append(
+            {"date": date.today().isoformat(), "scores": axis_scores}
         )
-        persist_profile_state()
-        st.success("Custom practice loaded. Go to Learn tab to start.")
+        save_portfolio()
+        st.success("Benchmark saved.")
+
+    if st.session_state.portfolio["benchmarks"]:
+        st.subheader("Benchmark history")
+        st.dataframe(st.session_state.portfolio["benchmarks"], use_container_width=True)
+
+    st.subheader("Portfolio artifacts")
+    st.write(f"Writing samples: {len(st.session_state.portfolio['writing_samples'])}")
+    st.write(f"Recordings: {len(st.session_state.portfolio['recordings'])}")
+    st.write(f"Conversation transcripts: {len(st.session_state.portfolio['transcripts'])}")
+
+    if st.session_state.portfolio["writing_samples"]:
+        st.markdown("**Latest writing sample**")
+        st.text_area(
+            "",
+            value=st.session_state.portfolio["writing_samples"][-1]["text"],
+            height=160,
+            disabled=True,
+        )
+
+    export = json.dumps(st.session_state.portfolio, indent=2)
+    st.download_button("Download portfolio JSON", data=export, file_name="vivalingo_portfolio.json")
 
 
-def render_settings() -> dict:
-    st.subheader("Learning Preferences")
-    profile = st.session_state.profile
-    profile["name"] = st.text_input("Name", profile["name"], placeholder="Tu nombre")
-    profile["goal"] = st.slider("Daily goal (minutes)", 5, 45, profile["goal"], step=5)
-    profile["level"] = st.selectbox("Learning level", ["Adaptive", "A1", "A2", "B1", "B2", "C1"], index=0)
-    st.markdown("### Exercise Mix")
-    options = [
-        "multiple_choice",
-        "fill_blank",
-        "translate",
-        "listening",
-        "listening_type",
-        "match",
-        "dialogue",
-        "cloze",
-        "conversation",
-        "word_order",
-        "sentence_build",
-    ]
-    default_options = [
-        "multiple_choice",
-        "fill_blank",
-        "translate",
-        "listening",
-        "listening_type",
-        "dialogue",
-        "cloze",
-        "conversation",
-        "word_order",
-    ]
-    variety = st.multiselect("Choose exercise types", options, default=default_options)
-    st.markdown("### Coaching Tips")
-    st.info("Mix practice modes daily. Short, frequent sessions help retention.")
-    persist_profile_state()
-    return {"difficulty": profile["level"], "variety": variety}
+def render_overview() -> None:
+    st.header("Program Overview")
+    st.write(
+        "This lab integrates diagnostics, register calibration, prosody coaching, collocation accuracy,"
+        " and portfolio-grade evidence for advanced Spanish learners."
+    )
+
+    st.markdown(
+        """
+        <div class="metric-grid">
+            <div class="card">
+                <h3>Weekly Gap Finder</h3>
+                <p>Adaptive C1–C2 diagnostics with ranked Error Top 20 and targeted training plan.</p>
+            </div>
+            <div class="card">
+                <h3>Register Simulator</h3>
+                <p>One prompt, five registers. Score politeness, hedging, directness, idiomaticity.</p>
+            </div>
+            <div class="card">
+                <h3>Prosody Coach</h3>
+                <p>Shadowing with waveform + pitch tracks and looped playback.</p>
+            </div>
+            <div class="card">
+                <h3>Native Collocation Engine</h3>
+                <p>Verb-noun pairs, fixed phrases, and corpus-based frames.</p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def main() -> None:
     set_theme()
     init_state()
+    render_profile_sidebar()
 
-    top_left, top_right = st.columns([2.2, 1])
-    with top_left:
-        render_hero()
-        st.write("")
-        render_stats()
-    with top_right:
-        render_auth_panel()
+    render_hero()
+    st.write("")
 
-    tabs = st.tabs(["Learn", "Practice", "Progress", "Library", "Insights", "Downloads", "Settings"])
-    with tabs[0]:
-        st.markdown("### Choose a lesson")
-        learn_session = st.session_state.sessions["learn"]
-        selected = learn_session.get("lesson_id")
-        selected = render_lesson_cards(selected)
-        if selected:
-            if selected != learn_session.get("lesson_id"):
-                learn_session.update(default_session_state())
-                learn_session["lesson_id"] = selected
-        st.markdown("---")
-        if learn_session.get("lesson_id"):
-            settings = {
-                "difficulty": st.session_state.profile["level"],
-                "variety": st.session_state.get("variety", ["multiple_choice", "fill_blank", "translate"]),
-            }
-            render_session(learn_session["lesson_id"], settings, "learn")
-    with tabs[1]:
-        st.markdown("### Adaptive practice")
-        settings = {
-            "difficulty": st.session_state.profile["level"],
-            "variety": st.session_state.get("variety", ["multiple_choice", "fill_blank", "translate"]),
-        }
-        if st.button("Start adaptive practice"):
-            practice_session = st.session_state.sessions["practice"]
-            practice_session.update(default_session_state())
-            practice_session["lesson_id"] = LESSONS[0]["id"]
-            practice_session["exercises"] = make_exercises(
-                lesson_id=LESSONS[0]["id"],
-                difficulty=settings["difficulty"],
-                variety=settings["variety"],
-            )
-            st.session_state.session["index"] = 0
-        if st.session_state.session.get("lesson_id"):
-            render_session(st.session_state.session["lesson_id"], settings, "practice")
-        st.markdown("---")
-        render_pronunciation_studio()
-    with tabs[2]:
-        render_progress()
-    with tabs[3]:
-        render_library()
-    with tabs[4]:
-        render_insights()
-    with tabs[5]:
-        render_downloads()
-    with tabs[6]:
-        settings = render_settings()
-        st.session_state.variety = settings["variety"]
+    nav = st.sidebar.radio(
+        "Go to",
+        [
+            "Overview",
+            "Gap Finder",
+            "Register Simulator",
+            "Prosody Coach",
+            "Collocation Engine",
+            "Conversation Lab",
+            "Writing Studio",
+            "Argumentation",
+            "Dialect Tuning",
+            "Listening for Nuance",
+            "Portfolio",
+        ],
+    )
+
+    if nav == "Overview":
+        render_overview()
+    elif nav == "Gap Finder":
+        render_gap_finder()
+    elif nav == "Register Simulator":
+        render_register_simulator()
+    elif nav == "Prosody Coach":
+        render_pronunciation_coach()
+    elif nav == "Collocation Engine":
+        render_collocation_engine()
+    elif nav == "Conversation Lab":
+        render_conversation_lab()
+    elif nav == "Writing Studio":
+        render_writing_studio()
+    elif nav == "Argumentation":
+        render_argumentation_drills()
+    elif nav == "Dialect Tuning":
+        render_dialect_tuning()
+    elif nav == "Listening for Nuance":
+        render_listening_nuance()
+    elif nav == "Portfolio":
+        render_portfolio()
 
 
 if __name__ == "__main__":
