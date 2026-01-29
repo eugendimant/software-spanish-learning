@@ -361,6 +361,18 @@ def default_session_state() -> dict:
     }
 
 
+def ensure_session_state(state: dict | None) -> dict:
+    defaults = default_session_state()
+    if not isinstance(state, dict):
+        return defaults
+    merged = {**defaults, **state}
+    if merged["exercises"] is None:
+        merged["exercises"] = []
+    if merged["results"] is None:
+        merged["results"] = {}
+    return merged
+
+
 def sanitize_dom_id(value: str) -> str:
     return "".join(char for char in value.lower() if char in DOM_ID_SAFE)
 
