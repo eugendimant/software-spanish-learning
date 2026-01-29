@@ -1,11 +1,14 @@
+import csv
+import hashlib
+import io
+import json
 import random
 from dataclasses import dataclass
 from datetime import datetime
-import io
-import json
-import csv
+from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 @dataclass(frozen=True)
@@ -46,6 +49,45 @@ VOCAB = [
     VocabItem("a pesar de", "despite", "B2", "connectors"),
     VocabItem("desempeñar", "to perform", "C1", "verbs"),
     VocabItem("aprovechar", "to take advantage", "C1", "verbs"),
+]
+
+SENTENCES = [
+    {
+        "spanish": "Me llamo Sofía y soy de México.",
+        "english": "My name is Sofia and I am from Mexico.",
+        "level": "A1",
+        "topic": "greetings",
+    },
+    {
+        "spanish": "Quisiera un café con leche, por favor.",
+        "english": "I would like a coffee with milk, please.",
+        "level": "A1",
+        "topic": "food",
+    },
+    {
+        "spanish": "¿Dónde está la estación de metro?",
+        "english": "Where is the metro station?",
+        "level": "A2",
+        "topic": "places",
+    },
+    {
+        "spanish": "Estoy aprendiendo español para mi trabajo.",
+        "english": "I am learning Spanish for my job.",
+        "level": "B1",
+        "topic": "verbs",
+    },
+    {
+        "spanish": "Aunque hace frío, vamos a caminar por el parque.",
+        "english": "Although it is cold, we are going to walk through the park.",
+        "level": "B2",
+        "topic": "connectors",
+    },
+    {
+        "spanish": "Aprovechamos la reunión para presentar la estrategia.",
+        "english": "We took advantage of the meeting to present the strategy.",
+        "level": "C1",
+        "topic": "verbs",
+    },
 ]
 
 LESSONS = [
@@ -98,6 +140,9 @@ LESSONS = [
         "story": "You lead a project update meeting.",
     },
 ]
+
+DATA_DIR = Path("data")
+PROFILE_PATH = DATA_DIR / "profiles.json"
 
 
 def set_theme() -> None:
@@ -182,6 +227,13 @@ def set_theme() -> None:
             background: rgba(255, 255, 255, 0.75);
             border: 1px solid rgba(148, 163, 184, 0.25);
         }
+        .auth-card {
+            padding: 1.5rem;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+        }
         .progress-bar {
             height: 10px;
             border-radius: 999px;
@@ -210,20 +262,110 @@ class Exercise:
     metadata: dict | None = None
 
 
-def init_state() -> None:
-    if "profile" not in st.session_state:
-        st.session_state.profile = {
+def load_profiles() -> dict:
+    if not PROFILE_PATH.exists():
+        return {}
+    try:
+        return json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+
+
+def save_profiles(profiles: dict) -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    PROFILE_PATH.write_text(json.dumps(profiles, indent=2), encoding="utf-8")
+
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+
+def default_profile_state() -> dict:
+    return {
+        "profile": {
             "name": "",
             "goal": 15,
             "level": "Adaptive",
             "streak": 3,
             "xp": 120,
             "last_login": datetime.now().strftime("%Y-%m-%d"),
-        }
-    if "progress" not in st.session_state:
-        st.session_state.progress = {lesson["id"]: 0 for lesson in LESSONS}
-    if "mastery" not in st.session_state:
-        st.session_state.mastery = {item.spanish: 0 for item in VOCAB}
+        },
+        "progress": {lesson["id"]: 0 for lesson in LESSONS},
+        "mastery": {item.spanish: 0 for item in VOCAB},
+        "activity_log": [],
+        "goals": {"weekly_minutes": 90, "weekly_target": 5},
+        "focus": {"topics": [], "level": "Adaptive"},
+    }
+
+
+def apply_profile_state(state: dict) -> None:
+    defaults = default_profile_state()
+    merged = {
+        "profile": {**defaults["profile"], **state.get("profile", {})},
+        "progress": {**defaults["progress"], **state.get("progress", {})},
+        "mastery": {**defaults["mastery"], **state.get("mastery", {})},
+        "activity_log": state.get("activity_log", defaults["activity_log"]),
+        "goals": {**defaults["goals"], **state.get("goals", {})},
+        "focus": {**defaults["focus"], **state.get("focus", {})},
+    }
+    st.session_state.profile = merged["profile"]
+    st.session_state.progress = merged["progress"]
+    st.session_state.mastery = merged["mastery"]
+    st.session_state.activity_log = merged["activity_log"]
+    st.session_state.goals = merged["goals"]
+    st.session_state.focus = merged["focus"]
+
+
+def persist_profile_state() -> None:
+    if not st.session_state.auth.get("logged_in"):
+        return
+    profiles = load_profiles()
+    email = st.session_state.auth["email"]
+    profiles[email]["state"] = {
+        "profile": st.session_state.profile,
+        "progress": st.session_state.progress,
+        "mastery": st.session_state.mastery,
+        "activity_log": st.session_state.activity_log,
+        "goals": st.session_state.goals,
+        "focus": st.session_state.focus,
+    }
+    profiles[email]["state"]["profile"]["last_login"] = datetime.now().strftime("%Y-%m-%d")
+    save_profiles(profiles)
+
+
+def create_profile(name: str, email: str, password: str) -> tuple[bool, str]:
+    if not name or not email or not password:
+        return False, "Please complete all fields."
+    profiles = load_profiles()
+    if email in profiles:
+        return False, "Account already exists. Please log in."
+    profiles[email] = {
+        "name": name,
+        "password": hash_password(password),
+        "created_at": datetime.now().isoformat(),
+        "state": default_profile_state(),
+    }
+    profiles[email]["state"]["profile"]["name"] = name
+    save_profiles(profiles)
+    return True, "Profile created. You're ready to learn!"
+
+
+def authenticate(email: str, password: str) -> tuple[bool, str]:
+    profiles = load_profiles()
+    account = profiles.get(email)
+    if not account:
+        return False, "We couldn't find that account."
+    if account["password"] != hash_password(password):
+        return False, "Incorrect password."
+    return True, "Welcome back!"
+
+
+def init_state() -> None:
+    if "auth" not in st.session_state:
+        st.session_state.auth = {"email": "", "logged_in": False}
+    if "profile" not in st.session_state:
+        defaults = default_profile_state()
+        apply_profile_state(defaults)
     if "session" not in st.session_state:
         st.session_state.session = {
             "lesson_id": None,
@@ -234,19 +376,47 @@ def init_state() -> None:
             "feedback": "",
             "last_answer": "",
         }
-    if "activity_log" not in st.session_state:
-        st.session_state.activity_log = []
-    if "goals" not in st.session_state:
-        st.session_state.goals = {"weekly_minutes": 90, "weekly_target": 5}
-    if "focus" not in st.session_state:
-        st.session_state.focus = {"topics": [], "level": "Adaptive"}
+    if "variety" not in st.session_state:
+        st.session_state.variety = [
+            "multiple_choice",
+            "fill_blank",
+            "translate",
+            "listening",
+            "conversation",
+            "word_order",
+            "sentence_build",
+        ]
 
 
 def filter_vocab(topics: list[str], level: str) -> list[VocabItem]:
     pool = [item for item in VOCAB if item.topic in topics]
     if level == "Adaptive":
         return pool
-    return [item for item in pool if item.level <= level]
+    rank = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5}
+    target = rank.get(level, 5)
+    return [item for item in pool if rank.get(item.level, 5) <= target]
+
+
+def filter_sentences(topics: list[str], level: str) -> list[dict]:
+    pool = [sentence for sentence in SENTENCES if sentence["topic"] in topics]
+    if level == "Adaptive":
+        return pool
+    rank = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5}
+    target = rank.get(level, 5)
+    return [sentence for sentence in pool if rank.get(sentence["level"], 5) <= target]
+
+
+def build_options(correct: str, pool: list[str], size: int = 4) -> list[str]:
+    options = [correct]
+    candidates = [item for item in pool if item != correct]
+    random.shuffle(candidates)
+    options.extend(candidates[: max(0, size - 1)])
+    if len(options) < size:
+        fallback = [item.english for item in VOCAB if item.english not in options]
+        random.shuffle(fallback)
+        options.extend(fallback[: size - len(options)])
+    random.shuffle(options)
+    return options
 
 def make_exercises(
     lesson_id: str,
@@ -257,14 +427,16 @@ def make_exercises(
     lesson = next(l for l in LESSONS if l["id"] == lesson_id)
     topics = topics_override or lesson["topics"]
     vocab_pool = filter_vocab(topics, difficulty)
+    sentence_pool = filter_sentences(topics, difficulty)
     random.shuffle(vocab_pool)
 
     exercises: list[Exercise] = []
+    if difficulty == "Adaptive":
+        vocab_pool.sort(key=lambda item: st.session_state.mastery.get(item.spanish, 0))
+
     for item in vocab_pool[:6]:
         if "multiple_choice" in variety:
-            options = [item.english]
-            options += random.sample([v.english for v in VOCAB if v.english != item.english], 3)
-            random.shuffle(options)
+            options = build_options(item.english, [v.english for v in VOCAB])
             exercises.append(
                 Exercise(
                     kind="multiple_choice",
@@ -295,6 +467,18 @@ def make_exercises(
                     metadata={"spanish": item.spanish, "english": item.english},
                 )
             )
+        if "listening" in variety:
+            options = build_options(item.english, [v.english for v in VOCAB])
+            exercises.append(
+                Exercise(
+                    kind="listening",
+                    prompt="Listen and choose the correct meaning.",
+                    answer=item.english,
+                    options=options,
+                    explanation=f"You heard **{item.spanish}**.",
+                    metadata={"spanish": item.spanish, "english": item.english},
+                )
+            )
 
     if "match" in variety:
         pair_items = vocab_pool[:4]
@@ -310,36 +494,56 @@ def make_exercises(
             )
 
     if "conversation" in variety:
-            exercises.append(
-                Exercise(
-                    kind="conversation",
-                    prompt="You meet someone in the morning. Choose the best greeting.",
-                    answer="buenos días",
-                    options=["buenas noches", "buenos días", "adiós", "gracias"],
-                    explanation="In the morning you say **buenos días**.",
-                )
+        exercises.append(
+            Exercise(
+                kind="conversation",
+                prompt="You meet someone in the morning. Choose the best greeting.",
+                answer="buenos días",
+                options=["buenas noches", "buenos días", "adiós", "gracias"],
+                explanation="In the morning you say **buenos días**.",
             )
+        )
 
     if "word_order" in variety:
-            exercises.append(
-                Exercise(
-                    kind="word_order",
-                    prompt="Arrange the words to say: 'Please, the bill'.",
-                    answer="por favor la cuenta",
-                    extra={"words": ["la", "cuenta", "por", "favor"]},
-                    explanation="The polite phrase is **por favor, la cuenta**.",
-                )
+        exercises.append(
+            Exercise(
+                kind="word_order",
+                prompt="Arrange the words to say: 'Please, the bill'.",
+                answer="por favor la cuenta",
+                extra={"words": ["la", "cuenta", "por", "favor"]},
+                explanation="The polite phrase is **por favor, la cuenta**.",
             )
+        )
+
+    if "sentence_build" in variety and sentence_pool:
+        sentence = random.choice(sentence_pool)
+        words = sentence["spanish"].replace("¿", "").replace("?", "").replace(",", "").split()
+        random.shuffle(words)
+        exercises.append(
+            Exercise(
+                kind="sentence_build",
+                prompt=f"Build the sentence: '{sentence['english']}'",
+                answer=sentence["spanish"],
+                extra={"words": words},
+                explanation=f"One correct answer is: {sentence['spanish']}",
+                metadata={"spanish": sentence["spanish"], "english": sentence["english"]},
+            )
+        )
 
     random.shuffle(exercises)
     return exercises[:10]
 
 
 def normalize_text(text: str) -> str:
-    return " ".join(text.strip().lower().split())
+    cleaned = text.strip().lower()
+    for char in ["¿", "?", "!", ",", ".", "¡"]:
+        cleaned = cleaned.replace(char, "")
+    return " ".join(cleaned.split())
 
 
 def check_answer(exercise: Exercise, response: str) -> tuple[bool, str]:
+    if not response:
+        return False, "Please enter or choose an answer before checking."
     normalized = normalize_text(response)
     answer = normalize_text(exercise.answer)
     if exercise.kind == "match":
@@ -361,10 +565,10 @@ def check_answer(exercise: Exercise, response: str) -> tuple[bool, str]:
 
 
 def update_mastery(exercise: Exercise, correct: bool) -> None:
-    if exercise.kind not in {"multiple_choice", "fill_blank", "translate"}:
+    if exercise.kind not in {"multiple_choice", "fill_blank", "translate", "listening"}:
         return
-    key = exercise.answer if exercise.kind != "multiple_choice" else None
-    if exercise.kind == "multiple_choice":
+    key = exercise.answer if exercise.kind not in {"multiple_choice", "listening"} else None
+    if exercise.kind in {"multiple_choice", "listening"}:
         for item in VOCAB:
             if item.english == exercise.answer:
                 key = item.spanish
@@ -398,6 +602,59 @@ def render_stats() -> None:
     col2.metric("XP", profile["xp"], "+20")
     col3.metric("Daily Goal", f"{profile['goal']} min", "On track")
     col4.metric("Level", profile["level"], "Adaptive")
+
+
+def render_auth_panel() -> None:
+    with st.container():
+        st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
+        if st.session_state.auth.get("logged_in"):
+            profile = st.session_state.profile
+            st.subheader(f"Welcome back, {profile['name'] or 'Learner'}")
+            st.caption(f"Signed in as {st.session_state.auth['email']}")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Save progress"):
+                    persist_profile_state()
+                    st.success("Progress saved.")
+            with col2:
+                if st.button("Sign out"):
+                    persist_profile_state()
+                    st.session_state.auth = {"email": "", "logged_in": False}
+                    apply_profile_state(default_profile_state())
+                    st.success("Signed out.")
+        else:
+            st.subheader("Create a profile or log in")
+            tab_create, tab_login = st.tabs(["Create profile", "Log in"])
+            with tab_create:
+                with st.form("create-profile"):
+                    name = st.text_input("Name", placeholder="Your name")
+                    email = st.text_input("Email")
+                    password = st.text_input("Password", type="password")
+                    submitted = st.form_submit_button("Create profile")
+                if submitted:
+                    success, message = create_profile(name, email, password)
+                    if success:
+                        profiles = load_profiles()
+                        st.session_state.auth = {"email": email, "logged_in": True}
+                        apply_profile_state(profiles[email]["state"])
+                        st.success(message)
+                    else:
+                        st.error(message)
+            with tab_login:
+                with st.form("login-profile"):
+                    email = st.text_input("Email", key="login-email")
+                    password = st.text_input("Password", type="password", key="login-password")
+                    submitted = st.form_submit_button("Log in")
+                if submitted:
+                    success, message = authenticate(email, password)
+                    if success:
+                        profiles = load_profiles()
+                        st.session_state.auth = {"email": email, "logged_in": True}
+                        apply_profile_state(profiles[email]["state"])
+                        st.success(message)
+                    else:
+                        st.error(message)
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_lesson_cards(selected_id: str | None) -> str:
@@ -444,6 +701,39 @@ def render_word_order(exercise: Exercise) -> str:
     return st.text_input("Your sentence", key=f"word-order-{st.session_state.session['index']}")
 
 
+def render_sentence_build(exercise: Exercise) -> str:
+    st.write("Rebuild the sentence using the words provided:")
+    st.caption("Words: " + ", ".join(exercise.extra["words"]))
+    return st.text_input("Your sentence", key=f"sentence-build-{st.session_state.session['index']}")
+
+
+def render_listening_exercise(exercise: Exercise) -> str:
+    spanish = exercise.metadata["spanish"]
+    payload = json.dumps(spanish)
+    components.html(
+        f"""
+        <div style="display:flex; gap:12px; align-items:center; padding:8px 0;">
+            <button style="padding:8px 14px; border-radius:10px; border:1px solid #cbd5f5; background:#fff;">
+                🔊 Play audio
+            </button>
+            <span style="color:#475569; font-size:14px;">Listen and pick the correct meaning.</span>
+        </div>
+        <script>
+            const button = document.currentScript.previousElementSibling.querySelector('button');
+            button.addEventListener('click', () => {{
+                const text = {payload};
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-ES';
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            }});
+        </script>
+        """,
+        height=70,
+    )
+    return st.radio("Pick the meaning", exercise.options, key=f"listen-{st.session_state.session['index']}")
+
+
 def render_exercise(exercise: Exercise) -> str:
     st.markdown(f"<div class='exercise-card'>", unsafe_allow_html=True)
     st.subheader(exercise.prompt)
@@ -456,13 +746,19 @@ def render_exercise(exercise: Exercise) -> str:
         response = render_match_exercise(exercise)
     elif exercise.kind == "word_order":
         response = render_word_order(exercise)
+    elif exercise.kind == "sentence_build":
+        response = render_sentence_build(exercise)
+    elif exercise.kind == "listening":
+        response = render_listening_exercise(exercise)
     st.markdown("</div>", unsafe_allow_html=True)
     return response
 
 
 def render_session(selected_lesson: str, settings: dict) -> None:
     session = st.session_state.session
-    if session["lesson_id"] != selected_lesson or not session["exercises"]:
+    if selected_lesson == "custom" and session["exercises"]:
+        pass
+    elif session["lesson_id"] != selected_lesson or not session["exercises"]:
         session["lesson_id"] = selected_lesson
         session["exercises"] = make_exercises(
             selected_lesson,
@@ -493,6 +789,7 @@ def render_session(selected_lesson: str, settings: dict) -> None:
                 "xp": st.session_state.profile["xp"],
             }
         )
+        persist_profile_state()
         if st.button("Restart lesson"):
             session["exercises"] = []
         return
@@ -512,6 +809,7 @@ def render_session(selected_lesson: str, settings: dict) -> None:
                 session["correct"] += 1
                 st.session_state.profile["xp"] += 5
             update_mastery(exercise, correct)
+            persist_profile_state()
     with col2:
         if st.button("Next", key="next-question"):
             if session["answered"]:
@@ -525,6 +823,37 @@ def render_session(selected_lesson: str, settings: dict) -> None:
         st.info(session["feedback"])
 
     st.caption(f"Accuracy so far: {session['correct']} / {index + 1}")
+
+
+def render_pronunciation_studio() -> None:
+    st.subheader("Pronunciation Studio")
+    st.write("Hear the phrase, then say it out loud to practice your accent.")
+    examples = [sentence["spanish"] for sentence in SENTENCES]
+    chosen = st.selectbox("Choose a phrase to practice", examples)
+    custom = st.text_input("Or type your own phrase")
+    phrase = custom.strip() or chosen
+    payload = json.dumps(phrase)
+    components.html(
+        f"""
+        <div style="display:flex; gap:12px; align-items:center; padding:8px 0;">
+            <button style="padding:8px 14px; border-radius:10px; border:1px solid #cbd5f5; background:#fff;">
+                🎧 Play pronunciation
+            </button>
+            <span style="color:#475569; font-size:14px;">Use your microphone locally to repeat it.</span>
+        </div>
+        <script>
+            const button = document.currentScript.previousElementSibling.querySelector('button');
+            button.addEventListener('click', () => {{
+                const text = {payload};
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-ES';
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            }});
+        </script>
+        """,
+        height=70,
+    )
 
 
 def render_progress() -> None:
@@ -568,6 +897,7 @@ def render_insights() -> None:
         avg_accuracy = sum(s["accuracy"] for s in recent_sessions) / len(recent_sessions)
         st.metric("Average accuracy (last 7)", f"{avg_accuracy:.0%}")
     st.info("Try mixing lesson types to reinforce vocabulary in different contexts.")
+    persist_profile_state()
 
 
 def export_activity_csv() -> str:
@@ -610,9 +940,10 @@ def render_library() -> None:
         st.session_state.session["exercises"] = make_exercises(
             lesson_id=LESSONS[0]["id"],
             difficulty=level,
-            variety=["multiple_choice", "fill_blank", "translate", "word_order"],
+            variety=["multiple_choice", "fill_blank", "translate", "word_order", "listening"],
             topics_override=selected_topics or LESSONS[0]["topics"],
         )
+        persist_profile_state()
         st.success("Custom practice loaded. Go to Learn tab to start.")
 
 
@@ -623,11 +954,21 @@ def render_settings() -> dict:
     profile["goal"] = st.slider("Daily goal (minutes)", 5, 45, profile["goal"], step=5)
     profile["level"] = st.selectbox("Learning level", ["Adaptive", "A1", "A2", "B1", "B2", "C1"], index=0)
     st.markdown("### Exercise Mix")
-    options = ["multiple_choice", "fill_blank", "translate", "match", "conversation", "word_order"]
-    default_options = ["multiple_choice", "fill_blank", "translate", "conversation", "word_order"]
+    options = [
+        "multiple_choice",
+        "fill_blank",
+        "translate",
+        "listening",
+        "match",
+        "conversation",
+        "word_order",
+        "sentence_build",
+    ]
+    default_options = ["multiple_choice", "fill_blank", "translate", "listening", "conversation", "word_order"]
     variety = st.multiselect("Choose exercise types", options, default=default_options)
     st.markdown("### Coaching Tips")
     st.info("Mix practice modes daily. Short, frequent sessions help retention.")
+    persist_profile_state()
     return {"difficulty": profile["level"], "variety": variety}
 
 
@@ -635,9 +976,13 @@ def main() -> None:
     set_theme()
     init_state()
 
-    render_hero()
-    st.write("")
-    render_stats()
+    top_left, top_right = st.columns([2.2, 1])
+    with top_left:
+        render_hero()
+        st.write("")
+        render_stats()
+    with top_right:
+        render_auth_panel()
 
     tabs = st.tabs(["Learn", "Practice", "Progress", "Library", "Insights", "Downloads", "Settings"])
     with tabs[0]:
@@ -669,6 +1014,8 @@ def main() -> None:
             st.session_state.session["index"] = 0
         if st.session_state.session.get("lesson_id"):
             render_session(st.session_state.session["lesson_id"], settings)
+        st.markdown("---")
+        render_pronunciation_studio()
     with tabs[2]:
         render_progress()
     with tabs[3]:
