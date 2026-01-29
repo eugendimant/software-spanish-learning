@@ -520,24 +520,6 @@ def build_options(correct: str, pool: list[str], size: int = 4) -> list[str]:
     return options
 
 
-def build_cloze(sentence: dict) -> Exercise | None:
-    spanish = sentence["spanish"]
-    words = [word.strip("¿?¡!.,") for word in spanish.split()]
-    if len(words) < 4:
-        return None
-    target_word = random.choice(words[1:-1])
-    prompt = spanish.replace(target_word, "_____")
-    options = build_options(target_word, [item.spanish for item in VOCAB] + words)
-    return Exercise(
-        kind="cloze",
-        prompt=f"Fill in the missing word: {prompt}",
-        answer=target_word,
-        options=options,
-        explanation=f"The missing word is **{target_word}**.",
-        metadata={"spanish": spanish, "english": sentence["english"]},
-    )
-
-
 def make_exercises(
     lesson_id: str,
     difficulty: str,
@@ -846,61 +828,32 @@ def render_match_exercise(exercise: Exercise, key_prefix: str, index: int) -> st
 def render_word_order(exercise: Exercise, key_prefix: str, index: int) -> str:
     st.write("Tap the words in order (type them in the box):")
     st.caption("Words: " + ", ".join(exercise.extra["words"]))
-    return st.text_input("Your sentence", key=f"{key_prefix}-word-order-{index}")
+    return st.text_input("Your sentence", key=f"{key_prefix}-word-order-{st.session_state.session['index']}")
 
-def render_sentence_build(exercise: Exercise, key_prefix: str, index: int) -> str:
+def render_sentence_build(exercise: Exercise, key_prefix: str) -> str:
     st.write("Rebuild the sentence using the words provided:")
     st.caption("Words: " + ", ".join(exercise.extra["words"]))
-    return st.text_input("Your sentence", key=f"{key_prefix}-sentence-build-{index}")
-
-
-def render_audio_prompt(text: str, key_prefix: str, helper_text: str) -> None:
-    payload = json.dumps(text)
-    dom_id = sanitize_dom_id(key_prefix)
-    components.html(
-        f"""
-        <div style="display:flex; gap:12px; align-items:center; padding:8px 0;">
-            <button id="audio-btn-{dom_id}" style="padding:8px 14px; border-radius:10px; border:1px solid #cbd5f5; background:#fff;">
-                🔊 Play audio
-            </button>
-            <span style="color:#475569; font-size:14px;">{helper_text}</span>
-        </div>
-        <script>
-            const button = document.getElementById('audio-btn-{dom_id}');
-            if (button) {{
-                button.addEventListener('click', () => {{
-                    const text = {payload};
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.lang = 'es-ES';
-                    window.speechSynthesis.cancel();
-                    window.speechSynthesis.speak(utterance);
-                }});
-            }}
-        </script>
-        """,
-        height=70,
-    )
+    return st.text_input("Your sentence", key=f"{key_prefix}-sentence-build-{st.session_state.session['index']}")
 
 
 def render_voice_practice(expected: str, key_prefix: str, label: str) -> None:
     payload = json.dumps(expected)
-    dom_id = sanitize_dom_id(key_prefix)
     components.html(
         f"""
         <div style="border:1px solid #e2e8f0; padding:12px; border-radius:12px; background:#fff;">
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <button id="voice-btn-{dom_id}" style="padding:8px 12px; border-radius:8px; border:1px solid #cbd5f5; background:#f8fafc;">
+                <button id="voice-btn-{key_prefix}" style="padding:8px 12px; border-radius:8px; border:1px solid #cbd5f5; background:#f8fafc;">
                     🎙️ Start voice mode
                 </button>
                 <span style="font-size:13px; color:#64748b;">Speak the phrase and get instant feedback.</span>
             </div>
             <div style="margin-top:10px; font-size:14px;">
                 <strong>Transcript:</strong>
-                <div id="voice-transcript-{dom_id}" style="margin-top:4px; color:#0f172a;"></div>
+                <div id="voice-transcript-{key_prefix}" style="margin-top:4px; color:#0f172a;"></div>
             </div>
             <div style="margin-top:6px; font-size:13px; color:#475569;">
                 <strong>Pronunciation score:</strong>
-                <span id="voice-score-{dom_id}">--</span>
+                <span id="voice-score-{key_prefix}">--</span>
             </div>
             <div style="margin-top:4px; font-size:12px; color:#94a3b8;">Target: {label}</div>
         </div>
@@ -921,9 +874,9 @@ def render_voice_practice(expected: str, key_prefix: str, label: str) -> None:
                 }});
                 return Math.round((matchCount / Math.max(targetWords.length, 1)) * 100);
             }};
-            const button = document.getElementById('voice-btn-{dom_id}');
-            const transcriptEl = document.getElementById('voice-transcript-{dom_id}');
-            const scoreEl = document.getElementById('voice-score-{dom_id}');
+            const button = document.getElementById('voice-btn-{key_prefix}');
+            const transcriptEl = document.getElementById('voice-transcript-{key_prefix}');
+            const scoreEl = document.getElementById('voice-score-{key_prefix}');
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {{
                 button.disabled = true;
@@ -954,23 +907,40 @@ def render_voice_practice(expected: str, key_prefix: str, label: str) -> None:
     )
 
 
-def render_listening_exercise(exercise: Exercise, key_prefix: str, index: int) -> str:
+def render_listening_exercise(exercise: Exercise, key_prefix: str) -> str:
     spanish = exercise.metadata["spanish"]
-    render_audio_prompt(spanish, f"{key_prefix}-listen-audio-{index}", "Listen and pick the correct meaning.")
+    payload = json.dumps(spanish)
+    components.html(
+        f"""
+        <div style="display:flex; gap:12px; align-items:center; padding:8px 0;">
+            <button id="audio-btn-{dom_id}" style="padding:8px 14px; border-radius:10px; border:1px solid #cbd5f5; background:#fff;">
+                🔊 Play audio
+            </button>
+            <span style="color:#475569; font-size:14px;">{helper_text}</span>
+        </div>
+        <script>
+            const button = document.getElementById('audio-btn-{dom_id}');
+            if (button) {{
+                button.addEventListener('click', () => {{
+                    const text = {payload};
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'es-ES';
+                    window.speechSynthesis.cancel();
+                    window.speechSynthesis.speak(utterance);
+                }});
+            }}
+        </script>
+        """,
+        height=70,
+    )
     return st.radio(
         "Pick the meaning",
         exercise.options,
-        key=f"{key_prefix}-listen-{index}",
+        key=f"{key_prefix}-listen-{st.session_state.session['index']}",
     )
 
 
-def render_listening_type(exercise: Exercise, key_prefix: str, index: int) -> str:
-    spanish = exercise.metadata["spanish"]
-    render_audio_prompt(spanish, f"{key_prefix}-listen-type-{index}", "Listen and type what you hear.")
-    return st.text_input("Type what you heard", key=f"{key_prefix}-listen-type-input-{index}")
-
-
-def render_exercise(exercise: Exercise, key_prefix: str, index: int) -> str:
+def render_exercise(exercise: Exercise, key_prefix: str) -> str:
     st.markdown(f"<div class='exercise-card'>", unsafe_allow_html=True)
     st.subheader(exercise.prompt)
     response = ""
@@ -985,27 +955,19 @@ def render_exercise(exercise: Exercise, key_prefix: str, index: int) -> str:
     elif exercise.kind == "match":
         response = render_match_exercise(exercise, key_prefix, index)
     elif exercise.kind == "word_order":
-        response = render_word_order(exercise, key_prefix, index)
+        response = render_word_order(exercise, key_prefix)
     elif exercise.kind == "sentence_build":
-        response = render_sentence_build(exercise, key_prefix, index)
+        response = render_sentence_build(exercise, key_prefix)
     elif exercise.kind == "listening":
-        response = render_listening_exercise(exercise, key_prefix, index)
-    elif exercise.kind == "listening_type":
-        response = render_listening_type(exercise, key_prefix, index)
-    elif exercise.kind in {"dialogue", "cloze"}:
-        response = st.radio(
-            "Pick one",
-            exercise.options,
-            key=f"{key_prefix}-choice-{index}",
-        )
+        response = render_listening_exercise(exercise, key_prefix)
     if exercise.kind in {"fill_blank", "translate", "word_order", "sentence_build"}:
         st.markdown("##### Voice mode")
-        render_voice_practice(exercise.answer, f"{key_prefix}-voice-{index}", exercise.answer)
-    if exercise.kind in {"listening", "listening_type"}:
+        render_voice_practice(exercise.answer, f"{key_prefix}-voice-{st.session_state.session['index']}", exercise.answer)
+    if exercise.kind == "listening":
         st.markdown("##### Voice mode")
         render_voice_practice(
             exercise.metadata["spanish"],
-            f"{key_prefix}-voice-{index}",
+            f"{key_prefix}-voice-{st.session_state.session['index']}",
             exercise.metadata["spanish"],
         )
     st.markdown("</div>", unsafe_allow_html=True)
@@ -1104,7 +1066,28 @@ def render_pronunciation_studio() -> None:
     chosen = st.selectbox("Choose a phrase to practice", examples)
     custom = st.text_input("Or type your own phrase")
     phrase = custom.strip() or chosen
-    render_audio_prompt(phrase, "pronunciation-studio-audio", "Use your microphone locally to repeat it.")
+    payload = json.dumps(phrase)
+    components.html(
+        f"""
+        <div style="display:flex; gap:12px; align-items:center; padding:8px 0;">
+            <button style="padding:8px 14px; border-radius:10px; border:1px solid #cbd5f5; background:#fff;">
+                🎧 Play pronunciation
+            </button>
+            <span style="color:#475569; font-size:14px;">Use your microphone locally to repeat it.</span>
+        </div>
+        <script>
+            const button = document.currentScript.previousElementSibling.querySelector('button');
+            button.addEventListener('click', () => {{
+                const text = {payload};
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-ES';
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            }});
+        </script>
+        """,
+        height=70,
+    )
     st.markdown("##### Voice mode")
     render_voice_practice(phrase, "pronunciation-studio", phrase)
 
@@ -1293,9 +1276,9 @@ def main() -> None:
                 difficulty=settings["difficulty"],
                 variety=settings["variety"],
             )
-        practice_session = st.session_state.sessions["practice"]
-        if practice_session.get("lesson_id"):
-            render_session(practice_session["lesson_id"], settings, "practice")
+            st.session_state.session["index"] = 0
+        if st.session_state.session.get("lesson_id"):
+            render_session(st.session_state.session["lesson_id"], settings, "practice")
         st.markdown("---")
         render_pronunciation_studio()
     with tabs[2]:
