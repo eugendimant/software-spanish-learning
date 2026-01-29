@@ -793,19 +793,20 @@ def render_lesson_cards(selected_id: str | None) -> str:
     for index, lesson in enumerate(LESSONS):
         progress = st.session_state.progress.get(lesson["id"], 0)
         with cols[index % 3]:
-            st.markdown(
-                f"""
-                <div class="lesson-card">
-                    <h3>{lesson['title']}</h3>
-                    <p><strong>{lesson['level']}</strong> • {lesson['goal']}</p>
-                    <div class="progress-bar"><span style="width: {progress}%;"></span></div>
-                    <p style="margin-top:0.5rem; color:#475569;">{lesson['story']}</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            if st.button(f"Start {lesson['title']}", key=f"start-{lesson['id']}"):
-                selection = lesson["id"]
+            with st.container():
+                st.markdown(
+                    f"""
+                    <div class="lesson-card">
+                        <h3>{lesson['title']}</h3>
+                        <p><strong>{lesson['level']}</strong> • {lesson['goal']}</p>
+                        <div class="progress-bar"><span style="width: {progress}%;"></span></div>
+                        <p style="margin-top:0.5rem; color:#475569;">{lesson['story']}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                if st.button(f"Start {lesson['title']}", key=f"start-{lesson['id']}", use_container_width=True):
+                    selection = lesson["id"]
     return selection
 
 
@@ -828,7 +829,7 @@ def render_match_exercise(exercise: Exercise, key_prefix: str, index: int) -> st
 def render_word_order(exercise: Exercise, key_prefix: str, index: int) -> str:
     st.write("Tap the words in order (type them in the box):")
     st.caption("Words: " + ", ".join(exercise.extra["words"]))
-    return st.text_input("Your sentence", key=f"{key_prefix}-word-order-{st.session_state.session['index']}")
+    return st.text_input("Your sentence", key=f"{key_prefix}-word-order-{index}")
 
 def render_sentence_build(exercise: Exercise, key_prefix: str) -> str:
     st.write("Rebuild the sentence using the words provided:")
@@ -1020,7 +1021,7 @@ def render_session(selected_lesson: str, settings: dict, session_label: str) -> 
 
     col1, col2 = st.columns([1, 1])
     with col1:
-        if st.button("Check", key=f"{key_prefix}-check-answer"):
+        if st.button("Check", key=f"{key_prefix}-check-answer", use_container_width=True):
             correct, feedback = check_answer(exercise, response)
             result = session["results"].get(index, {"mistake": False, "correct": False})
             if result["correct"] and not result["mistake"]:
@@ -1044,7 +1045,7 @@ def render_session(selected_lesson: str, settings: dict, session_label: str) -> 
             update_mastery(exercise, correct)
             persist_profile_state()
     with col2:
-        if st.button("Next", key=f"{key_prefix}-next-question"):
+        if st.button("Next", key=f"{key_prefix}-next-question", use_container_width=True):
             if session["answered"]:
                 session["index"] += 1
                 session["answered"] = False
