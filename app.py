@@ -188,6 +188,17 @@ COLLOCATION_SETS = [
         "native": "alto",
         "rewrite": "El proyecto exige un alto nivel de compromiso.",
     },
+]
+
+PORTFOLIO_AXES = [
+    "Lexical sophistication",
+    "Collocation accuracy",
+    "Pragmatic appropriateness",
+    "Prosody",
+    "Cohesion",
+]
+
+ADAPTIVE_QUESTION_BANK = [
     {
         "pair": "me da la impresión de que",
         "type": "fixed phrase",
@@ -340,268 +351,6 @@ PORTFOLIO_AXES = [
     "Cohesion",
 ]
 
-ADAPTIVE_QUESTION_BANK = [
-    {
-        "id": "c1-coll-1",
-        "level": "C1",
-        "skill": "Collocations",
-        "prompt": "Elige la opción más natural: \"___ una decisión informada\"",
-        "options": ["Hacer", "Tomar", "Crear"],
-        "answer": "Tomar",
-        "explanation": "En español es más natural 'tomar una decisión'.",
-    },
-    {
-        "id": "c1-discourse-1",
-        "level": "C1",
-        "skill": "Discourse markers",
-        "prompt": "Completa con un conector adecuado: \"___, los datos sugieren un cambio estructural.\"",
-        "options": ["Además", "Sin embargo", "Por eso"],
-        "answer": "Además",
-        "explanation": "El contexto es aditivo, no contrastivo.",
-    },
-    {
-        "id": "c1-prep-1",
-        "level": "C1",
-        "skill": "Prepositions",
-        "prompt": "Selecciona la preposición correcta: \"Depende ___ la estrategia.\"",
-        "options": ["de", "en", "a"],
-        "answer": "de",
-        "explanation": "El verbo es 'depender de'.",
-    },
-    {
-        "id": "c2-register-1",
-        "level": "C2",
-        "skill": "Register & tone",
-        "prompt": "En un correo formal, ¿qué opción suena más adecuada?",
-        "options": [
-            "¿Puedes mandarme eso hoy?",
-            "Le agradecería que me enviara el documento hoy.",
-            "Mándame eso ya.",
-        ],
-        "answer": "Le agradecería que me enviara el documento hoy.",
-        "explanation": "Incluye tratamiento formal y mitigación.",
-    },
-    {
-        "id": "c2-nuance-1",
-        "level": "C2",
-        "skill": "Nuance & pragmatics",
-        "prompt": "¿Qué reformulación suena más natural?",
-        "options": [
-            "Me dio la impresión de que no estaban listos.",
-            "Me dio la sensación de que no estaban listos.",
-            "Me dio el parecer de que no estaban listos.",
-        ],
-        "answer": "Me dio la impresión de que no estaban listos.",
-        "explanation": "La fórmula 'me dio la impresión de que' es idiomática.",
-    },
-    {
-        "id": "c2-discourse-2",
-        "level": "C2",
-        "skill": "Discourse markers",
-        "prompt": "Selecciona el conector correcto: \"___, conviene matizar la hipótesis.\"",
-        "options": ["No obstante", "Por ejemplo", "Mientras tanto"],
-        "answer": "No obstante",
-        "explanation": "Marca contraste o matización.",
-    },
-]
-
-FOSSILIZED_ERRORS = [
-    {
-        "pattern": "aplicar para",
-        "correction": "solicitar",
-        "explanation": "Evita el calco 'aplicar para' en español formal.",
-        "minimal_pairs": [
-            ("Solicité el puesto ayer.", "Apliqué para el puesto ayer."),
-            ("¿Has solicitado la beca?", "¿Has aplicado para la beca?"),
-        ],
-    },
-    {
-        "pattern": "realizar una decisión",
-        "correction": "tomar una decisión",
-        "explanation": "La colocación correcta es 'tomar una decisión'.",
-        "minimal_pairs": [
-            ("Tomamos una decisión informada.", "Realizamos una decisión informada."),
-            ("Necesitamos tomar una decisión hoy.", "Necesitamos realizar una decisión hoy."),
-        ],
-    },
-    {
-        "pattern": "por otro lado" ,
-        "correction": "además",
-        "explanation": "Usa 'por otro lado' solo con contraste claro.",
-        "minimal_pairs": [
-            ("Además, el equipo ya validó el plan.", "Por otro lado, el equipo ya validó el plan."),
-            ("Además, aumentó la demanda.", "Por otro lado, aumentó la demanda."),
-        ],
-    },
-]
-
-IDIOM_LIBRARY = [
-    {
-        "idiom": "estar en las nubes",
-        "meaning": "estar distraído",
-        "register": "informal",
-        "safe_alternative": "estar distraído",
-        "note": "Evita usarlo en contextos académicos muy formales.",
-    },
-    {
-        "idiom": "poner el grito en el cielo",
-        "meaning": "quejarse fuertemente",
-        "register": "neutral",
-        "safe_alternative": "quejarse con fuerza",
-        "note": "Úsalo en contextos narrativos o coloquiales.",
-    },
-    {
-        "idiom": "a grandes rasgos",
-        "meaning": "en términos generales",
-        "register": "formal",
-        "safe_alternative": "en términos generales",
-        "note": "Funciona bien en informes y presentaciones.",
-    },
-]
-
-PRAGMATIC_SCENARIOS = [
-    {
-        "region": "Mexico",
-        "situation": "Pedir un favor a un colega senior.",
-        "prompt": "Selecciona la versión socialmente más adecuada:",
-        "options": [
-            "Oye, pásame el informe ya.",
-            "¿Te molestaría compartirme el informe cuando tengas un momento?",
-            "Mándame el informe ahora mismo.",
-        ],
-        "answer": "¿Te molestaría compartirme el informe cuando tengas un momento?",
-        "feedback": "En México se valora la mitigación y los suavizadores en peticiones laborales.",
-    },
-    {
-        "region": "Spain",
-        "situation": "Rechazar una invitación informal.",
-        "prompt": "Selecciona la versión más natural:",
-        "options": [
-            "No voy.",
-            "Me encantaría, pero se me complica esta vez.",
-            "No puedo asistir.",
-        ],
-        "answer": "Me encantaría, pero se me complica esta vez.",
-        "feedback": "El rechazo suave con una razón breve es más natural en contexto informal.",
-    },
-]
-
-DOMAIN_MODULES = {
-    "Finance": {
-        "collocations": ["gestionar riesgos", "flujo de caja", "rentabilidad ajustada"],
-        "templates": ["Según el análisis, la liquidez se mantiene estable."],
-        "false_friend": {
-            "prompt": "¿Cuál es la traducción correcta de 'actual' en finanzas?",
-            "options": ["actual", "real", "corriente"],
-            "answer": "actual",
-            "note": "En español financiero, 'actual' suele equivaler a current/present.",
-        },
-    },
-    "Law": {
-        "collocations": ["interponer un recurso", "marco normativo", "jurisprudencia vigente"],
-        "templates": ["Conforme al marco normativo, procede la revisión del contrato."],
-        "false_friend": {
-            "prompt": "¿Cómo se traduce correctamente 'eventually' en textos jurídicos?",
-            "options": ["eventualmente", "finalmente", "posiblemente"],
-            "answer": "finalmente",
-            "note": "\"Eventualmente\" en español significa \"ocasionalmente\".",
-        },
-    },
-    "Medicine": {
-        "collocations": ["presentar síntomas", "historia clínica", "alta médica"],
-        "templates": ["La historia clínica indica antecedentes relevantes."],
-        "false_friend": {
-            "prompt": "¿Cuál es la traducción correcta de 'intoxication' en medicina?",
-            "options": ["intoxicación", "embriaguez", "toxicidad"],
-            "answer": "intoxicación",
-            "note": "\"Intoxicación\" es el término estándar para poisoning.",
-        },
-    },
-    "Academia": {
-        "collocations": ["marco teórico", "diseño metodológico", "hallazgos clave"],
-        "templates": ["El estudio se apoya en un marco teórico robusto."],
-        "false_friend": {
-            "prompt": "¿Cómo se traduce 'evidence' en un paper?",
-            "options": ["evidencia", "prueba", "testimonio"],
-            "answer": "evidencia",
-            "note": "\"Evidencia\" es aceptado en academia, con matices según disciplina.",
-        },
-    },
-    "Tech": {
-        "collocations": ["escalabilidad del sistema", "arquitectura modular", "rendimiento óptimo"],
-        "templates": ["La arquitectura modular facilita la escalabilidad."],
-        "false_friend": {
-            "prompt": "¿Cómo se traduce 'library' en software?",
-            "options": ["biblioteca", "librería", "libro"],
-            "answer": "librería",
-            "note": "\"Librería\" es el uso estándar en tecnología.",
-        },
-    },
-    "HR": {
-        "collocations": ["gestión del talento", "clima laboral", "plan de carrera"],
-        "templates": ["El plan de carrera mejora la retención del talento."],
-        "false_friend": {
-            "prompt": "¿Cómo se traduce correctamente 'actually' en una revisión?",
-            "options": ["actualmente", "en realidad", "realmente"],
-            "answer": "en realidad",
-            "note": "\"Actually\" suele equivaler a \"en realidad\".",
-        },
-    },
-}
-
-IMMERSION_MODES = [
-    {
-        "label": "20-minute sprint",
-        "duration": 20,
-        "steps": [
-            "Read a 300-word article and annotate discourse markers.",
-            "Listen to a short debate clip and note stance markers.",
-            "Summarize in 5 sentences using formal register.",
-            "Rewrite in a stricter register with hedging.",
-        ],
-    },
-    {
-        "label": "40-minute deep dive",
-        "duration": 40,
-        "steps": [
-            "Read a 600-word report and list 10 collocations.",
-            "Listen to a panel discussion and identify softeners.",
-            "Write a 150-word argument with concessions.",
-            "Rewrite for a different audience (email vs abstract).",
-        ],
-    },
-    {
-        "label": "60-minute immersion",
-        "duration": 60,
-        "steps": [
-            "Read a 900-word essay and map its rhetorical structure.",
-            "Listen to a fast interview and capture implied meaning.",
-            "Write a 250-word response with 5 discourse connectors.",
-            "Rewrite into a formal complaint and then a pitch.",
-        ],
-    },
-]
-
-NAV_ITEMS = [
-    "Overview",
-    "Adaptive Assessment",
-    "Gap Finder",
-    "Register Simulator",
-    "Prosody Coach",
-    "Collocation Engine",
-    "Conversation Lab",
-    "Writing Studio",
-    "Argumentation",
-    "Dialect Tuning",
-    "Listening for Nuance",
-    "Fossilized Errors",
-    "Idioms & Metaphor",
-    "Cultural Pragmatics",
-    "Domain Precision",
-    "Immersion Mode",
-    "Portfolio",
-]
-
 
 def set_theme() -> None:
     st.set_page_config(page_title="VivaLingo Pro", page_icon="🗣️", layout="wide")
@@ -663,7 +412,7 @@ def set_theme() -> None:
         }
         .metric-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
         }
         .wave-box {
@@ -682,23 +431,7 @@ def set_theme() -> None:
             font-weight: 600;
             margin-right: 0.4rem;
         }
-        .quick-card {
-            border-radius: 18px;
-            border: 1px solid var(--border);
-            padding: 1rem;
-            background: #fff;
-        }
-        .sidebar-header {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--muted);
-            margin-top: 0.5rem;
-        }
-        section[data-testid="stSidebar"] .stButton button {
-            border-radius: 12px;
-            border: 1px solid rgba(148, 163, 184, 0.4);
-            background: #fff;
+        .stTabs [data-baseweb="tab"] {
             font-weight: 600;
         }
         section[data-testid="stSidebar"] .stButton button:hover {
@@ -724,24 +457,6 @@ def init_state() -> None:
         st.session_state.portfolio = load_portfolio()
     if "writing_analysis" not in st.session_state:
         st.session_state.writing_analysis = {"draft": "", "edits": []}
-    if "nav" not in st.session_state:
-        st.session_state.nav = "Overview"
-    if "assessment" not in st.session_state:
-        st.session_state.assessment = {
-            "active": False,
-            "questions": [],
-            "index": 0,
-            "score": 0,
-            "level": "C1",
-            "missed_skills": {},
-            "complete": False,
-        }
-    if "fossil_log" not in st.session_state:
-        st.session_state.fossil_log = []
-    if "fossil_stats" not in st.session_state:
-        st.session_state.fossil_stats = {"attempts": 0, "correct": 0}
-    if "immersion_notes" not in st.session_state:
-        st.session_state.immersion_notes = ""
 
 
 def load_portfolio() -> dict:
@@ -774,11 +489,6 @@ def generate_gap_results(scores: dict[str, int]) -> list[DiagnosticIssue]:
     return ranked[:20]
 
 
-def set_nav(page: str) -> None:
-    if page in NAV_ITEMS:
-        st.session_state.nav = page
-
-
 def render_hero() -> None:
     st.markdown(
         """
@@ -804,94 +514,14 @@ def render_profile_sidebar() -> None:
     profile["level"] = st.sidebar.selectbox("Target level", ["C1", "C2"], index=0)
     profile["weekly_goal"] = st.sidebar.slider("Weekly sessions", 2, 10, profile["weekly_goal"])
     st.sidebar.markdown("---")
-    st.sidebar.markdown("<div class='sidebar-header'>Navigation</div>", unsafe_allow_html=True)
-    st.sidebar.caption(f"Current: {st.session_state.nav}")
-    for item in NAV_ITEMS:
-        if st.sidebar.button(item, key=f"nav-{item}", use_container_width=True):
-            set_nav(item)
-
-
-def render_adaptive_assessment() -> None:
-    st.header("Adaptive placement test")
-    st.write("Calibrate your level and generate a personalized plan based on real-time performance.")
-
-    assessment = st.session_state.assessment
-
-    if not assessment["active"]:
-        if st.button("Start adaptive assessment"):
-            assessment.update(
-                {
-                    "active": True,
-                    "questions": [],
-                    "index": 0,
-                    "score": 0,
-                    "level": st.session_state.profile["level"],
-                    "missed_skills": {},
-                    "complete": False,
-                }
-            )
+    st.sidebar.subheader("Navigation")
 
     if not assessment["active"]:
         st.info("Start the assessment to begin adaptive questions.")
         return
 
-    if assessment["complete"]:
-        st.subheader("Placement result")
-        estimated = assessment["level"]
-        st.metric("Estimated level", estimated)
-        missed = assessment["missed_skills"]
-        if missed:
-            sorted_skills = sorted(missed.items(), key=lambda item: item[1], reverse=True)
-            st.markdown("**Top gaps to address next**")
-            for skill, count in sorted_skills[:3]:
-                st.write(f"- {skill} (missed {count} items)")
-                for tip in TRAINING_PLAN.get(skill, []):
-                    st.write(f"  - {tip}")
-        st.success("Your personalized plan is ready. Use Gap Finder for weekly refinement.")
-        if st.button("Restart assessment"):
-            assessment["active"] = False
-        return
-
-    current_level = assessment["level"]
-    candidates = [q for q in ADAPTIVE_QUESTION_BANK if q["level"] == current_level]
-    if len(assessment["questions"]) < 8:
-        remaining = [q for q in candidates if q["id"] not in assessment["questions"]]
-        if not remaining:
-            remaining = candidates
-        chosen = random.choice(remaining)
-        assessment["questions"].append(chosen["id"])
-        question = chosen
-    else:
-        question_id = assessment["questions"][assessment["index"]]
-        question = next(q for q in ADAPTIVE_QUESTION_BANK if q["id"] == question_id)
-
-    st.subheader(f"Question {assessment['index'] + 1} of 8")
-    st.write(question["prompt"])
-    response = st.radio("Choose an answer", question["options"], key=f"adaptive-{assessment['index']}")
-
-    if st.button("Submit answer"):
-        correct = response == question["answer"]
-        if correct:
-            assessment["score"] += 1
-            if current_level == "C1":
-                assessment["level"] = "C2"
-            st.success("Correct!")
-        else:
-            assessment["missed_skills"][question["skill"]] = assessment["missed_skills"].get(question["skill"], 0) + 1
-            if current_level == "C2":
-                assessment["level"] = "C1"
-            st.error(f"Incorrect. {question['explanation']}")
-
-        assessment["index"] += 1
-        if assessment["index"] >= 8:
-            assessment["complete"] = True
-            assessment["active"] = True
-            st.session_state.assessment = assessment
-            st.experimental_rerun()
-
-
 def render_gap_finder() -> None:
-    st.header("Weekly gap-finder diagnostics")
+    st.header("1. Real-time gap-finder diagnostics")
     st.write("Weekly adaptive tests targeting collocations, prepositions, discourse markers, register, and nuance.")
 
     col1, col2 = st.columns([1.2, 1])
@@ -956,7 +586,7 @@ def score_register_response(text: str, style: str) -> dict[str, int]:
 
 
 def render_register_simulator() -> None:
-    st.header("Register & tone mastery simulator")
+    st.header("2. Register & tone mastery simulator")
     prompt = st.text_area(
         "Scenario prompt",
         value="You need to convince a skeptical team to adopt a new workflow.",
@@ -984,7 +614,7 @@ def render_register_simulator() -> None:
 
 
 def render_pronunciation_coach() -> None:
-    st.header("High-precision pronunciation & prosody coach")
+    st.header("3. High-precision pronunciation & prosody coach")
     target = st.selectbox("Shadowing prompt", [item["phrase"] for item in PRONUNCIATION_TARGETS])
     details = next(item for item in PRONUNCIATION_TARGETS if item["phrase"] == target)
     st.markdown("**Focus areas:** " + ", ".join(details["focus"]))
@@ -994,7 +624,6 @@ def render_pronunciation_coach() -> None:
     st.markdown("#### Shadowing mode")
     loop_count = st.slider("Replay loops", 1, 5, 2)
 
-    loop_text = f"Loop 1 / {loop_count}"
     components.html(
         f"""
         <div class="wave-box">
@@ -1009,7 +638,7 @@ def render_pronunciation_coach() -> None:
             </svg>
             <div style="font-size:12px; color:#64748b;">Waveform (blue) & pitch track (orange)</div>
             <button id="shadow-play" style="margin-top:8px; padding:8px 12px; border-radius:8px; border:1px solid #cbd5f5;">▶️ Play & loop</button>
-            <div id="shadow-status" style="margin-top:6px; font-size:13px; color:#0f172a;">{loop_text}</div>
+            <div id="shadow-status" style="margin-top:6px; font-size:13px; color:#0f172a;"></div>
         </div>
         <script>
             const button = document.getElementById('shadow-play');
@@ -1018,14 +647,14 @@ def render_pronunciation_coach() -> None:
             const loops = {loop_count};
             button.onclick = () => {{
                 let count = 0;
-                status.textContent = 'Loop 1 / ' + loops;
+                status.textContent = `Loop 1 / ${loops}`;
                 const speakOnce = () => {{
                     const utterance = new SpeechSynthesisUtterance(utteranceText);
                     utterance.lang = 'es-ES';
                     utterance.onend = () => {{
                         count += 1;
                         if (count < loops) {{
-                            status.textContent = 'Loop ' + (count + 1) + ' / ' + loops;
+                            status.textContent = `Loop ${count + 1} / ${loops}`;
                             speakOnce();
                         }} else {{
                             status.textContent = 'Done. Replay to continue shadowing.';
@@ -1043,7 +672,7 @@ def render_pronunciation_coach() -> None:
 
 
 def render_collocation_engine() -> None:
-    st.header("Native-corpus collocation engine")
+    st.header("4. Native-corpus collocation engine")
     tabs = st.tabs(["Choose-the-more-native", "Rewrite to sound native", "Collocation completion"])
 
     with tabs[0]:
@@ -1057,7 +686,7 @@ def render_collocation_engine() -> None:
     with tabs[1]:
         item = random.choice(COLLOCATION_SETS)
         st.markdown(f"Rewrite using: **{item['pair']}**")
-        st.text_area("Your rewrite", value="", key="rewrite-native")
+        rewrite = st.text_area("Your rewrite", value="", key="rewrite-native")
         if st.button("Show model", key="rewrite-show"):
             st.info(item["rewrite"])
             st.caption("Compare rhythm, verb choice, and fixed frames.")
@@ -1065,7 +694,7 @@ def render_collocation_engine() -> None:
     with tabs[2]:
         item = random.choice(COLLOCATION_SETS)
         st.markdown(item["frame"])
-        st.text_input("Fill in the blank", key="collocation-fill")
+        completion = st.text_input("Fill in the blank", key="collocation-fill")
         if st.button("Reveal", key="collocation-reveal"):
             st.success(f"Suggested: {item['native']}")
             st.caption(f"Full example: {item['rewrite']}")
@@ -1095,7 +724,7 @@ def analyze_constraints(response: str, constraints: list[str]) -> dict[str, bool
 
 
 def render_conversation_lab() -> None:
-    st.header("Advanced conversation lab with constraints")
+    st.header("5. Advanced conversation lab with constraints")
     scenario = st.selectbox("Choose a roleplay", [s["title"] for s in CONVERSATION_SCENARIOS])
     selected = next(s for s in CONVERSATION_SCENARIOS if s["title"] == scenario)
 
@@ -1143,7 +772,7 @@ def generate_edit_trail(text: str) -> list[dict]:
 
 
 def render_writing_studio() -> None:
-    st.header("Error-aware writing studio with edit trails")
+    st.header("6. Error-aware writing studio with edit trails")
     st.write("Write 300–1000 words and receive line edits with reasoning categories.")
     draft = st.text_area("Your draft", height=220, key="writing-draft")
 
@@ -1205,8 +834,8 @@ def render_writing_studio() -> None:
 
 
 def render_argumentation_drills() -> None:
-    st.header("Argumentation & rhetoric drills")
-    st.selectbox("Choose a topic", ARGUMENTATION_TOPICS)
+    st.header("7. Argumentation & rhetoric drills")
+    topic = st.selectbox("Choose a topic", ARGUMENTATION_TOPICS)
     st.write("Build a thesis, counterargument, concession, and conclusion using discourse connectors.")
 
     thesis = st.text_input("Thesis")
@@ -1226,7 +855,7 @@ def render_argumentation_drills() -> None:
 
 
 def render_dialect_tuning() -> None:
-    st.header("Dialect & regional Spanish tuning")
+    st.header("8. Dialect & regional Spanish tuning")
     dialect = st.selectbox("Select region", list(DIALECT_MODULES.keys()))
     data = DIALECT_MODULES[dialect]
 
@@ -1263,7 +892,7 @@ def render_dialect_tuning() -> None:
 
 
 def render_listening_nuance() -> None:
-    st.header("Listening for nuance: fast, messy, real")
+    st.header("9. Listening for nuance: fast, messy, real")
     scenario_title = st.selectbox("Choose a scenario", [s["title"] for s in LISTENING_SCENARIOS])
     scenario = next(s for s in LISTENING_SCENARIOS if s["title"] == scenario_title)
     st.write(scenario["audio"])
@@ -1285,129 +914,13 @@ def render_listening_nuance() -> None:
     )
 
     for idx, task in enumerate(scenario["tasks"]):
-        st.radio(task["question"], task["options"], key=f"nuance-{idx}")
+        choice = st.radio(task["question"], task["options"], key=f"nuance-{idx}")
         if st.button("Reveal", key=f"nuance-reveal-{idx}"):
             st.info(f"Answer: {task['answer']}")
 
 
-def render_fossilized_practice() -> None:
-    st.header("Deliberate practice on fossilized errors")
-    st.write("Detect repeated near-correct patterns and drill minimal pairs until accuracy improves.")
-
-    log = st.text_area("Paste recent errors or draft snippets")
-    if st.button("Analyze errors"):
-        st.session_state.fossil_log.append(log)
-
-    combined = " ".join(st.session_state.fossil_log).lower()
-    st.subheader("Detected patterns")
-    matches = []
-    for item in FOSSILIZED_ERRORS:
-        if item["pattern"] in combined:
-            matches.append(item)
-            st.markdown(f"- **{item['pattern']}** → {item['correction']} ({item['explanation']})")
-
-    if not matches:
-        st.info("No repeated patterns detected yet. Add more writing samples or errors.")
-        return
-
-    st.subheader("Contrast drill")
-    selected = matches[0]
-    pair = random.choice(selected["minimal_pairs"])
-    choice = st.radio("Which sentence is correct?", pair, key="fossil-drill")
-    if st.button("Submit drill"):
-        st.session_state.fossil_stats["attempts"] += 1
-        if choice == pair[0]:
-            st.session_state.fossil_stats["correct"] += 1
-            st.success("Correct! Keep reinforcing the accurate pattern.")
-        else:
-            st.error("Not quite. Focus on the corrected pattern above.")
-
-    attempts = st.session_state.fossil_stats["attempts"]
-    correct = st.session_state.fossil_stats["correct"]
-    if attempts:
-        st.metric("Drill accuracy", f"{(correct / attempts):.0%}")
-
-
-def render_idioms_metaphor() -> None:
-    st.header("Idioms, set phrases, and metaphor control")
-    idiom = st.selectbox("Choose an idiom", [item["idiom"] for item in IDIOM_LIBRARY])
-    selected = next(item for item in IDIOM_LIBRARY if item["idiom"] == idiom)
-
-    st.markdown(f"**Meaning:** {selected['meaning']}")
-    st.markdown(f"**Register:** {selected['register']}")
-    st.markdown(f"**Safer alternative:** {selected['safe_alternative']}")
-    st.info(selected["note"])
-
-    register = st.selectbox("Required register", ["informal", "neutral", "formal"])
-    response = st.text_area("Use it in context", height=120)
-    if st.button("Evaluate usage"):
-        has_idiom = selected["idiom"] in response.lower()
-        register_match = selected["register"] == register or selected["register"] == "neutral"
-        if has_idiom and register_match:
-            st.success("Good usage. Sounds natural in the chosen register.")
-        elif has_idiom:
-            st.warning("Idiom used, but register may be off. Try the safer alternative.")
-        else:
-            st.error("Idiom missing. Try incorporating it naturally.")
-
-
-def render_cultural_pragmatics() -> None:
-    st.header("Cultural pragmatics and etiquette")
-    region = st.selectbox("Region focus", sorted({s["region"] for s in PRAGMATIC_SCENARIOS}))
-    scenarios = [s for s in PRAGMATIC_SCENARIOS if s["region"] == region]
-    scenario = random.choice(scenarios)
-
-    st.markdown(f"**Scenario:** {scenario['situation']}")
-    st.write(scenario["prompt"])
-    choice = st.radio("Select the best option", scenario["options"], key="pragmatics-choice")
-    if st.button("Check pragmatics"):
-        if choice == scenario["answer"]:
-            st.success("Correct. Socially aligned response.")
-        else:
-            st.error("Grammatically possible, but socially off.")
-        st.caption(scenario["feedback"])
-
-
-def render_domain_precision() -> None:
-    st.header("Precision vocabulary by domains")
-    domain = st.selectbox("Select a domain", list(DOMAIN_MODULES.keys()))
-    data = DOMAIN_MODULES[domain]
-
-    st.subheader("Collocations & templates")
-    st.write(", ".join(data["collocations"]))
-    for template in data["templates"]:
-        st.markdown(f"- {template}")
-
-    st.subheader("False-friend trap")
-    trap = data["false_friend"]
-    choice = st.radio(trap["prompt"], trap["options"], key="domain-trap")
-    if st.button("Check domain trap"):
-        st.success("Correct!" if choice == trap["answer"] else "Try again.")
-        st.caption(trap["note"])
-
-
-def render_immersion_mode() -> None:
-    st.header("Long-session immersion modes")
-    mode_label = st.selectbox("Choose a session length", [mode["label"] for mode in IMMERSION_MODES])
-    mode = next(item for item in IMMERSION_MODES if item["label"] == mode_label)
-
-    st.markdown(f"**Duration:** {mode['duration']} minutes")
-    st.markdown("#### Guided steps")
-    for idx, step in enumerate(mode["steps"], start=1):
-        st.checkbox(f"Step {idx}: {step}", key=f"immersion-step-{mode_label}-{idx}")
-
-    st.subheader("Personal checklist")
-    st.session_state.immersion_notes = st.text_area(
-        "What do you personally need next?",
-        value=st.session_state.immersion_notes,
-        height=120,
-    )
-    if st.button("Save immersion notes"):
-        st.success("Saved. Revisit after each session to track progress.")
-
-
 def render_portfolio() -> None:
-    st.header("Native-likeness benchmark & portfolio")
+    st.header("10. Native-likeness benchmark & portfolio")
     st.write("Track progress across measurable axes and export your evidence.")
 
     axis_scores = {}
@@ -1454,12 +967,12 @@ def render_overview() -> None:
         """
         <div class="metric-grid">
             <div class="card">
-                <h3>Adaptive Assessment</h3>
-                <p>Level placement + plan generation based on real-time performance.</p>
-            </div>
-            <div class="card">
                 <h3>Weekly Gap Finder</h3>
                 <p>Adaptive C1–C2 diagnostics with ranked Error Top 20 and targeted training plan.</p>
+            </div>
+            <div class="card">
+                <h3>Register Simulator</h3>
+                <p>One prompt, five registers. Score politeness, hedging, directness, idiomaticity.</p>
             </div>
             <div class="card">
                 <h3>Prosody Coach</h3>
@@ -1474,21 +987,6 @@ def render_overview() -> None:
         unsafe_allow_html=True,
     )
 
-    st.subheader("Quick start exercises")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown("<div class='quick-card'>Adaptive Assessment</div>", unsafe_allow_html=True)
-        if st.button("Start assessment", key="quick-assessment"):
-            set_nav("Adaptive Assessment")
-    with col2:
-        st.markdown("<div class='quick-card'>Fossilized Errors Drill</div>", unsafe_allow_html=True)
-        if st.button("Start drill", key="quick-fossil"):
-            set_nav("Fossilized Errors")
-    with col3:
-        st.markdown("<div class='quick-card'>Immersion Session</div>", unsafe_allow_html=True)
-        if st.button("Start immersion", key="quick-immersion"):
-            set_nav("Immersion Mode")
-
 
 def main() -> None:
     set_theme()
@@ -1498,11 +996,25 @@ def main() -> None:
     render_hero()
     st.write("")
 
-    nav = st.session_state.nav
+    nav = st.sidebar.radio(
+        "Go to",
+        [
+            "Overview",
+            "Gap Finder",
+            "Register Simulator",
+            "Prosody Coach",
+            "Collocation Engine",
+            "Conversation Lab",
+            "Writing Studio",
+            "Argumentation",
+            "Dialect Tuning",
+            "Listening for Nuance",
+            "Portfolio",
+        ],
+    )
+
     if nav == "Overview":
         render_overview()
-    elif nav == "Adaptive Assessment":
-        render_adaptive_assessment()
     elif nav == "Gap Finder":
         render_gap_finder()
     elif nav == "Register Simulator":
@@ -1521,16 +1033,6 @@ def main() -> None:
         render_dialect_tuning()
     elif nav == "Listening for Nuance":
         render_listening_nuance()
-    elif nav == "Fossilized Errors":
-        render_fossilized_practice()
-    elif nav == "Idioms & Metaphor":
-        render_idioms_metaphor()
-    elif nav == "Cultural Pragmatics":
-        render_cultural_pragmatics()
-    elif nav == "Domain Precision":
-        render_domain_precision()
-    elif nav == "Immersion Mode":
-        render_immersion_mode()
     elif nav == "Portfolio":
         render_portfolio()
 
