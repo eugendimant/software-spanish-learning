@@ -3,6 +3,7 @@ import hashlib
 import io
 import json
 import random
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -361,6 +362,18 @@ def default_session_state() -> dict:
     }
 
 
+def ensure_session_state(state: dict | None) -> dict:
+    defaults = default_session_state()
+    if not isinstance(state, dict):
+        return defaults
+    merged = {**defaults, **state}
+    if merged["exercises"] is None:
+        merged["exercises"] = []
+    if merged["results"] is None:
+        merged["results"] = {}
+    return merged
+
+
 def sanitize_dom_id(value: str) -> str:
     return "".join(char for char in value.lower() if char in DOM_ID_SAFE)
 
@@ -514,6 +527,33 @@ def filter_sentences(topics: list[str], level: str) -> list[dict]:
     rank = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5}
     target = rank.get(level, 5)
     return [sentence for sentence in pool if rank.get(sentence["level"], 5) <= target]
+
+
+def build_cloze(sentence: dict) -> Exercise | None:
+    words = sentence["spanish"].split()
+    candidates = []
+    for word in words:
+        cleaned = re.sub(r"[¿?¡!.,]", "", word)
+        if len(cleaned) >= 4:
+            candidates.append(cleaned)
+    if not candidates:
+        return None
+    missing = random.choice(candidates)
+    masked_words = []
+    for word in words:
+        cleaned = re.sub(r"[¿?¡!.,]", "", word)
+        if cleaned == missing:
+            masked_words.append(word.replace(cleaned, "____"))
+        else:
+            masked_words.append(word)
+    prompt = "Complete the sentence: " + " ".join(masked_words)
+    return Exercise(
+        kind="cloze",
+        prompt=prompt,
+        answer=missing,
+        explanation=f"The full sentence is: {sentence['spanish']}",
+        metadata={"spanish": sentence["spanish"], "english": sentence["english"]},
+    )
 
 
 def build_options(correct: str, pool: list[str], size: int = 4) -> list[str]:
@@ -842,10 +882,11 @@ def render_word_order(exercise: Exercise, key_prefix: str, index: int) -> str:
     st.caption("Words: " + ", ".join(exercise.extra["words"]))
     return st.text_input("Your sentence", key=f"{key_prefix}-word-order-{index}")
 
-def render_sentence_build(exercise: Exercise, key_prefix: str) -> str:
+
+def render_sentence_build(exercise: Exercise, key_prefix: str, index: int) -> str:
     st.write("Rebuild the sentence using the words provided:")
     st.caption("Words: " + ", ".join(exercise.extra["words"]))
-    return st.text_input("Your sentence", key=f"{key_prefix}-sentence-build-{st.session_state.session['index']}")
+    return st.text_input("Your sentence", key=f"{key_prefix}-sentence-build-{index}")
 
 
 def render_voice_practice(expected: str, key_prefix: str, label: str) -> None:
@@ -919,9 +960,11 @@ def render_voice_practice(expected: str, key_prefix: str, label: str) -> None:
     )
 
 
-def render_listening_exercise(exercise: Exercise, key_prefix: str) -> str:
+def render_listening_exercise(exercise: Exercise, key_prefix: str, index: int) -> str:
     spanish = exercise.metadata["spanish"]
     payload = json.dumps(spanish)
+    dom_id = sanitize_dom_id(f"{key_prefix}-listen-{index}")
+    helper_text = "Listen to the Spanish word, then answer below."
     components.html(
         f"""
         <div style="display:flex; gap:12px; align-items:center; padding:8px 0;">
@@ -945,14 +988,16 @@ def render_listening_exercise(exercise: Exercise, key_prefix: str) -> str:
         """,
         height=70,
     )
-    return st.radio(
-        "Pick the meaning",
-        exercise.options,
-        key=f"{key_prefix}-listen-{st.session_state.session['index']}",
-    )
+    if exercise.kind == "listening":
+        return st.radio(
+            "Pick the meaning",
+            exercise.options,
+            key=f"{key_prefix}-listen-{index}",
+        )
+    return st.text_input("Type what you heard", key=f"{key_prefix}-listen-type-{index}")
 
 
-def render_exercise(exercise: Exercise, key_prefix: str) -> str:
+def render_exercise(exercise: Exercise, key_prefix: str, index: int) -> str:
     st.markdown(f"<div class='exercise-card'>", unsafe_allow_html=True)
     st.subheader(exercise.prompt)
     response = ""
@@ -967,12 +1012,14 @@ def render_exercise(exercise: Exercise, key_prefix: str) -> str:
     elif exercise.kind == "match":
         response = render_match_exercise(exercise, key_prefix, index)
     elif exercise.kind == "word_order":
-        response = render_word_order(exercise, key_prefix)
+        response = render_word_order(exercise, key_prefix, index)
     elif exercise.kind == "sentence_build":
-        response = render_sentence_build(exercise, key_prefix)
-    elif exercise.kind == "listening":
-        response = render_listening_exercise(exercise, key_prefix)
-    if exercise.kind in {"fill_blank", "translate", "word_order", "sentence_build"}:
+        response = render_sentence_build(exercise, key_prefix, index)
+    elif exercise.kind in {"listening", "listening_type"}:
+        response = render_listening_exercise(exercise, key_prefix, index)
+    elif exercise.kind == "cloze":
+        response = st.text_input("Fill in the missing word", key=f"{key_prefix}-cloze-{index}")
+    if exercise.kind in {"fill_blank", "translate", "word_order", "sentence_build", "cloze"}:
         st.markdown("##### Voice mode")
         render_voice_practice(exercise.answer, f"{key_prefix}-voice-{st.session_state.session['index']}", exercise.answer)
     if exercise.kind == "listening":
