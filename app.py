@@ -433,6 +433,10 @@ def set_theme() -> None:
         }
         .stTabs [data-baseweb="tab"] {
             font-weight: 600;
+            margin-right: 0.4rem;
+        }
+        section[data-testid="stSidebar"] .stButton button:hover {
+            border-color: rgba(56, 189, 248, 0.6);
         }
         section[data-testid="stSidebar"] .stButton button:hover {
             border-color: rgba(56, 189, 248, 0.6);
@@ -506,6 +510,10 @@ def render_hero() -> None:
         unsafe_allow_html=True,
     )
 
+    thesis = st.text_input("Thesis")
+    counter = st.text_input("Counterargument")
+    concession = st.text_input("Concession")
+    conclusion = st.text_input("Conclusion")
 
 def render_profile_sidebar() -> None:
     st.sidebar.header("Learner Profile")
@@ -612,6 +620,11 @@ def render_register_simulator() -> None:
             "- *Audience fit*: match lexical density and formality to register."
         )
 
+def render_listening_nuance() -> None:
+    st.header("Listening for nuance: fast, messy, real")
+    scenario_title = st.selectbox("Choose a scenario", [s["title"] for s in LISTENING_SCENARIOS])
+    scenario = next(s for s in LISTENING_SCENARIOS if s["title"] == scenario_title)
+    st.write(scenario["audio"])
 
 def render_pronunciation_coach() -> None:
     st.header("3. High-precision pronunciation & prosody coach")
