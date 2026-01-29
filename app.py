@@ -249,13 +249,6 @@ def set_theme() -> None:
         .auth-card {
             padding: 1.5rem;
             border-radius: 22px;
-            background: var(--surface-strong);
-            border: 1px solid var(--border);
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
-        }
-        .auth-card {
-            padding: 1.5rem;
-            border-radius: 22px;
             background: rgba(255, 255, 255, 0.85);
             border: 1px solid rgba(148, 163, 184, 0.25);
             box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
@@ -462,6 +455,7 @@ def build_options(correct: str, pool: list[str], size: int = 4) -> list[str]:
         options.extend(fallback[: size - len(options)])
     random.shuffle(options)
     return options
+
 
 def make_exercises(
     lesson_id: str,
@@ -745,14 +739,84 @@ def render_word_order(exercise: Exercise, key_prefix: str) -> str:
     st.caption("Words: " + ", ".join(exercise.extra["words"]))
     return st.text_input("Your sentence", key=f"{key_prefix}-word-order-{st.session_state.session['index']}")
 
-
-def render_sentence_build(exercise: Exercise) -> str:
+def render_sentence_build(exercise: Exercise, key_prefix: str) -> str:
     st.write("Rebuild the sentence using the words provided:")
     st.caption("Words: " + ", ".join(exercise.extra["words"]))
-    return st.text_input("Your sentence", key=f"sentence-build-{st.session_state.session['index']}")
+    return st.text_input("Your sentence", key=f"{key_prefix}-sentence-build-{st.session_state.session['index']}")
 
 
-def render_listening_exercise(exercise: Exercise) -> str:
+def render_voice_practice(expected: str, key_prefix: str, label: str) -> None:
+    payload = json.dumps(expected)
+    components.html(
+        f"""
+        <div style="border:1px solid #e2e8f0; padding:12px; border-radius:12px; background:#fff;">
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button id="voice-btn-{key_prefix}" style="padding:8px 12px; border-radius:8px; border:1px solid #cbd5f5; background:#f8fafc;">
+                    🎙️ Start voice mode
+                </button>
+                <span style="font-size:13px; color:#64748b;">Speak the phrase and get instant feedback.</span>
+            </div>
+            <div style="margin-top:10px; font-size:14px;">
+                <strong>Transcript:</strong>
+                <div id="voice-transcript-{key_prefix}" style="margin-top:4px; color:#0f172a;"></div>
+            </div>
+            <div style="margin-top:6px; font-size:13px; color:#475569;">
+                <strong>Pronunciation score:</strong>
+                <span id="voice-score-{key_prefix}">--</span>
+            </div>
+            <div style="margin-top:4px; font-size:12px; color:#94a3b8;">Target: {label}</div>
+        </div>
+        <script>
+            const expected = {payload};
+            const normalize = (text) => text
+                .toLowerCase()
+                .replace(/[¿?¡!.,]/g, '')
+                .replace(/\\s+/g, ' ')
+                .trim();
+            const scorePronunciation = (spoken, target) => {{
+                if (!spoken) return 0;
+                const spokenWords = normalize(spoken).split(' ');
+                const targetWords = normalize(target).split(' ');
+                let matchCount = 0;
+                targetWords.forEach((word) => {{
+                    if (spokenWords.includes(word)) matchCount += 1;
+                }});
+                return Math.round((matchCount / Math.max(targetWords.length, 1)) * 100);
+            }};
+            const button = document.getElementById('voice-btn-{key_prefix}');
+            const transcriptEl = document.getElementById('voice-transcript-{key_prefix}');
+            const scoreEl = document.getElementById('voice-score-{key_prefix}');
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {{
+                button.disabled = true;
+                transcriptEl.textContent = 'Voice recognition is not supported in this browser.';
+            }} else {{
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'es-ES';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                button.addEventListener('click', () => {{
+                    transcriptEl.textContent = 'Listening...';
+                    scoreEl.textContent = '--';
+                    recognition.start();
+                }});
+                recognition.addEventListener('result', (event) => {{
+                    const spoken = event.results[0][0].transcript;
+                    transcriptEl.textContent = spoken;
+                    const score = scorePronunciation(spoken, expected);
+                    scoreEl.textContent = `${{score}}%`;
+                }});
+                recognition.addEventListener('error', () => {{
+                    transcriptEl.textContent = 'We could not capture audio. Try again.';
+                }});
+            }}
+        </script>
+        """,
+        height=210,
+    )
+
+
+def render_listening_exercise(exercise: Exercise, key_prefix: str) -> str:
     spanish = exercise.metadata["spanish"]
     payload = json.dumps(spanish)
     components.html(
@@ -776,10 +840,14 @@ def render_listening_exercise(exercise: Exercise) -> str:
         """,
         height=70,
     )
-    return st.radio("Pick the meaning", exercise.options, key=f"listen-{st.session_state.session['index']}")
+    return st.radio(
+        "Pick the meaning",
+        exercise.options,
+        key=f"{key_prefix}-listen-{st.session_state.session['index']}",
+    )
 
 
-def render_exercise(exercise: Exercise) -> str:
+def render_exercise(exercise: Exercise, key_prefix: str) -> str:
     st.markdown(f"<div class='exercise-card'>", unsafe_allow_html=True)
     st.subheader(exercise.prompt)
     response = ""
@@ -794,11 +862,21 @@ def render_exercise(exercise: Exercise) -> str:
     elif exercise.kind == "match":
         response = render_match_exercise(exercise, key_prefix)
     elif exercise.kind == "word_order":
-        response = render_word_order(exercise)
+        response = render_word_order(exercise, key_prefix)
     elif exercise.kind == "sentence_build":
-        response = render_sentence_build(exercise)
+        response = render_sentence_build(exercise, key_prefix)
     elif exercise.kind == "listening":
-        response = render_listening_exercise(exercise)
+        response = render_listening_exercise(exercise, key_prefix)
+    if exercise.kind in {"fill_blank", "translate", "word_order", "sentence_build"}:
+        st.markdown("##### Voice mode")
+        render_voice_practice(exercise.answer, f"{key_prefix}-voice-{st.session_state.session['index']}", exercise.answer)
+    if exercise.kind == "listening":
+        st.markdown("##### Voice mode")
+        render_voice_practice(
+            exercise.metadata["spanish"],
+            f"{key_prefix}-voice-{st.session_state.session['index']}",
+            exercise.metadata["spanish"],
+        )
     st.markdown("</div>", unsafe_allow_html=True)
     return response
 
@@ -904,6 +982,8 @@ def render_pronunciation_studio() -> None:
         """,
         height=70,
     )
+    st.markdown("##### Voice mode")
+    render_voice_practice(phrase, "pronunciation-studio", phrase)
 
 
 def render_progress() -> None:
@@ -1063,7 +1143,7 @@ def main() -> None:
             )
             st.session_state.session["index"] = 0
         if st.session_state.session.get("lesson_id"):
-            render_session(st.session_state.session["lesson_id"], settings)
+            render_session(st.session_state.session["lesson_id"], settings, "practice")
         st.markdown("---")
         render_pronunciation_studio()
     with tabs[2]:
