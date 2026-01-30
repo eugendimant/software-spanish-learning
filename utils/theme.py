@@ -132,9 +132,22 @@ def get_css() -> str:
     h2 { font-size: 1.75rem !important; }
     h3 { font-size: 1.25rem !important; }
 
-    p, li, span, label {
+    p, li, span {
         color: var(--text-secondary) !important;
         line-height: 1.7;
+    }
+
+    /* Form labels should be clearly visible */
+    label, .stTextInput label, .stSelectbox label, .stTextArea label {
+        color: #94a3b8 !important;
+        font-weight: 500 !important;
+        font-size: 0.9rem !important;
+    }
+
+    /* Make sure label text is visible */
+    [data-testid="stWidgetLabel"] p,
+    [data-testid="stWidgetLabel"] span {
+        color: #94a3b8 !important;
     }
 
     /* === SIDEBAR - Glass Morphism === */
@@ -694,39 +707,63 @@ def get_css() -> str:
         box-shadow: 0 8px 24px rgba(244, 114, 182, 0.4), 0 0 30px rgba(244, 114, 182, 0.3);
     }
 
-    /* === TEXT INPUTS - Glass Style === */
+    /* === TEXT INPUTS - Glass Style with high contrast === */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea {
-        background: rgba(255, 255, 255, 0.03) !important;
+        background: rgba(18, 18, 26, 0.95) !important;
         border: 1px solid var(--border) !important;
         border-radius: var(--radius-md);
         padding: 0.875rem 1.125rem;
         font-size: 0.95rem;
-        color: var(--text-primary) !important;
+        color: #f8fafc !important;
+        -webkit-text-fill-color: #f8fafc !important;
         transition: all 0.3s ease;
+        caret-color: #f8fafc !important;
     }
 
     .stTextInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
         border-color: var(--primary) !important;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), var(--shadow-glow);
-        background: rgba(99, 102, 241, 0.05) !important;
+        background: rgba(26, 26, 37, 0.98) !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
     }
 
     .stTextInput > div > div > input::placeholder,
     .stTextArea > div > div > textarea::placeholder {
-        color: var(--text-muted) !important;
+        color: #94a3b8 !important;
+        -webkit-text-fill-color: #94a3b8 !important;
+        opacity: 1 !important;
+    }
+
+    /* Ensure input text is always visible */
+    .stTextInput input[type="text"],
+    .stTextInput input[type="number"],
+    .stTextInput input[type="email"],
+    .stTextInput input[type="password"] {
+        color: #f8fafc !important;
+        -webkit-text-fill-color: #f8fafc !important;
     }
 
     /* === SELECT BOXES === */
     .stSelectbox > div > div {
-        background: rgba(255, 255, 255, 0.03) !important;
+        background: rgba(18, 18, 26, 0.95) !important;
         border-radius: var(--radius-md);
         border: 1px solid var(--border) !important;
     }
 
     .stSelectbox > div > div:hover {
         border-color: var(--primary) !important;
+    }
+
+    .stSelectbox [data-baseweb="select"] > div {
+        background: rgba(18, 18, 26, 0.95) !important;
+        color: #f8fafc !important;
+    }
+
+    .stSelectbox [data-baseweb="select"] span {
+        color: #f8fafc !important;
     }
 
     /* === RADIO BUTTONS === */

@@ -234,18 +234,39 @@ def init_db() -> None:
 
 def init_profile_domains(profile_id: int) -> None:
     """Initialize default domains for a profile."""
+    if profile_id is None:
+        return
+
     domains = [
         "Healthcare", "Housing", "Relationships", "Travel problems",
         "Workplace conflict", "Finance", "Cooking", "Emotions",
         "Bureaucracy", "Everyday slang-light"
     ]
-    with get_connection() as conn:
-        for domain in domains:
+    try:
+        with get_connection() as conn:
+            # Ensure table exists with all required columns
             conn.execute("""
-                INSERT OR IGNORE INTO domain_exposure (profile_id, domain, exposure_count)
-                VALUES (?, ?, 0)
-            """, (profile_id, domain))
-        conn.commit()
+                CREATE TABLE IF NOT EXISTS domain_exposure (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    profile_id INTEGER DEFAULT 1,
+                    domain TEXT NOT NULL,
+                    exposure_count INTEGER DEFAULT 0,
+                    last_exposure TEXT,
+                    total_items INTEGER DEFAULT 0,
+                    mastered_items INTEGER DEFAULT 0,
+                    UNIQUE(profile_id, domain)
+                )
+            """)
+            # Insert domains using executemany for efficiency
+            conn.executemany("""
+                INSERT OR IGNORE INTO domain_exposure
+                (profile_id, domain, exposure_count, total_items, mastered_items)
+                VALUES (?, ?, 0, 0, 0)
+            """, [(profile_id, domain) for domain in domains])
+            conn.commit()
+    except Exception as e:
+        # Log error but don't crash - domains can be initialized later
+        print(f"Warning: Could not initialize profile domains: {e}")
 
 
 # ============== Profile Operations ==============
@@ -264,6 +285,7 @@ def get_all_profiles() -> list:
 
 def create_profile(name: str, level: str = "C1") -> int:
     """Create a new profile and return its ID."""
+    profile_id = None
     with get_connection() as conn:
         cursor = conn.execute("""
             INSERT INTO profiles (name, level, is_active, created_at, updated_at)
@@ -272,8 +294,10 @@ def create_profile(name: str, level: str = "C1") -> int:
         conn.commit()
         profile_id = cursor.lastrowid
 
-    # Initialize domains for this profile
-    init_profile_domains(profile_id)
+    # Initialize domains for this profile (with error handling)
+    if profile_id is not None:
+        init_profile_domains(profile_id)
+
     return profile_id
 
 
