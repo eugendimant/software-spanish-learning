@@ -206,8 +206,14 @@ def render_domain_vocabulary(domain_data: dict, is_stretch: bool = False):
     st.divider()
     st.markdown("### Quick Practice")
 
-    if lexicon:
-        practice_item = random.choice(lexicon)
+    if lexicon and len(lexicon) > 0:
+        # Use session state to maintain consistent practice item within a session
+        practice_key = f"td_practice_item_{domain_name}"
+        if practice_key not in st.session_state or st.session_state.get(f"{practice_key}_changed", False):
+            st.session_state[practice_key] = random.choice(lexicon)
+            st.session_state[f"{practice_key}_changed"] = False
+
+        practice_item = st.session_state[practice_key]
 
         st.markdown(f"**Fill in the blank with the correct word:**")
         st.markdown(f"Context: _{practice_item.get('contexts', ['Use the word in a sentence'])[0] if practice_item.get('contexts') else 'Use this word appropriately.'}_")
@@ -218,6 +224,8 @@ def render_domain_vocabulary(domain_data: dict, is_stretch: bool = False):
             if user_answer.lower().strip() == practice_item["term"].lower():
                 st.success("🎉 Correct! Great job!")
                 record_progress({"vocab_reviewed": 1})
+                # Mark to get a new practice item next time
+                st.session_state[f"{practice_key}_changed"] = True
             else:
                 st.error(f"Not quite. The answer was: **{practice_item['term']}**")
                 st.markdown(f"**Meaning:** {practice_item['meaning']}")

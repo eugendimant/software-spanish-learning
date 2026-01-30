@@ -6,7 +6,7 @@ from datetime import date
 from utils.theme import render_hero, render_section_header
 from utils.database import save_conversation, record_progress
 from utils.content import CONVERSATION_SCENARIOS
-from utils.helpers import analyze_constraints, check_text_for_mistakes
+from utils.helpers import analyze_constraints, check_text_for_mistakes, detect_language
 
 
 def render_conversation_page():
@@ -176,7 +176,7 @@ def render_conversation_input():
             achieved = st.session_state.conv_targets_achieved
 
             for i, target in enumerate(targets):
-                if i < len(achieved) and achieved[i]:
+                if target in achieved:
                     st.markdown(f"✅ ~~{target}~~")
                 elif i <= st.session_state.conv_turn // 2:
                     st.markdown(f"🎯 {target}")
@@ -185,6 +185,15 @@ def render_conversation_input():
 def process_user_message(message: str):
     """Process user's conversation message."""
     scenario = st.session_state.conv_scenario
+
+    # Check language first
+    lang_info = detect_language(message)
+    language_warning = None
+
+    if lang_info["language"] == "english":
+        language_warning = "🌐 Please write in Spanish to practice your conversation skills!"
+    elif lang_info["language"] == "mixed" and lang_info.get("confidence", 0) > 0.3:
+        language_warning = "🔀 Mixed language detected. Try using only Spanish for better practice."
 
     # Check for mistakes with error handling
     corrections = []
@@ -195,6 +204,10 @@ def process_user_message(message: str):
                 corrections.append(f"{mistake['original']} → {mistake['correction']}")
     except Exception:
         mistakes = []  # Gracefully handle errors in mistake checking
+
+    # Add language warning to corrections if present
+    if language_warning:
+        corrections.insert(0, language_warning)
 
     # Check hidden targets with error handling
     targets = scenario.get("hidden_targets", [])
@@ -269,8 +282,8 @@ def render_conversation_summary():
     # Target breakdown
     st.markdown("### Target Analysis")
 
-    for i, target in enumerate(targets):
-        is_achieved = i < len(achieved) and achieved[i]
+    for target in targets:
+        is_achieved = target in achieved
         icon = "✅" if is_achieved else "❌"
         st.markdown(f"{icon} {target}")
 
@@ -298,7 +311,7 @@ def render_conversation_summary():
     # One thing to repeat tomorrow
     st.markdown("### Focus for Tomorrow")
 
-    unachieved = [t for i, t in enumerate(targets) if i >= len(achieved) or not achieved[i]]
+    unachieved = [t for t in targets if t not in achieved]
     if unachieved:
         st.markdown(f"🎯 **Practice this:** {unachieved[0]}")
     else:

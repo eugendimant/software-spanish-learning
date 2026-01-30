@@ -38,6 +38,11 @@ def render_verb_studio_page():
 
     st.divider()
 
+    # Check if there are any scenarios to practice
+    if not VERB_CHOICE_STUDIO:
+        st.warning("No verb scenarios available. Please check the content configuration.")
+        return
+
     if mode == "📚 Browse All Verbs":
         render_verb_reference()
     elif mode == "🎲 Random Challenge":
@@ -68,6 +73,10 @@ def render_verb_scenario(scenario: dict, random_mode: bool = False):
 
     # Display verb options as cards
     options = scenario.get("options", [])
+
+    if not options:
+        st.warning("No verb options available for this scenario.")
+        return
 
     cols = st.columns(len(options))
 
