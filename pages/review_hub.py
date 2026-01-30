@@ -269,6 +269,7 @@ def render_error_card(card: dict):
 
     if st.button("Check", type="primary"):
         correct = card.get("back", "")
+        item = card["item"]
 
         if user_answer.lower().strip() in correct.lower():
             st.markdown("""
@@ -279,7 +280,6 @@ def render_error_card(card: dict):
             record_progress({"errors_fixed": 1})
 
             # Update SRS for error
-            item = card["item"]
             if item.get("id"):
                 update_mistake_review(item["id"], 4)
         else:

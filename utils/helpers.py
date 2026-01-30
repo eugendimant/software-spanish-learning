@@ -384,20 +384,40 @@ def shuffle_with_seed(items: list, seed: int) -> list:
     return shuffled
 
 
-def get_streak_days(history: list[dict]) -> int:
-    """Calculate current streak of consecutive days with activity."""
+def get_streak_days(history: Optional[list[dict]] = None) -> int:
+    """
+    Calculate current streak of consecutive days with activity.
+
+    Args:
+        history: List of dictionaries containing 'metric_date' or 'date' keys.
+                 Can be None or empty.
+
+    Returns:
+        Integer representing the current streak in days.
+    """
     if not history:
         return 0
 
-    dates = sorted(set(h.get("metric_date") or h.get("date") for h in history if h.get("metric_date") or h.get("date")), reverse=True)
+    # Safely extract dates, handling various formats and None values
+    dates = set()
+    for h in history:
+        if not isinstance(h, dict):
+            continue
+        date_val = h.get("metric_date") or h.get("date")
+        if date_val:
+            # Handle datetime strings that might include time
+            if isinstance(date_val, str):
+                date_val = date_val[:10]  # Take only YYYY-MM-DD portion
+            dates.add(date_val)
 
     if not dates:
         return 0
 
+    sorted_dates = sorted(dates, reverse=True)
     streak = 0
     expected = date.today()
 
-    for date_str in dates:
+    for date_str in sorted_dates:
         try:
             d = date.fromisoformat(date_str)
             if d == expected:
@@ -405,7 +425,7 @@ def get_streak_days(history: list[dict]) -> int:
                 expected = expected - timedelta(days=1)
             elif d < expected:
                 break
-        except ValueError:
+        except (ValueError, TypeError):
             continue
 
     return streak

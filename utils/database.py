@@ -235,14 +235,17 @@ def get_vocab_items(domain: Optional[str] = None, status: Optional[str] = None) 
 
 def get_vocab_for_review() -> list:
     """Get vocabulary items due for review."""
-    today = date.today().isoformat()
-    with get_connection() as conn:
-        return [dict(row) for row in conn.execute("""
-            SELECT * FROM vocab_items
-            WHERE next_review IS NULL OR next_review <= ?
-            ORDER BY next_review ASC, ease_factor ASC
-            LIMIT 20
-        """, (today,)).fetchall()]
+    try:
+        today = date.today().isoformat()
+        with get_connection() as conn:
+            return [dict(row) for row in conn.execute("""
+                SELECT * FROM vocab_items
+                WHERE next_review IS NULL OR next_review <= ?
+                ORDER BY next_review ASC, ease_factor ASC
+                LIMIT 20
+            """, (today,)).fetchall()]
+    except Exception:
+        return []
 
 
 def update_vocab_review(term: str, quality: int) -> None:
@@ -309,14 +312,17 @@ def save_mistake(entry: dict) -> int:
 
 def get_mistakes_for_review() -> list:
     """Get mistakes due for review."""
-    today = date.today().isoformat()
-    with get_connection() as conn:
-        return [dict(row) for row in conn.execute("""
-            SELECT * FROM mistakes
-            WHERE next_review IS NULL OR next_review <= ?
-            ORDER BY next_review ASC, ease_factor ASC
-            LIMIT 15
-        """, (today,)).fetchall()]
+    try:
+        today = date.today().isoformat()
+        with get_connection() as conn:
+            return [dict(row) for row in conn.execute("""
+                SELECT * FROM mistakes
+                WHERE next_review IS NULL OR next_review <= ?
+                ORDER BY next_review ASC, ease_factor ASC
+                LIMIT 15
+            """, (today,)).fetchall()]
+    except Exception:
+        return []
 
 
 def get_mistake_stats() -> dict:
@@ -388,9 +394,12 @@ def record_domain_exposure(domain: str, items_count: int = 1) -> None:
 
 def get_domain_exposure() -> dict:
     """Get exposure data for all domains."""
-    with get_connection() as conn:
-        rows = conn.execute("SELECT * FROM domain_exposure").fetchall()
-        return {row["domain"]: dict(row) for row in rows}
+    try:
+        with get_connection() as conn:
+            rows = conn.execute("SELECT * FROM domain_exposure").fetchall()
+            return {row["domain"]: dict(row) for row in rows}
+    except Exception:
+        return {}
 
 
 def get_underexposed_domains(limit: int = 3) -> list:
@@ -552,38 +561,75 @@ def record_progress(metrics: dict) -> None:
 
 def get_progress_history(days: int = 30) -> list:
     """Get progress history for the last N days."""
-    start_date = (date.today() - timedelta(days=days)).isoformat()
-    with get_connection() as conn:
-        return [dict(row) for row in conn.execute("""
-            SELECT * FROM progress_metrics
-            WHERE metric_date >= ?
-            ORDER BY metric_date ASC
-        """, (start_date,)).fetchall()]
+    try:
+        start_date = (date.today() - timedelta(days=days)).isoformat()
+        with get_connection() as conn:
+            return [dict(row) for row in conn.execute("""
+                SELECT * FROM progress_metrics
+                WHERE metric_date >= ?
+                ORDER BY metric_date ASC
+            """, (start_date,)).fetchall()]
+    except Exception:
+        return []
 
 
 def get_total_stats() -> dict:
     """Get total statistics across all time."""
-    with get_connection() as conn:
-        row = conn.execute("""
-            SELECT
-                COALESCE(SUM(speaking_minutes), 0) as total_speaking,
-                COALESCE(SUM(writing_words), 0) as total_writing,
-                COALESCE(SUM(vocab_reviewed), 0) as total_vocab,
-                COALESCE(SUM(grammar_reviewed), 0) as total_grammar,
-                COALESCE(SUM(errors_fixed), 0) as total_errors,
-                COALESCE(SUM(missions_completed), 0) as total_missions
-            FROM progress_metrics
-        """).fetchone()
-        return dict(row) if row else {}
+    try:
+        with get_connection() as conn:
+            row = conn.execute("""
+                SELECT
+                    COALESCE(SUM(speaking_minutes), 0) as total_speaking,
+                    COALESCE(SUM(writing_words), 0) as total_writing,
+                    COALESCE(SUM(vocab_reviewed), 0) as total_vocab,
+                    COALESCE(SUM(grammar_reviewed), 0) as total_grammar,
+                    COALESCE(SUM(errors_fixed), 0) as total_errors,
+                    COALESCE(SUM(missions_completed), 0) as total_missions
+                FROM progress_metrics
+            """).fetchone()
+            return dict(row) if row else {
+                "total_speaking": 0,
+                "total_writing": 0,
+                "total_vocab": 0,
+                "total_grammar": 0,
+                "total_errors": 0,
+                "total_missions": 0
+            }
+    except Exception:
+        return {
+            "total_speaking": 0,
+            "total_writing": 0,
+            "total_vocab": 0,
+            "total_grammar": 0,
+            "total_errors": 0,
+            "total_missions": 0
+        }
 
 
 # ============== User Profile Operations ==============
 
 def get_user_profile() -> dict:
     """Get user profile."""
-    with get_connection() as conn:
-        row = conn.execute("SELECT * FROM user_profile WHERE id = 1").fetchone()
-        return dict(row) if row else {}
+    try:
+        with get_connection() as conn:
+            row = conn.execute("SELECT * FROM user_profile WHERE id = 1").fetchone()
+            return dict(row) if row else {
+                "id": 1,
+                "name": "",
+                "level": "C1",
+                "weekly_goal": 6,
+                "placement_completed": 0,
+                "dialect_preference": "Spain"
+            }
+    except Exception:
+        return {
+            "id": 1,
+            "name": "",
+            "level": "C1",
+            "weekly_goal": 6,
+            "placement_completed": 0,
+            "dialect_preference": "Spain"
+        }
 
 
 def update_user_profile(profile: dict) -> None:

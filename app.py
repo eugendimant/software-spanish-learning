@@ -9,7 +9,8 @@ import json
 # Initialize database and theme first
 from utils.database import (
     init_db, get_user_profile, update_user_profile, get_total_stats,
-    get_domain_exposure, get_vocab_for_review, get_mistakes_for_review
+    get_domain_exposure, get_vocab_for_review, get_mistakes_for_review,
+    get_progress_history
 )
 from utils.theme import apply_theme, render_hero, render_metric_grid, render_section_header, render_progress_bar
 from utils.helpers import get_streak_days, format_time_ago, pick_domain_pair
@@ -65,7 +66,7 @@ def render_sidebar():
         """, unsafe_allow_html=True)
 
         # Streak counter
-        streak = get_streak_days()
+        streak = get_streak_days(get_progress_history())
         st.markdown(f"""
         <div style="text-align: center; padding: 0.5rem; margin: 0.5rem 0;
                     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
