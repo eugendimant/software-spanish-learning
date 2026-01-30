@@ -3,13 +3,17 @@ import streamlit as st
 import json
 from datetime import date
 
-from utils.theme import render_hero, render_section_header
+from utils.theme import render_hero, render_section_header, render_profile_card
 from utils.database import (
     get_user_profile, update_user_profile,
     export_vocab_json, export_mistakes_json, export_progress_json,
-    get_total_stats, load_portfolio, save_portfolio
+    get_total_stats, load_portfolio, save_portfolio,
+    get_all_profiles, create_profile, get_profile_stats, delete_profile,
+    set_active_profile_id, get_active_profile_id, get_progress_history,
+    get_activity_history
 )
 from utils.content import PLACEMENT_QUESTIONS, DIALECT_MODULES
+from utils.helpers import get_streak_days
 
 
 def render_settings_page():
@@ -21,19 +25,127 @@ def render_settings_page():
     )
 
     # Tabs
-    tabs = st.tabs(["👤 Profile", "📋 Placement Test", "🌍 Preferences", "💾 Data Export"])
+    tabs = st.tabs(["👤 Profile", "👥 All Profiles", "📋 Placement Test", "🌍 Preferences", "💾 Data Export"])
 
     with tabs[0]:
         render_profile_section()
 
     with tabs[1]:
-        render_placement_test()
+        render_all_profiles()
 
     with tabs[2]:
-        render_preferences()
+        render_placement_test()
 
     with tabs[3]:
+        render_preferences()
+
+    with tabs[4]:
         render_data_export()
+
+
+def render_all_profiles():
+    """Render the all profiles management section."""
+    render_section_header("Manage Profiles")
+
+    profiles = get_all_profiles()
+    current_profile_id = get_active_profile_id()
+
+    if profiles:
+        cols = st.columns(min(len(profiles), 3))
+
+        for i, profile in enumerate(profiles):
+            with cols[i % 3]:
+                stats = get_profile_stats(profile["id"])
+                is_active = profile["id"] == current_profile_id
+                streak = get_streak_days(get_progress_history()) if is_active else 0
+
+                st.markdown(render_profile_card(
+                    profile.get("name", "Unknown"),
+                    profile.get("level", "C1"),
+                    stats.get("vocab_count", 0),
+                    streak,
+                    is_active
+                ), unsafe_allow_html=True)
+
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    if st.button(
+                        "Active" if is_active else "Switch",
+                        key=f"switch_{profile['id']}",
+                        use_container_width=True,
+                        type="primary" if is_active else "secondary",
+                        disabled=is_active
+                    ):
+                        st.session_state.active_profile_id = profile["id"]
+                        set_active_profile_id(profile["id"])
+                        st.rerun()
+
+                with col_b:
+                    if not is_active:
+                        if st.button("Delete", key=f"delete_{profile['id']}", use_container_width=True):
+                            if st.session_state.get(f"confirm_delete_{profile['id']}"):
+                                delete_profile(profile["id"])
+                                st.rerun()
+                            else:
+                                st.session_state[f"confirm_delete_{profile['id']}"] = True
+                                st.warning("Click again to confirm deletion")
+                    else:
+                        st.caption("Current profile")
+
+    # Create new profile section
+    st.divider()
+    render_section_header("Create New Profile")
+
+    col1, col2, col3 = st.columns([2, 1, 1])
+
+    with col1:
+        new_name = st.text_input("Profile Name", placeholder="Enter a name...", key="new_profile_name")
+
+    with col2:
+        new_level = st.selectbox("Level", ["B2", "C1", "C2"], index=1, key="new_profile_level")
+
+    with col3:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Create Profile", type="primary", use_container_width=True):
+            if new_name.strip():
+                profile_id = create_profile(new_name.strip(), new_level)
+                st.success(f"Profile '{new_name}' created!")
+                st.rerun()
+            else:
+                st.error("Please enter a name for the profile.")
+
+    # Activity history for current profile
+    st.divider()
+    render_section_header("Recent Activity")
+
+    activities = get_activity_history(days=7, limit=20)
+    if activities:
+        for activity in activities[:10]:
+            activity_type = activity.get("activity_type", "Unknown")
+            activity_name = activity.get("activity_name", "")
+            created_at = activity.get("created_at", "")[:16]  # Truncate timestamp
+            score = activity.get("score")
+
+            icon_map = {
+                "vocab_review": "📚",
+                "daily_mission": "🎤",
+                "conversation": "💬",
+                "mistake_fixed": "✅",
+                "lesson": "📝"
+            }
+            icon = icon_map.get(activity_type, "📌")
+
+            score_text = f" - Score: {score:.0f}%" if score else ""
+            st.markdown(f"""
+            <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                <span>{icon}</span>
+                <strong style="color: var(--text-primary);">{activity_name or activity_type}</strong>
+                <span style="color: var(--text-muted); font-size: 0.8rem;">{score_text}</span>
+                <span style="float: right; color: var(--text-muted); font-size: 0.75rem;">{created_at}</span>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("No recent activity. Start learning to see your activity here!")
 
 
 def render_profile_section():
