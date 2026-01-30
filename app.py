@@ -198,6 +198,272 @@ PORTFOLIO_AXES = [
     "Cohesion",
 ]
 
+VOCAB_DOMAINS = [
+    {
+        "domain": "Climate adaptation & resilience",
+        "context": (
+            "Las ciudades costeras están rediseñando su infraestructura para **mitigar** el "
+            "**riesgo** de inundaciones, pero también para **blindar** servicios críticos y "
+            "**reforzar** cadenas de suministro."
+        ),
+        "lexicon": [
+            {
+                "term": "mitigar",
+                "meaning": "reducir el impacto de algo negativo",
+                "example": "Se busca mitigar los efectos de las marejadas.",
+                "register": "formal",
+            },
+            {
+                "term": "blindar",
+                "meaning": "proteger de forma sólida o estratégica",
+                "example": "El plan pretende blindar la red eléctrica.",
+                "register": "formal",
+            },
+            {
+                "term": "reforzar",
+                "meaning": "hacer más sólido o resistente",
+                "example": "Hay que reforzar los diques.",
+                "register": "neutral",
+            },
+            {
+                "term": "umbral",
+                "meaning": "límite crítico o punto de cambio",
+                "example": "Superamos el umbral de tolerancia.",
+                "register": "formal",
+            },
+        ],
+    },
+    {
+        "domain": "Workplace dynamics & negotiation",
+        "context": (
+            "En negociaciones complejas conviene **sopesar** concesiones, "
+            "**desactivar** tensiones y **pactar** un cronograma realista sin **ceder** "
+            "más de lo necesario."
+        ),
+        "lexicon": [
+            {
+                "term": "sopesar",
+                "meaning": "evaluar con calma varias opciones",
+                "example": "Sopesó cada propuesta antes de responder.",
+                "register": "formal",
+            },
+            {
+                "term": "desactivar",
+                "meaning": "reducir un conflicto o tensión",
+                "example": "Buscamos desactivar la fricción con el cliente.",
+                "register": "neutral",
+            },
+            {
+                "term": "pactar",
+                "meaning": "llegar a un acuerdo explícito",
+                "example": "Pactaron nuevos plazos y prioridades.",
+                "register": "neutral",
+            },
+            {
+                "term": "ceder",
+                "meaning": "entregar algo de forma parcial",
+                "example": "Ceder demasiado puede debilitar la posición.",
+                "register": "neutral",
+            },
+        ],
+    },
+    {
+        "domain": "Health policy & public trust",
+        "context": (
+            "La estrategia debe **priorizar** la transparencia para **restablecer** "
+            "la confianza pública, sin **subestimar** la fatiga informativa ni "
+            "**desmentir** rumores con tono condescendiente."
+        ),
+        "lexicon": [
+            {
+                "term": "priorizar",
+                "meaning": "dar prioridad a algo",
+                "example": "El plan prioriza la atención primaria.",
+                "register": "formal",
+            },
+            {
+                "term": "restablecer",
+                "meaning": "volver a instaurar",
+                "example": "Restablecer la confianza requiere coherencia.",
+                "register": "formal",
+            },
+            {
+                "term": "subestimar",
+                "meaning": "dar menos importancia de la real",
+                "example": "No hay que subestimar el cansancio social.",
+                "register": "neutral",
+            },
+            {
+                "term": "desmentir",
+                "meaning": "negar públicamente una información",
+                "example": "El ministerio desmintió el rumor.",
+                "register": "formal",
+            },
+        ],
+    },
+]
+
+VERB_PRECISION_DRILLS = [
+    {
+        "scenario": "Necesitas decir que evaluaste opciones con calma antes de decidir.",
+        "options": [
+            {
+                "verb": "sopesar",
+                "nuance": "evaluación cuidadosa y estratégica",
+                "example": "Sopesamos los riesgos antes de firmar.",
+            },
+            {
+                "verb": "mirar",
+                "nuance": "revisión general, poco profunda",
+                "example": "Miramos los datos rápidamente.",
+            },
+            {
+                "verb": "considerar",
+                "nuance": "evaluación neutra, menos intensa",
+                "example": "Consideramos varias alternativas.",
+            },
+        ],
+        "best": "sopesar",
+        "contrast": "Sopesar implica deliberación más intensa que considerar.",
+    },
+    {
+        "scenario": "Quieres expresar que bajaste la tensión en una reunión.",
+        "options": [
+            {
+                "verb": "desactivar",
+                "nuance": "neutraliza tensión o conflicto",
+                "example": "Desactivó la discusión con humor.",
+            },
+            {
+                "verb": "parar",
+                "nuance": "detener de forma brusca",
+                "example": "Paró la conversación en seco.",
+            },
+            {
+                "verb": "calmar",
+                "nuance": "reducir intensidad emocional",
+                "example": "Calmó a su equipo con claridad.",
+            },
+        ],
+        "best": "desactivar",
+        "contrast": "Desactivar es más táctico que calmar y menos brusco que parar.",
+    },
+    {
+        "scenario": "Necesitas afirmar que insististe en cumplir una norma.",
+        "options": [
+            {
+                "verb": "exigir",
+                "nuance": "imponer con autoridad o firmeza",
+                "example": "Exigió el cumplimiento del contrato.",
+            },
+            {
+                "verb": "pedir",
+                "nuance": "solicitud neutra",
+                "example": "Pidió una actualización.",
+            },
+            {
+                "verb": "sugerir",
+                "nuance": "propuesta suave",
+                "example": "Sugirió mejorar el proceso.",
+            },
+        ],
+        "best": "exigir",
+        "contrast": "Exigir es más fuerte y formal que pedir o sugerir.",
+    },
+]
+
+GRAMMAR_MICRODRILLS = [
+    {
+        "focus": "Gender agreement",
+        "prompt": "Selecciona la opción correcta: La reunión fue ___ y productiva.",
+        "options": ["intenso", "intensa", "intensas"],
+        "answer": "intensa",
+        "explanation": "Reunión es femenino singular, por eso requiere intensa.",
+        "examples": [
+            "La discusión fue intensa.",
+            "La agenda estuvo cargada.",
+        ],
+    },
+    {
+        "focus": "Verb tense",
+        "prompt": "Completa: Si ___ más tiempo, habría terminado el informe.",
+        "options": ["tengo", "tenía", "tuviera"],
+        "answer": "tuviera",
+        "explanation": "Condicional con si requiere imperfecto de subjuntivo.",
+        "examples": [
+            "Si tuviera apoyo, lo haría.",
+            "Si fuera posible, lo ajustamos.",
+        ],
+    },
+    {
+        "focus": "Ser vs estar",
+        "prompt": "El plan ___ listo, pero los recursos aún no.",
+        "options": ["está", "es", "son"],
+        "answer": "está",
+        "explanation": "Estados temporales usan estar.",
+        "examples": [
+            "El equipo está listo.",
+            "La sala está ocupada.",
+        ],
+    },
+    {
+        "focus": "Preposition choice",
+        "prompt": "Depende ___ la aprobación del comité.",
+        "options": ["de", "en", "por"],
+        "answer": "de",
+        "explanation": "El verbo depender se construye con de.",
+        "examples": [
+            "Depende de ti.",
+            "Depende del presupuesto.",
+        ],
+    },
+]
+
+OUTPUT_PROMPTS = [
+    {
+        "title": "Operational update",
+        "requirements": [
+            "Usa 2 verbos precisos del banco.",
+            "Incluye 1 conector concesivo (aunque/si bien).",
+            "Usa 2 palabras del dominio elegido.",
+        ],
+        "prompt": "Escribe un update de 6-8 líneas para el equipo sobre un retraso en el proyecto.",
+    },
+    {
+        "title": "Client negotiation note",
+        "requirements": [
+            "Usa 1 verbo de negociación.",
+            "Incluye una frase de mitigación (quizá, tal vez, me parece).",
+            "Evita calcos del inglés.",
+        ],
+        "prompt": "Redacta una respuesta breve a un cliente que pide más alcance sin ampliar plazos.",
+    },
+]
+
+COMMON_MISTAKES = [
+    {
+        "pattern": "dependen en",
+        "correction": "dependen de",
+        "explanation": "El verbo depender siempre va con de.",
+        "examples": ["Depende de la aprobación.", "Dependemos de su respuesta."],
+    },
+    {
+        "pattern": "tomar una decisión en",
+        "correction": "tomar una decisión sobre",
+        "explanation": "En español, tomar una decisión sobre un tema es más natural.",
+        "examples": [
+            "Tomamos una decisión sobre el presupuesto.",
+            "Tomó una decisión sobre el contrato.",
+        ],
+    },
+    {
+        "pattern": "la problema",
+        "correction": "el problema",
+        "explanation": "Problema es masculino pese a terminar en -a.",
+        "examples": ["El problema fue resuelto.", "El problema persiste."],
+    },
+]
+
 ADAPTIVE_QUESTION_BANK = [
     {
         "pair": "me da la impresión de que",
@@ -593,6 +859,12 @@ def init_state() -> None:
         }
     if "live_mode" not in st.session_state:
         st.session_state.live_mode = {"last_speed": 1.0, "last_complexity": 1.0}
+    if "review_queue" not in st.session_state:
+        st.session_state.review_queue = {}
+    if "review_step" not in st.session_state:
+        st.session_state.review_step = 0
+    if "mistake_log" not in st.session_state:
+        st.session_state.mistake_log = {}
 
 
 def load_portfolio() -> dict:
@@ -1308,6 +1580,10 @@ def render_overview() -> None:
                 <p>Shadowing with waveform + pitch tracks and looped playback.</p>
             </div>
             <div class="card">
+                <h3>Growth Studio</h3>
+                <p>Vocabulary expansion, verb precision, grammar drills, and output-first challenges.</p>
+            </div>
+            <div class="card">
                 <h3>Relationship Memory</h3>
                 <p>Track persona history, adjust to tendencies, stay consistent across weeks.</p>
             </div>
@@ -1315,6 +1591,191 @@ def render_overview() -> None:
         """,
         unsafe_allow_html=True,
     )
+
+
+def add_review_items(items: list[dict]) -> None:
+    for item in items:
+        item_id = item["term"]
+        if item_id not in st.session_state.review_queue:
+            st.session_state.review_queue[item_id] = {
+                "term": item["term"],
+                "meaning": item["meaning"],
+                "example": item["example"],
+                "streak": 0,
+                "next_due": 0,
+            }
+
+
+def log_mistake(pattern: str, correction: str) -> None:
+    log = st.session_state.mistake_log
+    if pattern not in log:
+        log[pattern] = {"correction": correction, "count": 0}
+    log[pattern]["count"] += 1
+
+
+def update_review_item(item_id: str, success: bool) -> None:
+    item = st.session_state.review_queue[item_id]
+    if success:
+        item["streak"] += 1
+    else:
+        item["streak"] = 0
+    item["next_due"] = st.session_state.review_step + (2 ** item["streak"])
+
+
+def render_growth_studio() -> None:
+    st.header("Growth studio: vocabulary, verbs, grammar, output")
+    st.write(
+        "Push beyond repeated input with domain-specific vocabulary, precise verb choices, "
+        "micro-grammar drills, and output-first practice with review."
+    )
+
+    st.subheader("1) Vocabulary expansion in context")
+    domain = st.selectbox("Choose a new domain", [d["domain"] for d in VOCAB_DOMAINS])
+    selected_domain = next(d for d in VOCAB_DOMAINS if d["domain"] == domain)
+    st.markdown(selected_domain["context"])
+    st.table(
+        [
+            {
+                "Term": item["term"],
+                "Meaning": item["meaning"],
+                "Example": item["example"],
+                "Register": item["register"],
+            }
+            for item in selected_domain["lexicon"]
+        ]
+    )
+    chosen_terms = st.multiselect(
+        "Add words to your review queue",
+        [item["term"] for item in selected_domain["lexicon"]],
+    )
+    if st.button("Save vocab to review"):
+        add_review_items(
+            [item for item in selected_domain["lexicon"] if item["term"] in chosen_terms]
+        )
+        st.success("Added to review queue.")
+
+    st.markdown("**Active production check**")
+    vocab_response = st.text_area(
+        "Write 2-3 sentences using at least 3 words from the table.",
+        height=120,
+        key="vocab-output",
+    )
+    if st.button("Check vocabulary usage"):
+        used_terms = [item["term"] for item in selected_domain["lexicon"] if item["term"] in vocab_response]
+        if len(used_terms) >= 3:
+            st.success(f"Great—used: {', '.join(used_terms)}.")
+        else:
+            st.warning(
+                "Try to include at least 3 target words. Detected: "
+                f"{', '.join(used_terms) or 'none'}."
+            )
+
+    st.subheader("2) Verb precision lab")
+    verb_drill = st.selectbox(
+        "Select a scenario", [item["scenario"] for item in VERB_PRECISION_DRILLS]
+    )
+    drill = next(item for item in VERB_PRECISION_DRILLS if item["scenario"] == verb_drill)
+    verb_choice = st.radio(
+        "Choose the best verb",
+        [option["verb"] for option in drill["options"]],
+        key="verb-choice",
+    )
+    if st.button("Check verb choice"):
+        if verb_choice == drill["best"]:
+            st.success("Correct choice for tone and precision.")
+        else:
+            st.error("Close, but there is a more precise option.")
+            log_mistake("verb precision", drill["best"])
+        st.caption(drill["contrast"])
+        st.markdown("**Quick contrasts**")
+        st.write(
+            [
+                {
+                    "Verb": option["verb"],
+                    "Nuance": option["nuance"],
+                    "Example": option["example"],
+                }
+                for option in drill["options"]
+            ]
+        )
+
+    st.subheader("3) Grammar reinforcement (micro-drills)")
+    drill_results = []
+    for idx, drill in enumerate(GRAMMAR_MICRODRILLS):
+        st.markdown(f"**{drill['focus']}**")
+        choice = st.radio(drill["prompt"], drill["options"], key=f"grammar-{idx}")
+        drill_results.append((drill, choice))
+    if st.button("Check grammar drills"):
+        for drill, choice in drill_results:
+            if choice == drill["answer"]:
+                st.success(f"{drill['focus']}: Correct.")
+            else:
+                st.error(f"{drill['focus']}: Correct answer is {drill['answer']}.")
+                log_mistake(drill["prompt"], drill["answer"])
+            st.caption(drill["explanation"])
+            st.write("Examples: " + " • ".join(drill["examples"]))
+
+    st.subheader("4) Output-first challenge")
+    output_prompt = st.selectbox("Choose a prompt", [p["title"] for p in OUTPUT_PROMPTS])
+    selected_prompt = next(p for p in OUTPUT_PROMPTS if p["title"] == output_prompt)
+    st.markdown("**Prompt**: " + selected_prompt["prompt"])
+    st.markdown("**Requirements**")
+    for req in selected_prompt["requirements"]:
+        st.markdown(f"- {req}")
+    output_text = st.text_area("Your response", height=180, key="output-challenge")
+    if st.button("Evaluate output"):
+        feedback = []
+        for mistake in COMMON_MISTAKES:
+            if mistake["pattern"] in output_text.lower():
+                feedback.append(mistake)
+                log_mistake(mistake["pattern"], mistake["correction"])
+        if feedback:
+            st.error("Corrections needed")
+            for item in feedback:
+                st.markdown(f"- **Correction**: {item['correction']}")
+                st.caption(item["explanation"])
+                st.write("Examples: " + " • ".join(item["examples"]))
+        else:
+            st.success("Nice work! Your output avoids common errors.")
+
+    st.subheader("5) Personalized review queue")
+    st.session_state.review_step += 1
+    due_items = [
+        item for item in st.session_state.review_queue.values()
+        if item["next_due"] <= st.session_state.review_step
+    ]
+    if not due_items:
+        st.info("No items due. Add vocab above to start reviewing.")
+    for item in due_items:
+        st.markdown(f"**{item['term']}** — {item['meaning']}")
+        st.caption(item["example"])
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Got it", key=f"review-pass-{item['term']}"):
+                update_review_item(item["term"], True)
+                st.success("Scheduled further out.")
+        with col2:
+            if st.button("Missed", key=f"review-fail-{item['term']}"):
+                update_review_item(item["term"], False)
+                st.warning("We'll recycle it sooner.")
+
+    if st.session_state.mistake_log:
+        st.markdown("**Mistake focus tracker**")
+        sorted_mistakes = sorted(
+            st.session_state.mistake_log.items(),
+            key=lambda item: item[1]["count"],
+            reverse=True,
+        )
+        st.table(
+            [
+                {
+                    "Pattern": pattern,
+                    "Correction": data["correction"],
+                    "Count": data["count"],
+                }
+                for pattern, data in sorted_mistakes
+            ]
+        )
 
 
 def main() -> None:
@@ -1329,6 +1790,7 @@ def main() -> None:
         "Go to",
         [
             "Overview",
+            "Growth Studio",
             "Weekly Mission",
             "Adaptive Inputs",
             "Nuance Feedback",
@@ -1349,6 +1811,8 @@ def main() -> None:
 
     if nav == "Overview":
         render_overview()
+    elif nav == "Growth Studio":
+        render_growth_studio()
     elif nav == "Weekly Mission":
         render_mission_control()
     elif nav == "Adaptive Inputs":
