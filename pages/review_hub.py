@@ -146,14 +146,14 @@ def render_review_session():
     queue = st.session_state.review_queue
     index = st.session_state.review_index
 
-    if index >= len(queue):
+    if not queue or index >= len(queue):
         render_review_complete()
         return
 
     current = queue[index]
 
     # Progress bar
-    progress = (index) / len(queue)
+    progress = (index + 1) / len(queue)  # +1 for 1-based progress display
     st.progress(progress)
     st.caption(f"Card {index + 1} of {len(queue)}")
 

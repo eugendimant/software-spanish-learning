@@ -121,16 +121,18 @@ def get_css() -> str:
     }}
 
     .hero h1 {{
-        color: white;
-        font-size: 1.875rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
+        color: white !important;
+        font-size: 1.875rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.5rem !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }}
 
     .hero p {{
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 1rem;
-        margin: 0;
+        color: rgba(255, 255, 255, 0.95) !important;
+        font-size: 1rem !important;
+        margin: 0 !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }}
 
     .hero-pills {{
@@ -141,13 +143,14 @@ def get_css() -> str:
     }}
 
     .hero-pill {{
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
+        background: rgba(255, 255, 255, 0.25) !important;
+        color: white !important;
         padding: 0.25rem 0.75rem;
         border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
         backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
     }}
 
     /* === CARDS === */
@@ -383,18 +386,30 @@ def get_css() -> str:
     }}
 
     /* === BUTTONS === */
-    /* Primary button (default) */
+    /* Primary button (default) - ensure white text on blue background */
     .stButton > button,
-    .stButton > button[data-testid="stBaseButton-primary"] {{
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    .stButton > button[kind="primary"],
+    .stButton > button[data-testid="stBaseButton-primary"],
+    .stButton button[kind="primary"],
+    button[data-testid="stBaseButton-primary"] {{
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
         color: white !important;
-        border: none;
+        border: none !important;
         border-radius: var(--radius-md);
         padding: 0.625rem 1.25rem;
-        font-weight: 600;
+        font-weight: 600 !important;
         font-size: 0.875rem;
         transition: all 0.2s ease;
         box-shadow: var(--shadow-sm);
+    }}
+
+    /* Ensure button text is white */
+    .stButton > button p,
+    .stButton > button span,
+    .stButton > button div,
+    button[data-testid="stBaseButton-primary"] p,
+    button[data-testid="stBaseButton-primary"] span {{
+        color: white !important;
     }}
 
     .stButton > button:hover,
@@ -409,7 +424,9 @@ def get_css() -> str:
     }}
 
     /* Secondary button style */
-    .stButton > button[data-testid="stBaseButton-secondary"] {{
+    .stButton > button[kind="secondary"],
+    .stButton > button[data-testid="stBaseButton-secondary"],
+    button[data-testid="stBaseButton-secondary"] {{
         background: var(--surface) !important;
         color: var(--text) !important;
         border: 1px solid var(--border) !important;
@@ -417,7 +434,7 @@ def get_css() -> str:
     }}
 
     .stButton > button[data-testid="stBaseButton-secondary"]:hover {{
-        background: var(--background) !important;
+        background: var(--surface-dim) !important;
         border-color: var(--primary) !important;
         color: var(--primary) !important;
         transform: translateY(-1px);

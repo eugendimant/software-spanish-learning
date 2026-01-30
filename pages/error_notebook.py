@@ -197,7 +197,7 @@ def render_all_errors():
                         st.markdown("**Examples:**")
                         for ex in examples[:2]:
                             st.markdown(f"- _{ex}_")
-                    except:
+                    except (json.JSONDecodeError, TypeError):
                         pass
 
             with col2:
@@ -318,7 +318,7 @@ def render_error_practice():
                 st.markdown("**Examples:**")
                 for ex in examples[:2]:
                     st.markdown(f"- _{ex}_")
-            except:
+            except (json.JSONDecodeError, TypeError):
                 pass
 
         if st.button("Next Error →"):

@@ -85,17 +85,16 @@ def check_text_for_mistakes(text: str) -> list[dict]:
     ]
 
     for pattern, correction, tag, explanation in gender_patterns:
-        if re.search(pattern, text_lower):
-            match = re.search(pattern, text_lower)
-            if match:
-                mistakes_found.append({
-                    "original": match.group(),
-                    "correction": correction,
-                    "explanation": explanation,
-                    "examples": [],
-                    "tag": tag,
-                    "position": match.start(),
-                })
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": [],
+                "tag": tag,
+                "position": match.start(),
+            })
 
     # Ser/Estar common errors
     ser_estar_patterns = [
@@ -105,17 +104,16 @@ def check_text_for_mistakes(text: str) -> list[dict]:
     ]
 
     for pattern, correction, tag, explanation in ser_estar_patterns:
-        if re.search(pattern, text_lower):
-            match = re.search(pattern, text_lower)
-            if match:
-                mistakes_found.append({
-                    "original": match.group(),
-                    "correction": correction,
-                    "explanation": explanation,
-                    "examples": [],
-                    "tag": tag,
-                    "position": match.start(),
-                })
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": [],
+                "tag": tag,
+                "position": match.start(),
+            })
 
     return mistakes_found
 

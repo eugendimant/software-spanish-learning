@@ -35,8 +35,8 @@ def render_context_units_page():
         index=st.session_state.cu_current_unit
     )
 
-    unit = next(u for u in VOCAB_CONTEXT_UNITS if u["term"] == selected_unit_name)
-    st.session_state.cu_current_unit = unit_names.index(selected_unit_name)
+    unit = next((u for u in VOCAB_CONTEXT_UNITS if u["term"] == selected_unit_name), VOCAB_CONTEXT_UNITS[0])
+    st.session_state.cu_current_unit = unit_names.index(unit["term"])
 
     st.divider()
 

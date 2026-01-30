@@ -80,9 +80,14 @@ def render_upload_section():
         )
 
         if uploaded_file:
-            text = uploaded_file.read().decode("utf-8")
+            try:
+                text = uploaded_file.read().decode("utf-8")
+            except UnicodeDecodeError:
+                st.error("File encoding error. Please upload a UTF-8 encoded text file.")
+                text = ""
             st.session_state.ci_text = text
-            st.text_area("File content:", value=text[:500] + "..." if len(text) > 500 else text, height=150, disabled=True)
+            if text:
+                st.text_area("File content:", value=text[:500] + "..." if len(text) > 500 else text, height=150, disabled=True)
         else:
             text = ""
 
