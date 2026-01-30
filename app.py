@@ -7,10 +7,13 @@ from datetime import date
 import json
 
 # Initialize database and theme first
-from utils.database import init_db, get_user_profile, update_user_profile, get_total_stats, get_domain_exposure
+from utils.database import (
+    init_db, get_user_profile, update_user_profile, get_total_stats,
+    get_domain_exposure, get_vocab_for_review, get_mistakes_for_review
+)
 from utils.theme import apply_theme, render_hero, render_metric_grid, render_section_header, render_progress_bar
 from utils.helpers import get_streak_days, format_time_ago, pick_domain_pair
-from utils.content import TOPIC_DIVERSITY_DOMAINS
+from utils.content import TOPIC_DIVERSITY_DOMAINS, GRAMMAR_MICRODRILLS
 
 # Page configuration must be first Streamlit command
 st.set_page_config(
@@ -60,6 +63,38 @@ def render_sidebar():
             <p style="font-size: 0.75rem; color: #64748b; margin: 0;">Spanish Mastery Lab</p>
         </div>
         """, unsafe_allow_html=True)
+
+        # Streak counter
+        streak = get_streak_days()
+        st.markdown(f"""
+        <div style="text-align: center; padding: 0.5rem; margin: 0.5rem 0;
+                    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                    border-radius: 8px; border: 1px solid #fbbf24;">
+            <span style="font-size: 1.5rem;">🔥</span>
+            <span style="font-weight: 700; color: #92400e; font-size: 1.25rem;">{streak}</span>
+            <span style="color: #a16207; font-size: 0.75rem;"> day{'s' if streak != 1 else ''} streak</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Items due badges
+        vocab_due = len(get_vocab_for_review())
+        errors_due = len(get_mistakes_for_review())
+        grammar_due = len(GRAMMAR_MICRODRILLS)
+        total_due = vocab_due + errors_due
+
+        if total_due > 0:
+            st.markdown(f"""
+            <div style="display: flex; gap: 0.5rem; justify-content: center; margin: 0.5rem 0;">
+                <span style="background: #dbeafe; color: #1e40af; padding: 0.25rem 0.5rem;
+                            border-radius: 12px; font-size: 0.7rem; font-weight: 600;">
+                    📚 {vocab_due} vocab
+                </span>
+                <span style="background: #fee2e2; color: #991b1b; padding: 0.25rem 0.5rem;
+                            border-radius: 12px; font-size: 0.7rem; font-weight: 600;">
+                    ❌ {errors_due} errors
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
 
         st.divider()
 

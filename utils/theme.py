@@ -383,9 +383,11 @@ def get_css() -> str:
     }}
 
     /* === BUTTONS === */
-    .stButton > button {{
+    /* Primary button (default) */
+    .stButton > button,
+    .stButton > button[data-testid="stBaseButton-primary"] {{
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        color: white;
+        color: white !important;
         border: none;
         border-radius: var(--radius-md);
         padding: 0.625rem 1.25rem;
@@ -395,9 +397,11 @@ def get_css() -> str:
         box-shadow: var(--shadow-sm);
     }}
 
-    .stButton > button:hover {{
+    .stButton > button:hover,
+    .stButton > button[data-testid="stBaseButton-primary"]:hover {{
         transform: translateY(-1px);
         box-shadow: var(--shadow-md);
+        filter: brightness(1.05);
     }}
 
     .stButton > button:active {{
@@ -405,10 +409,63 @@ def get_css() -> str:
     }}
 
     /* Secondary button style */
-    .stButton > button[kind="secondary"] {{
-        background: var(--surface);
-        color: var(--text);
-        border: 1px solid var(--border);
+    .stButton > button[data-testid="stBaseButton-secondary"] {{
+        background: var(--surface) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: none;
+    }}
+
+    .stButton > button[data-testid="stBaseButton-secondary"]:hover {{
+        background: var(--background) !important;
+        border-color: var(--primary) !important;
+        color: var(--primary) !important;
+        transform: translateY(-1px);
+    }}
+
+    /* === SIDEBAR NAVIGATION BUTTONS === */
+    /* Sidebar secondary buttons (unselected nav items) */
+    [data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-secondary"] {{
+        background: transparent !important;
+        color: #475569 !important;
+        border: 1px solid transparent !important;
+        text-align: left;
+        justify-content: flex-start;
+        padding: 0.5rem 0.75rem;
+        font-weight: 500;
+    }}
+
+    [data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-secondary"]:hover {{
+        background: rgba(37, 99, 235, 0.08) !important;
+        color: var(--primary) !important;
+        border-color: transparent !important;
+    }}
+
+    /* Sidebar primary buttons (selected nav items) */
+    [data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-primary"] {{
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+        color: white !important;
+        border: none !important;
+        text-align: left;
+        justify-content: flex-start;
+        padding: 0.5rem 0.75rem;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    }}
+
+    [data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-primary"]:hover {{
+        filter: brightness(1.08);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    }}
+
+    /* Quick session button special styling */
+    [data-testid="stSidebar"] .stButton:first-of-type > button[data-testid="stBaseButton-primary"] {{
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }}
+
+    [data-testid="stSidebar"] .stButton:first-of-type > button[data-testid="stBaseButton-primary"]:hover {{
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
     }}
 
     /* === TEXT INPUTS === */
