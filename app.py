@@ -97,13 +97,23 @@ def render_profile_creation():
         </div>
         """, unsafe_allow_html=True)
 
-        name = st.text_input("Your Name", placeholder="Enter your name...")
+        name = st.text_input("Your Name", placeholder="Enter your name...", max_chars=50)
         level = st.selectbox("Current Level", ["B2", "C1", "C2"], index=1)
 
         if st.button("Start Learning", type="primary", use_container_width=True):
-            if name.strip():
+            cleaned_name = name.strip()
+            # Input validation
+            if not cleaned_name:
+                st.error("Please enter your name to continue.")
+            elif len(cleaned_name) < 2:
+                st.error("Name must be at least 2 characters long.")
+            elif len(cleaned_name) > 50:
+                st.error("Name must be 50 characters or less.")
+            elif not cleaned_name.replace(" ", "").replace("-", "").replace("'", "").isalnum():
+                st.error("Name can only contain letters, numbers, spaces, hyphens, and apostrophes.")
+            else:
                 try:
-                    profile_id = create_profile(name.strip(), level)
+                    profile_id = create_profile(cleaned_name, level)
                     if profile_id:
                         st.session_state.active_profile_id = profile_id
                         st.session_state.show_create_profile = False
@@ -113,8 +123,6 @@ def render_profile_creation():
                         st.error("Failed to create profile. Please try again.")
                 except Exception as e:
                     st.error(f"Error creating profile: {str(e)}")
-            else:
-                st.error("Please enter your name to continue.")
 
 
 def render_profile_selector():

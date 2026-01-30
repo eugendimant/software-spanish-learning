@@ -1,9 +1,14 @@
 """Database management for VivaLingo Pro with multi-profile support."""
 import sqlite3
+import logging
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Optional
 import json
+
+# Configure logging for database operations
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 DATA_DIR = Path("data")
 DB_PATH = DATA_DIR / "vivalingo.db"
@@ -384,8 +389,8 @@ def update_profile(profile_id: int, profile: dict) -> None:
                 profile_id
             ))
             conn.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Profile update failed for ID {profile_id}: {e}")
 
 
 def delete_profile(profile_id: int) -> None:
@@ -403,8 +408,9 @@ def delete_profile(profile_id: int) -> None:
             conn.execute("DELETE FROM activity_log WHERE profile_id = ?", (profile_id,))
             conn.execute("DELETE FROM profiles WHERE id = ?", (profile_id,))
             conn.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.error(f"Profile deletion failed for ID {profile_id}: {e}")
+        raise  # Re-raise since deletion failure is critical
 
 
 def get_profile_stats(profile_id: int) -> dict:
@@ -453,8 +459,8 @@ def log_activity(activity_type: str, activity_name: str = "", details: str = "",
             """, (profile_id, activity_type, activity_name, details, score, duration_seconds,
                   datetime.now().isoformat()))
             conn.commit()
-    except Exception:
-        pass  # Activity logging is not critical
+    except Exception as e:
+        logger.warning(f"Activity logging failed: {e}")
 
 
 def get_activity_history(days: int = 30, limit: int = 100) -> list:
@@ -504,8 +510,8 @@ def save_vocab_item(item: dict) -> None:
                 json.dumps(item.get("collocations", []))
             ))
             conn.commit()
-    except Exception:
-        pass  # Vocab save is not critical
+    except Exception as e:
+        logger.warning(f"Vocab save failed for '{item.get('term', 'unknown')}': {e}")
 
 
 def get_vocab_items(domain: Optional[str] = None, status: Optional[str] = None) -> list:
@@ -582,8 +588,8 @@ def update_vocab_review(term: str, quality: int) -> None:
                 WHERE profile_id = ? AND term = ?
             """, (date.today().isoformat(), next_review, ease_factor, interval, status, profile_id, term))
             conn.commit()
-    except Exception:
-        pass  # Review update is not critical
+    except Exception as e:
+        logger.warning(f"Vocab review update failed for '{term}': {e}")
 
 
 # ============== Mistake Operations ==============
@@ -684,8 +690,8 @@ def update_mistake_review(mistake_id: int, quality: int) -> None:
                 WHERE id = ?
             """, (date.today().isoformat(), next_review, ease_factor, interval, mistake_id))
             conn.commit()
-    except Exception:
-        pass  # Silently fail - review update is not critical
+    except Exception as e:
+        logger.warning(f"Mistake review update failed for ID {mistake_id}: {e}")
 
 
 # ============== Domain Exposure Operations ==============
@@ -705,8 +711,8 @@ def record_domain_exposure(domain: str, items_count: int = 1) -> None:
             """, (profile_id, domain, items_count, date.today().isoformat(), items_count,
                   items_count, date.today().isoformat(), items_count))
             conn.commit()
-    except Exception:
-        pass  # Silently fail - exposure tracking is not critical
+    except Exception as e:
+        logger.warning(f"Domain exposure recording failed for '{domain}': {e}")
 
 
 def get_domain_exposure() -> dict:
@@ -758,8 +764,8 @@ def save_grammar_pattern(pattern: dict) -> None:
                 json.dumps(pattern.get("examples", []))
             ))
             conn.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Grammar pattern save failed for '{pattern.get('name', 'unknown')}': {e}")
 
 
 def get_grammar_for_review() -> list:
@@ -834,8 +840,8 @@ def update_mission_response(mission_id: int, response: str, feedback: str, score
                 WHERE id = ?
             """, (response, feedback, score, mission_id))
             conn.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Mission response update failed for ID {mission_id}: {e}")
 
 
 # ============== Conversation Operations ==============
@@ -914,8 +920,8 @@ def record_progress(metrics: dict) -> None:
                     metrics.get("missions_completed", 0)
                 ))
             conn.commit()
-    except Exception:
-        pass  # Progress recording is not critical
+    except Exception as e:
+        logger.warning(f"Progress recording failed: {e}")
 
 
 def get_progress_history(days: int = 30) -> list:
@@ -1034,8 +1040,8 @@ def update_user_profile(profile: dict) -> None:
                     datetime.now().isoformat()
                 ))
                 conn.commit()
-    except Exception:
-        pass  # Profile update is not critical
+    except Exception as e:
+        logger.warning(f"User profile update failed: {e}")
 
 
 # ============== Portfolio Operations ==============
@@ -1065,8 +1071,8 @@ def save_portfolio(portfolio: dict) -> None:
     try:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         PORTFOLIO_PATH.write_text(json.dumps(portfolio, indent=2), encoding="utf-8")
-    except Exception:
-        pass  # Portfolio save is not critical
+    except Exception as e:
+        logger.warning(f"Portfolio save failed: {e}")
 
 
 # ============== Export Operations ==============
@@ -1078,12 +1084,17 @@ def export_vocab_json() -> str:
 
 
 def export_mistakes_json() -> str:
-    """Export mistakes as JSON."""
+    """Export mistakes as JSON for the active profile."""
+    profile_id = get_active_profile_id()
     try:
         with get_connection() as conn:
-            rows = conn.execute("SELECT * FROM mistakes ORDER BY created_at DESC").fetchall()
+            rows = conn.execute(
+                "SELECT * FROM mistakes WHERE profile_id = ? ORDER BY created_at DESC",
+                (profile_id,)
+            ).fetchall()
             return json.dumps([dict(row) for row in rows], indent=2, ensure_ascii=False)
-    except Exception:
+    except Exception as e:
+        print(f"Error exporting mistakes: {e}")
         return "[]"
 
 
@@ -1119,5 +1130,5 @@ def save_transcript(text: str, duration: int = 0, mission_id: Optional[int] = No
                 VALUES (?, ?, ?)
             """, (text, duration, mission_id))
             conn.commit()
-    except Exception:
-        pass  # Transcript save is not critical
+    except Exception as e:
+        logger.warning(f"Transcript save failed: {e}")

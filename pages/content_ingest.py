@@ -73,18 +73,32 @@ def render_upload_section():
         st.session_state.ci_text = text
 
     else:
+        # File size limit: 1MB
+        MAX_FILE_SIZE_MB = 1
+        MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+
         uploaded_file = st.file_uploader(
-            "Upload a text file:",
+            f"Upload a text file (max {MAX_FILE_SIZE_MB}MB):",
             type=["txt", "md"],
             key="file_upload"
         )
 
         if uploaded_file:
-            try:
-                text = uploaded_file.read().decode("utf-8")
-            except UnicodeDecodeError:
-                st.error("File encoding error. Please upload a UTF-8 encoded text file.")
+            # Check file size
+            file_size = uploaded_file.size
+            if file_size > MAX_FILE_SIZE_BYTES:
+                st.error(f"File is too large ({file_size / 1024 / 1024:.2f}MB). Maximum size is {MAX_FILE_SIZE_MB}MB.")
                 text = ""
+            else:
+                try:
+                    text = uploaded_file.read().decode("utf-8")
+                    # Additional content length check
+                    if len(text) > 500000:  # ~500K characters max
+                        st.warning("File content is very long. Only the first 500,000 characters will be processed.")
+                        text = text[:500000]
+                except UnicodeDecodeError:
+                    st.error("File encoding error. Please upload a UTF-8 encoded text file.")
+                    text = ""
             st.session_state.ci_text = text
             if text:
                 st.text_area("File content:", value=text[:500] + "..." if len(text) > 500 else text, height=150, disabled=True)
@@ -107,7 +121,8 @@ def render_upload_section():
     with col1:
         if st.button("🔍 Extract Phrases", type="primary", use_container_width=True):
             if st.session_state.ci_text.strip():
-                extract_phrases(st.session_state.ci_text, inject_domains)
+                with st.spinner("Extracting phrases from your content..."):
+                    extract_phrases(st.session_state.ci_text, inject_domains)
                 st.success(f"Extracted {len(st.session_state.ci_extracted)} phrases!")
             else:
                 st.warning("Please paste or upload some text first.")
@@ -261,7 +276,8 @@ def render_extracted_phrases():
 
     with col3:
         if st.button("💾 Save Selected", type="primary", use_container_width=True):
-            save_selected_phrases()
+            with st.spinner("Saving selected phrases..."):
+                save_selected_phrases()
 
 
 def save_selected_phrases():

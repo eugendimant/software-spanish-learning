@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from utils.theme import render_hero, render_section_header
 from utils.database import (
     get_connection, get_mistakes_for_review, get_mistake_stats,
-    update_mistake_review, record_progress
+    update_mistake_review, record_progress, get_active_profile_id
 )
 from utils.helpers import format_time_ago
 
@@ -81,16 +81,19 @@ def render_error_dashboard():
     st.markdown("### Your Top Recurring Errors")
 
     # Get top errors from database
+    profile_id = get_active_profile_id()
     try:
         with get_connection() as conn:
             rows = conn.execute("""
                 SELECT pattern, error_type, explanation, COUNT(*) as occurrences
                 FROM mistakes
+                WHERE profile_id = ?
                 GROUP BY pattern
                 ORDER BY occurrences DESC
                 LIMIT 5
-            """).fetchall()
-    except Exception:
+            """, (profile_id,)).fetchall()
+    except Exception as e:
+        st.error(f"Could not load error patterns: {e}")
         rows = []
 
     if rows:
@@ -116,11 +119,12 @@ def render_error_dashboard():
             rows = conn.execute("""
                 SELECT DATE(created_at) as date, COUNT(*) as count
                 FROM mistakes
-                WHERE created_at >= DATE('now', '-30 days')
+                WHERE profile_id = ? AND created_at >= DATE('now', '-30 days')
                 GROUP BY DATE(created_at)
                 ORDER BY date
-            """).fetchall()
-    except Exception:
+            """, (profile_id,)).fetchall()
+    except Exception as e:
+        st.error(f"Could not load error trends: {e}")
         rows = []
 
     if rows:
@@ -151,11 +155,15 @@ def render_all_errors():
     # Filters
     col1, col2 = st.columns([1, 1])
 
+    profile_id = get_active_profile_id()
     with col1:
         # Get unique error types
         try:
             with get_connection() as conn:
-                types = conn.execute("SELECT DISTINCT error_type FROM mistakes").fetchall()
+                types = conn.execute(
+                    "SELECT DISTINCT error_type FROM mistakes WHERE profile_id = ?",
+                    (profile_id,)
+                ).fetchall()
                 type_list = ["All"] + [t["error_type"] for t in types if t["error_type"]]
         except Exception:
             type_list = ["All"]
@@ -165,9 +173,9 @@ def render_all_errors():
     with col2:
         sort_by = st.selectbox("Sort by:", ["Most Recent", "Most Frequent", "Hardest (lowest ease)"])
 
-    # Build query
-    query = "SELECT * FROM mistakes WHERE 1=1"
-    params = []
+    # Build query with profile filter
+    query = "SELECT * FROM mistakes WHERE profile_id = ?"
+    params = [profile_id]
 
     if filter_type != "All":
         query += " AND error_type = ?"
@@ -235,10 +243,12 @@ def render_error_practice():
         st.success("🎉 No errors due for review! Great job staying on top of your mistakes.")
 
         if st.button("Practice All Errors Anyway"):
+            profile_id = get_active_profile_id()
             try:
                 with get_connection() as conn:
                     errors = [dict(row) for row in conn.execute(
-                        "SELECT * FROM mistakes ORDER BY ease_factor ASC LIMIT 10"
+                        "SELECT * FROM mistakes WHERE profile_id = ? ORDER BY ease_factor ASC LIMIT 10",
+                        (profile_id,)
                     ).fetchall()]
             except Exception:
                 errors = []

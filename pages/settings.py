@@ -82,13 +82,22 @@ def render_all_profiles():
 
                 with col_b:
                     if not is_active:
-                        if st.button("Delete", key=f"delete_{profile['id']}", use_container_width=True):
+                        # Prevent deletion if this is the last profile
+                        if len(profiles) <= 1:
+                            st.caption("Cannot delete last profile")
+                        elif st.button("Delete", key=f"delete_{profile['id']}", use_container_width=True):
                             if st.session_state.get(f"confirm_delete_{profile['id']}"):
-                                delete_profile(profile["id"])
-                                st.rerun()
+                                try:
+                                    delete_profile(profile["id"])
+                                    # Clear confirmation state
+                                    st.session_state.pop(f"confirm_delete_{profile['id']}", None)
+                                    st.success(f"Profile deleted successfully.")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Failed to delete profile: {str(e)}")
                             else:
                                 st.session_state[f"confirm_delete_{profile['id']}"] = True
-                                st.warning("Click again to confirm deletion")
+                                st.warning("Click again to confirm deletion. This action cannot be undone!")
                     else:
                         st.caption("Current profile")
 
@@ -99,7 +108,7 @@ def render_all_profiles():
     col1, col2, col3 = st.columns([2, 1, 1])
 
     with col1:
-        new_name = st.text_input("Profile Name", placeholder="Enter a name...", key="new_profile_name")
+        new_name = st.text_input("Profile Name", placeholder="Enter a name...", key="new_profile_name", max_chars=50)
 
     with col2:
         new_level = st.selectbox("Level", ["B2", "C1", "C2"], index=1, key="new_profile_level")
@@ -107,12 +116,24 @@ def render_all_profiles():
     with col3:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Create Profile", type="primary", use_container_width=True):
-            if new_name.strip():
-                profile_id = create_profile(new_name.strip(), new_level)
-                st.success(f"Profile '{new_name}' created!")
-                st.rerun()
-            else:
+            cleaned_name = new_name.strip()
+            # Input validation
+            if not cleaned_name:
                 st.error("Please enter a name for the profile.")
+            elif len(cleaned_name) < 2:
+                st.error("Name must be at least 2 characters long.")
+            elif not cleaned_name.replace(" ", "").replace("-", "").replace("'", "").isalnum():
+                st.error("Name can only contain letters, numbers, spaces, hyphens, and apostrophes.")
+            else:
+                try:
+                    profile_id = create_profile(cleaned_name, new_level)
+                    if profile_id:
+                        st.success(f"Profile '{cleaned_name}' created!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to create profile. Please try again.")
+                except Exception as e:
+                    st.error(f"Error creating profile: {str(e)}")
 
     # Activity history for current profile
     st.divider()
@@ -161,7 +182,8 @@ def render_profile_section():
         name = st.text_input(
             "Name",
             value=profile.get("name", ""),
-            placeholder="Enter your name"
+            placeholder="Enter your name",
+            max_chars=50
         )
 
         # Level
@@ -214,17 +236,26 @@ def render_profile_section():
 
     # Save button
     if st.button("Save Profile", type="primary", use_container_width=True):
-        update_user_profile({
-            "name": name,
-            "level": level,
-            "weekly_goal": weekly_goal,
-            "focus_areas": new_focus,
-            "placement_completed": profile.get("placement_completed", 0),
-            "placement_score": profile.get("placement_score"),
-            "dialect_preference": profile.get("dialect_preference", "Spain"),
-        })
-        st.success("Profile saved!")
-        st.rerun()
+        cleaned_name = name.strip()
+        # Input validation
+        if not cleaned_name:
+            st.error("Name cannot be empty.")
+        elif len(cleaned_name) < 2:
+            st.error("Name must be at least 2 characters long.")
+        elif not cleaned_name.replace(" ", "").replace("-", "").replace("'", "").isalnum():
+            st.error("Name can only contain letters, numbers, spaces, hyphens, and apostrophes.")
+        else:
+            update_user_profile({
+                "name": cleaned_name,
+                "level": level,
+                "weekly_goal": weekly_goal,
+                "focus_areas": new_focus,
+                "placement_completed": profile.get("placement_completed", 0),
+                "placement_score": profile.get("placement_score"),
+                "dialect_preference": profile.get("dialect_preference", "Spain"),
+            })
+            st.success("Profile saved!")
+            st.rerun()
 
 
 def render_placement_test():
