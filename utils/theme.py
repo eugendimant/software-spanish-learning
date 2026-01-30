@@ -1276,10 +1276,41 @@ def get_css() -> str:
 
     /* Warning/Info boxes */
     .stAlert {
-        background: rgba(99, 102, 241, 0.1) !important;
-        border: 1px solid rgba(99, 102, 241, 0.3) !important;
         border-radius: var(--radius-lg) !important;
         color: var(--text-primary) !important;
+    }
+
+    /* Success alert */
+    .stAlert [data-testid="stNotificationContentSuccess"],
+    .stSuccess {
+        background: rgba(16, 185, 129, 0.15) !important;
+        border: 1px solid rgba(16, 185, 129, 0.4) !important;
+    }
+
+    /* Warning alert */
+    .stAlert [data-testid="stNotificationContentWarning"],
+    .stWarning {
+        background: rgba(245, 158, 11, 0.15) !important;
+        border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    }
+
+    /* Error alert */
+    .stAlert [data-testid="stNotificationContentError"],
+    .stError {
+        background: rgba(239, 68, 68, 0.15) !important;
+        border: 1px solid rgba(239, 68, 68, 0.4) !important;
+    }
+
+    /* Info alert */
+    .stAlert [data-testid="stNotificationContentInfo"],
+    .stInfo {
+        background: rgba(99, 102, 241, 0.15) !important;
+        border: 1px solid rgba(99, 102, 241, 0.4) !important;
+    }
+
+    /* Make alert text readable */
+    .stAlert p, .stAlert span {
+        color: #f8fafc !important;
     }
 
     /* Progress bar streamlit native */
