@@ -499,17 +499,20 @@ def save_vocab_item(item: dict) -> None:
 def get_vocab_items(domain: Optional[str] = None, status: Optional[str] = None) -> list:
     """Get vocabulary items for the active profile, optionally filtered."""
     profile_id = get_active_profile_id()
-    with get_connection() as conn:
-        query = "SELECT * FROM vocab_items WHERE profile_id = ?"
-        params = [profile_id]
-        if domain:
-            query += " AND domain = ?"
-            params.append(domain)
-        if status:
-            query += " AND status = ?"
-            params.append(status)
-        query += " ORDER BY created_at DESC"
-        return [dict(row) for row in conn.execute(query, params).fetchall()]
+    try:
+        with get_connection() as conn:
+            query = "SELECT * FROM vocab_items WHERE profile_id = ?"
+            params = [profile_id]
+            if domain:
+                query += " AND domain = ?"
+                params.append(domain)
+            if status:
+                query += " AND status = ?"
+                params.append(status)
+            query += " ORDER BY created_at DESC"
+            return [dict(row) for row in conn.execute(query, params).fetchall()]
+    except Exception:
+        return []
 
 
 def get_vocab_for_review() -> list:
@@ -612,53 +615,59 @@ def get_mistakes_for_review() -> list:
 def get_mistake_stats() -> dict:
     """Get statistics about mistakes by type for the active profile."""
     profile_id = get_active_profile_id()
-    with get_connection() as conn:
-        rows = conn.execute("""
-            SELECT error_type, COUNT(*) as count,
-                   AVG(ease_factor) as avg_ease
-            FROM mistakes
-            WHERE profile_id = ?
-            GROUP BY error_type
-            ORDER BY count DESC
-        """, (profile_id,)).fetchall()
-        return {row["error_type"]: {"count": row["count"], "avg_ease": row["avg_ease"]}
-                for row in rows}
+    try:
+        with get_connection() as conn:
+            rows = conn.execute("""
+                SELECT error_type, COUNT(*) as count,
+                       AVG(ease_factor) as avg_ease
+                FROM mistakes
+                WHERE profile_id = ?
+                GROUP BY error_type
+                ORDER BY count DESC
+            """, (profile_id,)).fetchall()
+            return {row["error_type"]: {"count": row["count"], "avg_ease": row["avg_ease"]}
+                    for row in rows}
+    except Exception:
+        return {}
 
 
 def update_mistake_review(mistake_id: int, quality: int) -> None:
     """Update mistake after review using SM-2 algorithm."""
-    with get_connection() as conn:
-        row = conn.execute(
-            "SELECT * FROM mistakes WHERE id = ?", (mistake_id,)
-        ).fetchone()
-        if not row:
-            return
+    try:
+        with get_connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM mistakes WHERE id = ?", (mistake_id,)
+            ).fetchone()
+            if not row:
+                return
 
-        ease_factor = row["ease_factor"]
-        interval = row["interval_days"]
+            ease_factor = row["ease_factor"]
+            interval = row["interval_days"]
 
-        if quality >= 3:
-            if interval == 1:
-                interval = 6
+            if quality >= 3:
+                if interval == 1:
+                    interval = 6
+                else:
+                    interval = int(interval * ease_factor)
+                ease_factor = ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
             else:
-                interval = int(interval * ease_factor)
-            ease_factor = ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
-        else:
-            interval = 1
+                interval = 1
 
-        ease_factor = max(1.3, ease_factor)
-        next_review = (date.today() + timedelta(days=interval)).isoformat()
+            ease_factor = max(1.3, ease_factor)
+            next_review = (date.today() + timedelta(days=interval)).isoformat()
 
-        conn.execute("""
-            UPDATE mistakes SET
-                review_count = review_count + 1,
-                last_reviewed = ?,
-                next_review = ?,
-                ease_factor = ?,
-                interval_days = ?
-            WHERE id = ?
-        """, (date.today().isoformat(), next_review, ease_factor, interval, mistake_id))
-        conn.commit()
+            conn.execute("""
+                UPDATE mistakes SET
+                    review_count = review_count + 1,
+                    last_reviewed = ?,
+                    next_review = ?,
+                    ease_factor = ?,
+                    interval_days = ?
+                WHERE id = ?
+            """, (date.today().isoformat(), next_review, ease_factor, interval, mistake_id))
+            conn.commit()
+    except Exception:
+        pass  # Silently fail - review update is not critical
 
 
 # ============== Domain Exposure Operations ==============
@@ -666,17 +675,20 @@ def update_mistake_review(mistake_id: int, quality: int) -> None:
 def record_domain_exposure(domain: str, items_count: int = 1) -> None:
     """Record exposure to a domain for the active profile."""
     profile_id = get_active_profile_id()
-    with get_connection() as conn:
-        conn.execute("""
-            INSERT INTO domain_exposure (profile_id, domain, exposure_count, last_exposure, total_items)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(profile_id, domain) DO UPDATE SET
-                exposure_count = exposure_count + ?,
-                last_exposure = ?,
-                total_items = total_items + ?
-        """, (profile_id, domain, items_count, date.today().isoformat(), items_count,
-              items_count, date.today().isoformat(), items_count))
-        conn.commit()
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                INSERT INTO domain_exposure (profile_id, domain, exposure_count, last_exposure, total_items)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(profile_id, domain) DO UPDATE SET
+                    exposure_count = exposure_count + ?,
+                    last_exposure = ?,
+                    total_items = total_items + ?
+            """, (profile_id, domain, items_count, date.today().isoformat(), items_count,
+                  items_count, date.today().isoformat(), items_count))
+            conn.commit()
+    except Exception:
+        pass  # Silently fail - exposure tracking is not critical
 
 
 def get_domain_exposure() -> dict:
@@ -696,14 +708,17 @@ def get_domain_exposure() -> dict:
 def get_underexposed_domains(limit: int = 3) -> list:
     """Get domains with lowest exposure for the active profile."""
     profile_id = get_active_profile_id()
-    with get_connection() as conn:
-        rows = conn.execute("""
-            SELECT domain, exposure_count FROM domain_exposure
-            WHERE profile_id = ?
-            ORDER BY exposure_count ASC
-            LIMIT ?
-        """, (profile_id, limit)).fetchall()
-        return [row["domain"] for row in rows]
+    try:
+        with get_connection() as conn:
+            rows = conn.execute("""
+                SELECT domain, exposure_count FROM domain_exposure
+                WHERE profile_id = ?
+                ORDER BY exposure_count ASC
+                LIMIT ?
+            """, (profile_id, limit)).fetchall()
+            return [row["domain"] for row in rows]
+    except Exception:
+        return []
 
 
 # ============== Grammar Pattern Operations ==============
@@ -711,106 +726,124 @@ def get_underexposed_domains(limit: int = 3) -> list:
 def save_grammar_pattern(pattern: dict) -> None:
     """Save a grammar pattern for the active profile."""
     profile_id = get_active_profile_id()
-    with get_connection() as conn:
-        conn.execute("""
-            INSERT OR REPLACE INTO grammar_patterns
-            (profile_id, pattern_name, category, description, examples)
-            VALUES (?, ?, ?, ?, ?)
-        """, (
-            profile_id,
-            pattern["name"],
-            pattern["category"],
-            pattern.get("description"),
-            json.dumps(pattern.get("examples", []))
-        ))
-        conn.commit()
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO grammar_patterns
+                (profile_id, pattern_name, category, description, examples)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                profile_id,
+                pattern["name"],
+                pattern["category"],
+                pattern.get("description"),
+                json.dumps(pattern.get("examples", []))
+            ))
+            conn.commit()
+    except Exception:
+        pass
 
 
 def get_grammar_for_review() -> list:
     """Get grammar patterns due for review for the active profile."""
     profile_id = get_active_profile_id()
-    today = date.today().isoformat()
-    with get_connection() as conn:
-        return [dict(row) for row in conn.execute("""
-            SELECT * FROM grammar_patterns
-            WHERE profile_id = ? AND (next_review IS NULL OR next_review <= ?)
-            ORDER BY next_review ASC, ease_factor ASC
-            LIMIT 10
-        """, (profile_id, today)).fetchall()]
+    try:
+        today = date.today().isoformat()
+        with get_connection() as conn:
+            return [dict(row) for row in conn.execute("""
+                SELECT * FROM grammar_patterns
+                WHERE profile_id = ? AND (next_review IS NULL OR next_review <= ?)
+                ORDER BY next_review ASC, ease_factor ASC
+                LIMIT 10
+            """, (profile_id, today)).fetchall()]
+    except Exception:
+        return []
 
 
 # ============== Daily Mission Operations ==============
 
-def save_daily_mission(mission: dict) -> int:
+def save_daily_mission(mission: dict) -> Optional[int]:
     """Save a daily mission for the active profile and return its ID."""
     profile_id = get_active_profile_id()
-    with get_connection() as conn:
-        cursor = conn.execute("""
-            INSERT INTO daily_missions
-            (profile_id, mission_date, mission_type, prompt, constraints, user_response, feedback, score, completed)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            profile_id,
-            mission.get("date", date.today().isoformat()),
-            mission["type"],
-            mission.get("prompt"),
-            json.dumps(mission.get("constraints", [])),
-            mission.get("user_response"),
-            mission.get("feedback"),
-            mission.get("score"),
-            mission.get("completed", 0)
-        ))
-        conn.commit()
-        return cursor.lastrowid
+    try:
+        with get_connection() as conn:
+            cursor = conn.execute("""
+                INSERT INTO daily_missions
+                (profile_id, mission_date, mission_type, prompt, constraints, user_response, feedback, score, completed)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                profile_id,
+                mission.get("date", date.today().isoformat()),
+                mission["type"],
+                mission.get("prompt"),
+                json.dumps(mission.get("constraints", [])),
+                mission.get("user_response"),
+                mission.get("feedback"),
+                mission.get("score"),
+                mission.get("completed", 0)
+            ))
+            conn.commit()
+            return cursor.lastrowid
+    except Exception:
+        return None
 
 
 def get_today_mission() -> Optional[dict]:
     """Get today's mission for the active profile if exists."""
     profile_id = get_active_profile_id()
-    today = date.today().isoformat()
-    with get_connection() as conn:
-        row = conn.execute("""
-            SELECT * FROM daily_missions WHERE profile_id = ? AND mission_date = ?
-            ORDER BY id DESC LIMIT 1
-        """, (profile_id, today)).fetchone()
-        return dict(row) if row else None
+    try:
+        today = date.today().isoformat()
+        with get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM daily_missions WHERE profile_id = ? AND mission_date = ?
+                ORDER BY id DESC LIMIT 1
+            """, (profile_id, today)).fetchone()
+            return dict(row) if row else None
+    except Exception:
+        return None
 
 
 def update_mission_response(mission_id: int, response: str, feedback: str, score: float) -> None:
     """Update mission with user's response."""
-    with get_connection() as conn:
-        conn.execute("""
-            UPDATE daily_missions SET
-                user_response = ?,
-                feedback = ?,
-                score = ?,
-                completed = 1
-            WHERE id = ?
-        """, (response, feedback, score, mission_id))
-        conn.commit()
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                UPDATE daily_missions SET
+                    user_response = ?,
+                    feedback = ?,
+                    score = ?,
+                    completed = 1
+                WHERE id = ?
+            """, (response, feedback, score, mission_id))
+            conn.commit()
+    except Exception:
+        pass
 
 
 # ============== Conversation Operations ==============
 
-def save_conversation(conv: dict) -> int:
+def save_conversation(conv: dict) -> Optional[int]:
     """Save a conversation session for the active profile."""
     profile_id = get_active_profile_id()
-    with get_connection() as conn:
-        cursor = conn.execute("""
-            INSERT INTO conversations
-            (profile_id, scenario_title, hidden_targets, messages, achieved_targets, feedback, completed)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            profile_id,
-            conv["title"],
-            json.dumps(conv.get("hidden_targets", [])),
-            json.dumps(conv.get("messages", [])),
-            json.dumps(conv.get("achieved_targets", [])),
-            conv.get("feedback"),
-            conv.get("completed", 0)
-        ))
-        conn.commit()
-        return cursor.lastrowid
+    try:
+        with get_connection() as conn:
+            cursor = conn.execute("""
+                INSERT INTO conversations
+                (profile_id, scenario_title, hidden_targets, messages, achieved_targets, feedback, completed)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                profile_id,
+                conv["title"],
+                json.dumps(conv.get("hidden_targets", [])),
+                json.dumps(conv.get("messages", [])),
+                json.dumps(conv.get("achieved_targets", [])),
+                conv.get("feedback"),
+                conv.get("completed", 0)
+            ))
+            conn.commit()
+            return cursor.lastrowid
+    except Exception:
+        return None
 
 
 # ============== Progress Metrics Operations ==============
@@ -818,50 +851,53 @@ def save_conversation(conv: dict) -> int:
 def record_progress(metrics: dict) -> None:
     """Record daily progress metrics for the active profile."""
     profile_id = get_active_profile_id()
-    today = date.today().isoformat()
-    with get_connection() as conn:
-        existing = conn.execute(
-            "SELECT id FROM progress_metrics WHERE profile_id = ? AND metric_date = ?",
-            (profile_id, today)
-        ).fetchone()
+    try:
+        today = date.today().isoformat()
+        with get_connection() as conn:
+            existing = conn.execute(
+                "SELECT id FROM progress_metrics WHERE profile_id = ? AND metric_date = ?",
+                (profile_id, today)
+            ).fetchone()
 
-        if existing:
-            conn.execute("""
-                UPDATE progress_metrics SET
-                    speaking_minutes = speaking_minutes + ?,
-                    writing_words = writing_words + ?,
-                    vocab_reviewed = vocab_reviewed + ?,
-                    grammar_reviewed = grammar_reviewed + ?,
-                    errors_fixed = errors_fixed + ?,
-                    missions_completed = missions_completed + ?
-                WHERE profile_id = ? AND metric_date = ?
-            """, (
-                metrics.get("speaking_minutes", 0),
-                metrics.get("writing_words", 0),
-                metrics.get("vocab_reviewed", 0),
-                metrics.get("grammar_reviewed", 0),
-                metrics.get("errors_fixed", 0),
-                metrics.get("missions_completed", 0),
-                profile_id,
-                today
-            ))
-        else:
-            conn.execute("""
-                INSERT INTO progress_metrics
-                (profile_id, metric_date, speaking_minutes, writing_words, vocab_reviewed,
-                 grammar_reviewed, errors_fixed, missions_completed)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                profile_id,
-                today,
-                metrics.get("speaking_minutes", 0),
-                metrics.get("writing_words", 0),
-                metrics.get("vocab_reviewed", 0),
-                metrics.get("grammar_reviewed", 0),
-                metrics.get("errors_fixed", 0),
-                metrics.get("missions_completed", 0)
-            ))
-        conn.commit()
+            if existing:
+                conn.execute("""
+                    UPDATE progress_metrics SET
+                        speaking_minutes = speaking_minutes + ?,
+                        writing_words = writing_words + ?,
+                        vocab_reviewed = vocab_reviewed + ?,
+                        grammar_reviewed = grammar_reviewed + ?,
+                        errors_fixed = errors_fixed + ?,
+                        missions_completed = missions_completed + ?
+                    WHERE profile_id = ? AND metric_date = ?
+                """, (
+                    metrics.get("speaking_minutes", 0),
+                    metrics.get("writing_words", 0),
+                    metrics.get("vocab_reviewed", 0),
+                    metrics.get("grammar_reviewed", 0),
+                    metrics.get("errors_fixed", 0),
+                    metrics.get("missions_completed", 0),
+                    profile_id,
+                    today
+                ))
+            else:
+                conn.execute("""
+                    INSERT INTO progress_metrics
+                    (profile_id, metric_date, speaking_minutes, writing_words, vocab_reviewed,
+                     grammar_reviewed, errors_fixed, missions_completed)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    profile_id,
+                    today,
+                    metrics.get("speaking_minutes", 0),
+                    metrics.get("writing_words", 0),
+                    metrics.get("vocab_reviewed", 0),
+                    metrics.get("grammar_reviewed", 0),
+                    metrics.get("errors_fixed", 0),
+                    metrics.get("missions_completed", 0)
+                ))
+            conn.commit()
+    except Exception:
+        pass  # Progress recording is not critical
 
 
 def get_progress_history(days: int = 30) -> list:
@@ -1011,9 +1047,12 @@ def export_vocab_json() -> str:
 
 def export_mistakes_json() -> str:
     """Export mistakes as JSON."""
-    with get_connection() as conn:
-        rows = conn.execute("SELECT * FROM mistakes ORDER BY created_at DESC").fetchall()
-        return json.dumps([dict(row) for row in rows], indent=2, ensure_ascii=False)
+    try:
+        with get_connection() as conn:
+            rows = conn.execute("SELECT * FROM mistakes ORDER BY created_at DESC").fetchall()
+            return json.dumps([dict(row) for row in rows], indent=2, ensure_ascii=False)
+    except Exception:
+        return "[]"
 
 
 def export_progress_json() -> str:
@@ -1026,12 +1065,15 @@ def export_progress_json() -> str:
 def get_active_vocab_count() -> int:
     """Get count of vocabulary items that have been produced (used in output) for the active profile."""
     profile_id = get_active_profile_id()
-    with get_connection() as conn:
-        row = conn.execute("""
-            SELECT COUNT(*) as count FROM vocab_items
-            WHERE profile_id = ? AND status IN ('learning', 'mastered') AND exposure_count > 0
-        """, (profile_id,)).fetchone()
-        return row["count"] if row else 0
+    try:
+        with get_connection() as conn:
+            row = conn.execute("""
+                SELECT COUNT(*) as count FROM vocab_items
+                WHERE profile_id = ? AND status IN ('learning', 'mastered') AND exposure_count > 0
+            """, (profile_id,)).fetchone()
+            return row["count"] if row else 0
+    except Exception:
+        return 0
 
 
 def save_transcript(text: str, duration: int = 0, mission_id: Optional[int] = None) -> None:
