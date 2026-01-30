@@ -746,6 +746,25 @@ def get_css() -> str:
         -webkit-text-fill-color: #f8fafc !important;
     }
 
+    /* Override any Streamlit default white backgrounds */
+    .stTextInput > div,
+    .stTextArea > div {
+        background: transparent !important;
+    }
+
+    /* Force dark styling on all input containers */
+    [data-baseweb="input"],
+    [data-baseweb="base-input"] {
+        background-color: rgba(18, 18, 26, 0.95) !important;
+    }
+
+    [data-baseweb="input"] input,
+    [data-baseweb="base-input"] input {
+        color: #f8fafc !important;
+        -webkit-text-fill-color: #f8fafc !important;
+        background: transparent !important;
+    }
+
     /* === SELECT BOXES === */
     .stSelectbox > div > div {
         background: rgba(18, 18, 26, 0.95) !important;
@@ -764,6 +783,31 @@ def get_css() -> str:
 
     .stSelectbox [data-baseweb="select"] span {
         color: #f8fafc !important;
+    }
+
+    /* Dropdown menu styling */
+    [data-baseweb="popover"],
+    [data-baseweb="menu"],
+    [role="listbox"] {
+        background: rgba(18, 18, 26, 0.98) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    [data-baseweb="menu"] li,
+    [role="option"] {
+        color: #f8fafc !important;
+        background: transparent !important;
+    }
+
+    [data-baseweb="menu"] li:hover,
+    [role="option"]:hover {
+        background: rgba(99, 102, 241, 0.2) !important;
+    }
+
+    /* Selected option */
+    [aria-selected="true"] {
+        background: rgba(99, 102, 241, 0.3) !important;
+        color: #ffffff !important;
     }
 
     /* === RADIO BUTTONS === */

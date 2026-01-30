@@ -27,9 +27,39 @@ def set_active_profile_id(profile_id: int) -> None:
 def get_connection() -> sqlite3.Connection:
     """Get a database connection with row factory."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
+    # Enable foreign keys
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
+
+def ensure_tables_exist() -> None:
+    """Ensure all required tables exist (call after init_db)."""
+    try:
+        with get_connection() as conn:
+            # Check if domain_exposure table exists and has correct structure
+            cursor = conn.execute("""
+                SELECT name FROM sqlite_master
+                WHERE type='table' AND name='domain_exposure'
+            """)
+            if not cursor.fetchone():
+                # Table doesn't exist, create it
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS domain_exposure (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        profile_id INTEGER DEFAULT 1,
+                        domain TEXT NOT NULL,
+                        exposure_count INTEGER DEFAULT 0,
+                        last_exposure TEXT,
+                        total_items INTEGER DEFAULT 0,
+                        mastered_items INTEGER DEFAULT 0,
+                        UNIQUE(profile_id, domain)
+                    )
+                """)
+                conn.commit()
+    except Exception as e:
+        print(f"Warning: Could not ensure tables exist: {e}")
 
 
 def init_db() -> None:
@@ -231,6 +261,9 @@ def init_db() -> None:
 
         conn.commit()
 
+    # Ensure all tables exist after init
+    ensure_tables_exist()
+
 
 def init_profile_domains(profile_id: int) -> None:
     """Initialize default domains for a profile."""
@@ -257,12 +290,13 @@ def init_profile_domains(profile_id: int) -> None:
                     UNIQUE(profile_id, domain)
                 )
             """)
-            # Insert domains using executemany for efficiency
-            conn.executemany("""
-                INSERT OR IGNORE INTO domain_exposure
-                (profile_id, domain, exposure_count, total_items, mastered_items)
-                VALUES (?, ?, 0, 0, 0)
-            """, [(profile_id, domain) for domain in domains])
+            # Insert domains one by one to avoid executemany issues
+            for domain in domains:
+                conn.execute("""
+                    INSERT OR IGNORE INTO domain_exposure
+                    (profile_id, domain, exposure_count, total_items, mastered_items)
+                    VALUES (?, ?, 0, 0, 0)
+                """, (profile_id, domain))
             conn.commit()
     except Exception as e:
         # Log error but don't crash - domains can be initialized later
