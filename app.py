@@ -38,8 +38,11 @@ st.set_page_config(
 # Apply custom theme
 st.markdown(get_css(), unsafe_allow_html=True)
 
-# Initialize database
-init_db()
+# Initialize database with error handling
+try:
+    init_db()
+except Exception as e:
+    st.error(f"Database initialization error: {str(e)}. Please refresh the page.")
 
 
 def init_session_state():
@@ -99,11 +102,17 @@ def render_profile_creation():
 
         if st.button("Start Learning", type="primary", use_container_width=True):
             if name.strip():
-                profile_id = create_profile(name.strip(), level)
-                st.session_state.active_profile_id = profile_id
-                st.session_state.show_create_profile = False
-                set_active_profile_id(profile_id)
-                st.rerun()
+                try:
+                    profile_id = create_profile(name.strip(), level)
+                    if profile_id:
+                        st.session_state.active_profile_id = profile_id
+                        st.session_state.show_create_profile = False
+                        set_active_profile_id(profile_id)
+                        st.rerun()
+                    else:
+                        st.error("Failed to create profile. Please try again.")
+                except Exception as e:
+                    st.error(f"Error creating profile: {str(e)}")
             else:
                 st.error("Please enter your name to continue.")
 
