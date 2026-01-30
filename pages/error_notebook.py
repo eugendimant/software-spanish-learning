@@ -81,14 +81,17 @@ def render_error_dashboard():
     st.markdown("### Your Top Recurring Errors")
 
     # Get top errors from database
-    with get_connection() as conn:
-        rows = conn.execute("""
-            SELECT pattern, error_type, explanation, COUNT(*) as occurrences
-            FROM mistakes
-            GROUP BY pattern
-            ORDER BY occurrences DESC
-            LIMIT 5
-        """).fetchall()
+    try:
+        with get_connection() as conn:
+            rows = conn.execute("""
+                SELECT pattern, error_type, explanation, COUNT(*) as occurrences
+                FROM mistakes
+                GROUP BY pattern
+                ORDER BY occurrences DESC
+                LIMIT 5
+            """).fetchall()
+    except Exception:
+        rows = []
 
     if rows:
         for row in rows:
@@ -108,14 +111,17 @@ def render_error_dashboard():
     st.markdown("### Error Trend (Last 30 Days)")
 
     # Simplified trend visualization
-    with get_connection() as conn:
-        rows = conn.execute("""
-            SELECT DATE(created_at) as date, COUNT(*) as count
-            FROM mistakes
-            WHERE created_at >= DATE('now', '-30 days')
-            GROUP BY DATE(created_at)
-            ORDER BY date
-        """).fetchall()
+    try:
+        with get_connection() as conn:
+            rows = conn.execute("""
+                SELECT DATE(created_at) as date, COUNT(*) as count
+                FROM mistakes
+                WHERE created_at >= DATE('now', '-30 days')
+                GROUP BY DATE(created_at)
+                ORDER BY date
+            """).fetchall()
+    except Exception:
+        rows = []
 
     if rows:
         dates = [row["date"] for row in rows]
@@ -147,9 +153,12 @@ def render_all_errors():
 
     with col1:
         # Get unique error types
-        with get_connection() as conn:
-            types = conn.execute("SELECT DISTINCT error_type FROM mistakes").fetchall()
-            type_list = ["All"] + [t["error_type"] for t in types if t["error_type"]]
+        try:
+            with get_connection() as conn:
+                types = conn.execute("SELECT DISTINCT error_type FROM mistakes").fetchall()
+                type_list = ["All"] + [t["error_type"] for t in types if t["error_type"]]
+        except Exception:
+            type_list = ["All"]
 
         filter_type = st.selectbox("Filter by type:", type_list)
 
@@ -173,8 +182,11 @@ def render_all_errors():
 
     query += " LIMIT 50"
 
-    with get_connection() as conn:
-        errors = conn.execute(query, params).fetchall()
+    try:
+        with get_connection() as conn:
+            errors = conn.execute(query, params).fetchall()
+    except Exception:
+        errors = []
 
     if not errors:
         st.info("No errors logged yet.")
@@ -223,10 +235,13 @@ def render_error_practice():
         st.success("🎉 No errors due for review! Great job staying on top of your mistakes.")
 
         if st.button("Practice All Errors Anyway"):
-            with get_connection() as conn:
-                errors = [dict(row) for row in conn.execute(
-                    "SELECT * FROM mistakes ORDER BY ease_factor ASC LIMIT 10"
-                ).fetchall()]
+            try:
+                with get_connection() as conn:
+                    errors = [dict(row) for row in conn.execute(
+                        "SELECT * FROM mistakes ORDER BY ease_factor ASC LIMIT 10"
+                    ).fetchall()]
+            except Exception:
+                errors = []
 
         if not errors:
             st.info("Add some errors using the Mistake Catcher first!")
