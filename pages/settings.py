@@ -123,7 +123,7 @@ def render_all_profiles():
         for activity in activities[:10]:
             activity_type = activity.get("activity_type", "Unknown")
             activity_name = activity.get("activity_name", "")
-            created_at = activity.get("created_at", "")[:16]  # Truncate timestamp
+            created_at = (activity.get("created_at") or "")[:16]  # Truncate timestamp
             score = activity.get("score")
 
             icon_map = {
