@@ -1,229 +1,300 @@
-"""Clean, high-contrast design system for Spanish Learning App."""
+"""
+Modern iOS-style design system with glassmorphism, vibrant gradients, and 2026 aesthetics.
+"""
 import streamlit as st
 
 
+# Color palette for programmatic access
+COLORS = {
+    "primary": "#6366f1",
+    "primary_light": "#818cf8",
+    "secondary": "#ec4899",
+    "success": "#10b981",
+    "warning": "#f59e0b",
+    "error": "#ef4444",
+    "info": "#3b82f6",
+    "bg_dark": "#0a0a0f",
+    "bg_card": "rgba(255, 255, 255, 0.05)",
+    "text_primary": "#ffffff",
+    "text_secondary": "#a1a1aa",
+}
+
+
 def get_css() -> str:
-    """Return clean, readable CSS with high contrast and proper typography."""
+    """Return stunning iOS-style CSS with glassmorphism and modern aesthetics."""
     return """
     <style>
     /* ============================================
-       DESIGN TOKENS
+       2026 iOS-STYLE DESIGN SYSTEM
+       Glassmorphism • Vibrant Gradients • Fluid Motion
        ============================================ */
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
     :root {
-        /* Colors - High contrast palette */
-        --bg-primary: #0f1117;
-        --bg-secondary: #1a1d24;
-        --bg-card: #1e222a;
-        --bg-input: #262a33;
+        /* Premium Color Palette */
+        --primary: #6366f1;
+        --primary-light: #818cf8;
+        --primary-glow: rgba(99, 102, 241, 0.4);
+        --secondary: #ec4899;
+        --secondary-light: #f472b6;
+        --accent: #06b6d4;
+        --accent-light: #22d3ee;
 
-        --text-primary: #f8fafc;
-        --text-secondary: #cbd5e1;
-        --text-muted: #94a3b8;
-        --text-hint: #64748b;
+        /* Success/Warning/Error with vibrancy */
+        --success: #10b981;
+        --success-light: #34d399;
+        --success-glow: rgba(16, 185, 129, 0.3);
+        --warning: #f59e0b;
+        --warning-light: #fbbf24;
+        --error: #ef4444;
+        --error-light: #f87171;
+        --info: #3b82f6;
 
-        --accent-primary: #6366f1;
-        --accent-primary-hover: #818cf8;
-        --accent-success: #22c55e;
-        --accent-warning: #f59e0b;
-        --accent-error: #ef4444;
-        --accent-info: #3b82f6;
+        /* Dark backgrounds with depth */
+        --bg-base: #0a0a0f;
+        --bg-elevated: #12121a;
+        --bg-card: rgba(255, 255, 255, 0.03);
+        --bg-glass: rgba(255, 255, 255, 0.05);
+        --bg-hover: rgba(255, 255, 255, 0.08);
+        --bg-active: rgba(99, 102, 241, 0.15);
 
-        --border-subtle: rgba(255, 255, 255, 0.08);
-        --border-medium: rgba(255, 255, 255, 0.15);
+        /* Text with perfect contrast */
+        --text-primary: #ffffff;
+        --text-secondary: #a1a1aa;
+        --text-muted: #71717a;
+        --text-hint: #52525b;
+
+        /* Borders and dividers */
+        --border-subtle: rgba(255, 255, 255, 0.06);
+        --border-medium: rgba(255, 255, 255, 0.1);
+        --border-focus: rgba(99, 102, 241, 0.5);
+
+        /* Gradients */
+        --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+        --gradient-success: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+        --gradient-card: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+        --gradient-shine: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
 
         /* Typography */
-        --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        --font-mono: 'SF Mono', Monaco, 'Courier New', monospace;
+        --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+        --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
 
-        /* Font sizes */
-        --text-xs: 0.75rem;
-        --text-sm: 0.875rem;
-        --text-base: 1rem;
-        --text-lg: 1.125rem;
-        --text-xl: 1.25rem;
-        --text-2xl: 1.5rem;
-        --text-3xl: 2rem;
-
-        /* Line heights */
-        --leading-tight: 1.25;
-        --leading-normal: 1.5;
-        --leading-relaxed: 1.75;
-
-        /* Spacing scale */
-        --space-1: 0.25rem;
-        --space-2: 0.5rem;
-        --space-3: 0.75rem;
-        --space-4: 1rem;
-        --space-5: 1.25rem;
-        --space-6: 1.5rem;
-        --space-8: 2rem;
-        --space-10: 2.5rem;
-        --space-12: 3rem;
+        /* Spacing */
+        --space-xs: 4px;
+        --space-sm: 8px;
+        --space-md: 16px;
+        --space-lg: 24px;
+        --space-xl: 32px;
+        --space-2xl: 48px;
 
         /* Radii */
-        --radius-sm: 6px;
-        --radius-md: 8px;
-        --radius-lg: 12px;
-        --radius-xl: 16px;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 20px;
+        --radius-2xl: 24px;
+        --radius-full: 9999px;
 
         /* Shadows */
-        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+        --shadow-glow: 0 0 40px var(--primary-glow);
+        --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+        /* Transitions */
+        --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     /* ============================================
        BASE STYLES
        ============================================ */
     .stApp {
-        background: var(--bg-primary) !important;
+        background: var(--bg-base) !important;
+        background-image:
+            radial-gradient(ellipse at 20% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 100%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 70%) !important;
         color: var(--text-primary) !important;
         font-family: var(--font-sans) !important;
+        min-height: 100vh;
     }
 
-    /* Remove default Streamlit header */
-    header[data-testid="stHeader"] {
+    /* Hide default Streamlit header/footer */
+    header[data-testid="stHeader"],
+    footer,
+    #MainMenu {
         display: none !important;
     }
 
-    /* Main content area */
+    /* Main content */
     .main .block-container {
-        padding: var(--space-6) var(--space-8) !important;
-        max-width: 1200px !important;
+        padding: var(--space-lg) var(--space-xl) !important;
+        max-width: 1100px !important;
     }
 
     /* ============================================
-       TYPOGRAPHY
+       TYPOGRAPHY - iOS Style
        ============================================ */
-
-    /* Headings */
     h1, h2, h3, h4, h5, h6,
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+        font-family: var(--font-sans) !important;
         color: var(--text-primary) !important;
-        font-weight: 600 !important;
-        line-height: var(--leading-tight) !important;
-        margin-bottom: var(--space-4) !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.02em !important;
+        line-height: 1.2 !important;
     }
 
-    h1, .stMarkdown h1 { font-size: var(--text-3xl) !important; }
-    h2, .stMarkdown h2 { font-size: var(--text-2xl) !important; }
-    h3, .stMarkdown h3 { font-size: var(--text-xl) !important; }
-    h4, .stMarkdown h4 { font-size: var(--text-lg) !important; }
+    h1, .stMarkdown h1 {
+        font-size: 2.5rem !important;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
 
-    /* Body text */
-    p, .stMarkdown p, .stText {
+    h2, .stMarkdown h2 { font-size: 1.75rem !important; }
+    h3, .stMarkdown h3 { font-size: 1.25rem !important; }
+
+    p, .stMarkdown p {
         color: var(--text-secondary) !important;
-        font-size: var(--text-base) !important;
-        line-height: var(--leading-relaxed) !important;
-        max-width: 65ch;
+        font-size: 1rem !important;
+        line-height: 1.6 !important;
+        font-weight: 400 !important;
     }
 
-    /* Strong/bold text */
     strong, b {
         color: var(--text-primary) !important;
         font-weight: 600 !important;
     }
 
-    /* Captions and hints */
-    .stCaption, small, .caption {
-        color: var(--text-muted) !important;
-        font-size: var(--text-sm) !important;
-    }
-
     /* ============================================
-       SIDEBAR
+       SIDEBAR - Frosted Glass
        ============================================ */
     [data-testid="stSidebar"] {
-        background: var(--bg-secondary) !important;
+        background: rgba(18, 18, 26, 0.95) !important;
+        backdrop-filter: blur(20px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
         border-right: 1px solid var(--border-subtle) !important;
     }
 
     [data-testid="stSidebar"] .block-container {
-        padding: var(--space-4) !important;
+        padding: var(--space-md) !important;
     }
 
     [data-testid="stSidebar"] h1,
     [data-testid="stSidebar"] h2,
     [data-testid="stSidebar"] h3,
     [data-testid="stSidebar"] h4 {
-        color: var(--text-primary) !important;
-        font-size: var(--text-sm) !important;
+        font-size: 0.7rem !important;
         font-weight: 600 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.05em !important;
-        margin: var(--space-4) 0 var(--space-2) 0 !important;
+        letter-spacing: 0.1em !important;
+        color: var(--text-muted) !important;
+        margin: var(--space-lg) 0 var(--space-sm) 0 !important;
+        -webkit-text-fill-color: var(--text-muted) !important;
+        background: none !important;
     }
 
     /* ============================================
-       BUTTONS
+       BUTTONS - iOS Style with Gradients
        ============================================ */
 
-    /* Primary button */
+    /* Primary Button */
     .stButton > button[kind="primary"],
     .stButton > button[data-testid="baseButton-primary"] {
-        background: var(--accent-primary) !important;
+        background: var(--gradient-primary) !important;
         color: white !important;
         border: none !important;
-        border-radius: var(--radius-md) !important;
-        font-weight: 500 !important;
-        font-size: var(--text-base) !important;
-        padding: var(--space-3) var(--space-6) !important;
-        min-height: 44px !important;
-        transition: all 0.15s ease !important;
+        border-radius: var(--radius-lg) !important;
+        font-family: var(--font-sans) !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        padding: 14px 28px !important;
+        min-height: 50px !important;
+        box-shadow: var(--shadow-md), 0 0 20px var(--primary-glow) !important;
+        transition: all var(--transition-base) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    .stButton > button[kind="primary"]::before,
+    .stButton > button[data-testid="baseButton-primary"]::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 50% !important;
+        background: linear-gradient(to bottom, rgba(255,255,255,0.2), transparent) !important;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
     }
 
     .stButton > button[kind="primary"]:hover,
     .stButton > button[data-testid="baseButton-primary"]:hover {
-        background: var(--accent-primary-hover) !important;
-        transform: translateY(-1px) !important;
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: var(--shadow-lg), 0 0 40px var(--primary-glow) !important;
     }
 
     .stButton > button[kind="primary"]:active,
     .stButton > button[data-testid="baseButton-primary"]:active {
-        transform: translateY(0) !important;
+        transform: translateY(0) scale(0.98) !important;
     }
 
-    /* Secondary button */
+    /* Secondary Button - Glass Effect */
     .stButton > button[kind="secondary"],
     .stButton > button[data-testid="baseButton-secondary"],
-    .stButton > button {
-        background: transparent !important;
+    .stButton > button:not([kind]) {
+        background: var(--bg-glass) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
         color: var(--text-primary) !important;
         border: 1px solid var(--border-medium) !important;
-        border-radius: var(--radius-md) !important;
+        border-radius: var(--radius-lg) !important;
+        font-family: var(--font-sans) !important;
         font-weight: 500 !important;
-        font-size: var(--text-base) !important;
-        padding: var(--space-3) var(--space-6) !important;
-        min-height: 44px !important;
-        transition: all 0.15s ease !important;
+        font-size: 0.95rem !important;
+        padding: 14px 24px !important;
+        min-height: 50px !important;
+        transition: all var(--transition-base) !important;
+        box-shadow: var(--shadow-inner) !important;
     }
 
     .stButton > button[kind="secondary"]:hover,
     .stButton > button[data-testid="baseButton-secondary"]:hover,
-    .stButton > button:hover {
-        background: var(--bg-card) !important;
-        border-color: var(--accent-primary) !important;
+    .stButton > button:not([kind]):hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--primary) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: var(--shadow-sm) !important;
     }
 
     /* ============================================
-       FORM INPUTS
+       FORM INPUTS - Modern Glass
        ============================================ */
-
-    /* Text inputs */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea {
-        background: var(--bg-input) !important;
+        background: var(--bg-glass) !important;
+        backdrop-filter: blur(10px) !important;
         border: 1px solid var(--border-medium) !important;
         border-radius: var(--radius-md) !important;
         color: var(--text-primary) !important;
-        font-size: var(--text-base) !important;
-        padding: var(--space-3) var(--space-4) !important;
-        min-height: 44px !important;
+        font-family: var(--font-sans) !important;
+        font-size: 1rem !important;
+        padding: 14px 16px !important;
+        min-height: 50px !important;
+        transition: all var(--transition-fast) !important;
     }
 
     .stTextInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
-        border-color: var(--accent-primary) !important;
-        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 3px var(--primary-glow), var(--shadow-glow) !important;
+        outline: none !important;
     }
 
     .stTextInput > div > div > input::placeholder,
@@ -235,281 +306,383 @@ def get_css() -> str:
     .stTextInput > label,
     .stTextArea > label,
     .stSelectbox > label,
-    .stRadio > label,
-    .stCheckbox > label {
+    .stRadio > label {
         color: var(--text-secondary) !important;
-        font-size: var(--text-sm) !important;
+        font-size: 0.875rem !important;
         font-weight: 500 !important;
-        margin-bottom: var(--space-2) !important;
+        margin-bottom: var(--space-sm) !important;
     }
 
     /* ============================================
-       RADIO BUTTONS
+       RADIO BUTTONS - iOS Segmented Control Style
        ============================================ */
     .stRadio > div {
-        gap: var(--space-3) !important;
+        gap: var(--space-sm) !important;
+        flex-wrap: wrap !important;
     }
 
     .stRadio > div > label {
-        background: var(--bg-card) !important;
-        border: 1px solid var(--border-medium) !important;
+        background: var(--bg-glass) !important;
+        border: 1px solid var(--border-subtle) !important;
         border-radius: var(--radius-md) !important;
-        padding: var(--space-3) var(--space-4) !important;
-        color: var(--text-primary) !important;
-        font-size: var(--text-base) !important;
-        min-height: 44px !important;
+        padding: 12px 20px !important;
+        color: var(--text-secondary) !important;
+        font-size: 0.9rem !important;
+        font-weight: 500 !important;
+        cursor: pointer !important;
+        transition: all var(--transition-fast) !important;
+        min-height: 48px !important;
         display: flex !important;
         align-items: center !important;
-        cursor: pointer !important;
-        transition: all 0.15s ease !important;
     }
 
     .stRadio > div > label:hover {
-        border-color: var(--accent-primary) !important;
-        background: var(--bg-input) !important;
+        background: var(--bg-hover) !important;
+        border-color: var(--border-medium) !important;
+        color: var(--text-primary) !important;
     }
 
     .stRadio > div > label[data-checked="true"],
     .stRadio > div > label:has(input:checked) {
-        border-color: var(--accent-primary) !important;
-        background: rgba(99, 102, 241, 0.15) !important;
+        background: var(--bg-active) !important;
+        border-color: var(--primary) !important;
+        color: var(--text-primary) !important;
+        box-shadow: 0 0 20px var(--primary-glow) !important;
     }
 
     /* ============================================
-       SELECT / DROPDOWN
+       SELECT / DROPDOWN - Modern Style
        ============================================ */
     .stSelectbox > div > div {
-        background: var(--bg-input) !important;
+        background: var(--bg-glass) !important;
         border: 1px solid var(--border-medium) !important;
         border-radius: var(--radius-md) !important;
     }
 
     .stSelectbox > div > div > div {
         color: var(--text-primary) !important;
+        font-size: 0.95rem !important;
     }
 
-    /* Dropdown menu */
+    /* Dropdown popover */
     [data-baseweb="popover"],
     [data-baseweb="menu"],
     div[role="listbox"] {
-        background: var(--bg-card) !important;
+        background: rgba(18, 18, 26, 0.98) !important;
+        backdrop-filter: blur(20px) !important;
         border: 1px solid var(--border-medium) !important;
-        border-radius: var(--radius-md) !important;
+        border-radius: var(--radius-lg) !important;
+        box-shadow: var(--shadow-lg) !important;
+        overflow: hidden !important;
     }
 
     [data-baseweb="menu"] li,
     div[role="option"] {
         color: var(--text-primary) !important;
         background: transparent !important;
-        padding: var(--space-3) var(--space-4) !important;
+        padding: 12px 16px !important;
+        font-size: 0.95rem !important;
+        transition: background var(--transition-fast) !important;
     }
 
     [data-baseweb="menu"] li:hover,
     div[role="option"]:hover {
-        background: var(--bg-input) !important;
+        background: var(--bg-hover) !important;
     }
 
     [data-baseweb="menu"] li[aria-selected="true"],
     div[role="option"][aria-selected="true"] {
-        background: rgba(99, 102, 241, 0.2) !important;
+        background: var(--bg-active) !important;
     }
 
     /* ============================================
-       MULTISELECT
+       MULTISELECT - Pills Style
        ============================================ */
     .stMultiSelect > div > div {
-        background: var(--bg-input) !important;
+        background: var(--bg-glass) !important;
         border: 1px solid var(--border-medium) !important;
         border-radius: var(--radius-md) !important;
     }
 
     .stMultiSelect [data-baseweb="tag"] {
-        background: rgba(99, 102, 241, 0.2) !important;
-        border: 1px solid var(--accent-primary) !important;
-        color: var(--text-primary) !important;
+        background: var(--gradient-primary) !important;
+        border: none !important;
+        color: white !important;
+        border-radius: var(--radius-full) !important;
+        font-weight: 500 !important;
     }
 
     /* ============================================
-       SLIDER
-       ============================================ */
-    .stSlider > div > div > div {
-        background: var(--border-medium) !important;
-    }
-
-    .stSlider > div > div > div > div {
-        background: var(--accent-primary) !important;
-    }
-
-    .stSlider [data-baseweb="slider"] [role="slider"] {
-        background: var(--accent-primary) !important;
-        border: 2px solid white !important;
-    }
-
-    /* ============================================
-       PROGRESS BAR
+       PROGRESS BAR - Animated Gradient
        ============================================ */
     .stProgress > div > div {
-        background: var(--bg-input) !important;
-        border-radius: var(--radius-sm) !important;
-        height: 8px !important;
+        background: var(--bg-glass) !important;
+        border-radius: var(--radius-full) !important;
+        height: 10px !important;
+        overflow: hidden !important;
     }
 
     .stProgress > div > div > div {
-        background: var(--accent-primary) !important;
-        border-radius: var(--radius-sm) !important;
+        background: var(--gradient-primary) !important;
+        border-radius: var(--radius-full) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    .stProgress > div > div > div::after {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: -100% !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent) !important;
+        animation: shimmer 2s infinite !important;
+    }
+
+    @keyframes shimmer {
+        100% { left: 100%; }
     }
 
     /* ============================================
-       CARDS & CONTAINERS
+       CARDS - Glassmorphism
        ============================================ */
-
-    /* Base card */
-    .card {
-        background: var(--bg-card) !important;
-        border: 1px solid var(--border-subtle) !important;
-        border-radius: var(--radius-lg) !important;
-        padding: var(--space-6) !important;
-        margin-bottom: var(--space-4) !important;
-    }
-
-    /* Muted card for secondary content */
-    .card-muted {
-        background: var(--bg-secondary) !important;
-        border: 1px solid var(--border-subtle) !important;
-        border-radius: var(--radius-md) !important;
-        padding: var(--space-4) !important;
-        margin-bottom: var(--space-4) !important;
-    }
-
-    /* ============================================
-       HERO SECTION
-       ============================================ */
-    .hero {
-        background: var(--bg-card) !important;
+    .glass-card {
+        background: var(--gradient-card) !important;
+        backdrop-filter: blur(20px) saturate(150%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
         border: 1px solid var(--border-subtle) !important;
         border-radius: var(--radius-xl) !important;
-        padding: var(--space-8) !important;
-        margin-bottom: var(--space-6) !important;
+        padding: var(--space-lg) !important;
+        box-shadow: var(--shadow-md), var(--shadow-inner) !important;
+        position: relative !important;
+        overflow: hidden !important;
+        transition: all var(--transition-base) !important;
+    }
+
+    .glass-card::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 1px !important;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent) !important;
+    }
+
+    .glass-card:hover {
+        border-color: var(--border-medium) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: var(--shadow-lg) !important;
+    }
+
+    .card {
+        background: var(--bg-glass) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: var(--radius-xl) !important;
+        padding: var(--space-lg) !important;
+        margin-bottom: var(--space-md) !important;
+        transition: all var(--transition-base) !important;
+    }
+
+    .card:hover {
+        border-color: var(--border-medium) !important;
+    }
+
+    /* ============================================
+       HERO SECTION - Premium Header
+       ============================================ */
+    .hero {
+        background: var(--gradient-card) !important;
+        backdrop-filter: blur(20px) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: var(--radius-2xl) !important;
+        padding: var(--space-2xl) var(--space-xl) !important;
+        margin-bottom: var(--space-xl) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    .hero::before {
+        content: '' !important;
+        position: absolute !important;
+        top: -50% !important;
+        left: -50% !important;
+        width: 200% !important;
+        height: 200% !important;
+        background: radial-gradient(circle at 30% 30%, var(--primary-glow) 0%, transparent 50%) !important;
+        opacity: 0.5 !important;
+        animation: float 8s ease-in-out infinite !important;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        50% { transform: translate(20px, 20px) rotate(5deg); }
+    }
+
+    .hero-content {
+        position: relative !important;
+        z-index: 1 !important;
     }
 
     .hero-title {
-        color: var(--text-primary) !important;
-        font-size: var(--text-2xl) !important;
-        font-weight: 700 !important;
-        margin-bottom: var(--space-2) !important;
-        line-height: var(--leading-tight) !important;
+        font-size: 2rem !important;
+        font-weight: 800 !important;
+        background: var(--gradient-primary) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
+        margin-bottom: var(--space-sm) !important;
+        letter-spacing: -0.02em !important;
     }
 
     .hero-subtitle {
         color: var(--text-secondary) !important;
-        font-size: var(--text-base) !important;
-        line-height: var(--leading-relaxed) !important;
-        max-width: 60ch !important;
+        font-size: 1.1rem !important;
+        line-height: 1.6 !important;
+        max-width: 600px !important;
     }
 
     .hero-pills {
         display: flex !important;
-        gap: var(--space-2) !important;
+        gap: var(--space-sm) !important;
         flex-wrap: wrap !important;
-        margin-bottom: var(--space-4) !important;
+        margin-bottom: var(--space-md) !important;
     }
 
     .hero-pill {
-        background: rgba(99, 102, 241, 0.15) !important;
-        color: var(--accent-primary-hover) !important;
-        padding: var(--space-1) var(--space-3) !important;
-        border-radius: var(--radius-sm) !important;
-        font-size: var(--text-xs) !important;
-        font-weight: 500 !important;
+        background: var(--bg-active) !important;
+        color: var(--primary-light) !important;
+        padding: 6px 14px !important;
+        border-radius: var(--radius-full) !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        border: 1px solid rgba(99, 102, 241, 0.3) !important;
     }
 
     /* ============================================
        EXERCISE COMPONENTS
        ============================================ */
-
-    /* Exercise prompt - the main question/instruction */
     .exercise-prompt {
-        color: var(--text-primary) !important;
-        font-size: var(--text-lg) !important;
+        background: var(--bg-elevated) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: var(--radius-lg) !important;
+        padding: var(--space-lg) !important;
+        font-size: 1.15rem !important;
         font-weight: 500 !important;
-        line-height: var(--leading-relaxed) !important;
-        padding: var(--space-4) !important;
-        background: var(--bg-secondary) !important;
-        border-radius: var(--radius-md) !important;
-        margin-bottom: var(--space-4) !important;
+        color: var(--text-primary) !important;
+        line-height: 1.6 !important;
+        margin-bottom: var(--space-md) !important;
     }
 
-    /* Exercise type badge */
     .exercise-type {
-        display: inline-block !important;
-        background: var(--accent-primary) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        background: var(--gradient-primary) !important;
         color: white !important;
-        padding: var(--space-1) var(--space-3) !important;
-        border-radius: var(--radius-sm) !important;
-        font-size: var(--text-xs) !important;
-        font-weight: 600 !important;
+        padding: 6px 14px !important;
+        border-radius: var(--radius-full) !important;
+        font-size: 0.7rem !important;
+        font-weight: 700 !important;
         text-transform: uppercase !important;
         letter-spacing: 0.05em !important;
-        margin-bottom: var(--space-3) !important;
+        margin-bottom: var(--space-md) !important;
     }
 
     /* ============================================
-       FEEDBACK BOXES
+       FEEDBACK BOXES - Vibrant Colors
        ============================================ */
     .feedback-box {
-        padding: var(--space-4) !important;
-        border-radius: var(--radius-md) !important;
-        margin: var(--space-4) 0 !important;
-        font-size: var(--text-base) !important;
-        line-height: var(--leading-normal) !important;
+        padding: var(--space-md) var(--space-lg) !important;
+        border-radius: var(--radius-lg) !important;
+        margin: var(--space-md) 0 !important;
+        font-size: 0.95rem !important;
+        line-height: 1.5 !important;
+        position: relative !important;
+        overflow: hidden !important;
     }
 
     .feedback-success {
-        background: rgba(34, 197, 94, 0.15) !important;
-        border: 1px solid rgba(34, 197, 94, 0.3) !important;
-        color: #4ade80 !important;
+        background: rgba(16, 185, 129, 0.1) !important;
+        border: 1px solid rgba(16, 185, 129, 0.3) !important;
+        color: var(--success-light) !important;
+    }
+
+    .feedback-success::before {
+        content: '' !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        width: 4px !important;
+        background: var(--gradient-success) !important;
     }
 
     .feedback-error {
-        background: rgba(239, 68, 68, 0.15) !important;
+        background: rgba(239, 68, 68, 0.1) !important;
         border: 1px solid rgba(239, 68, 68, 0.3) !important;
-        color: #f87171 !important;
+        color: var(--error-light) !important;
+    }
+
+    .feedback-error::before {
+        content: '' !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        width: 4px !important;
+        background: linear-gradient(to bottom, var(--error), var(--secondary)) !important;
     }
 
     .feedback-warning {
-        background: rgba(245, 158, 11, 0.15) !important;
+        background: rgba(245, 158, 11, 0.1) !important;
         border: 1px solid rgba(245, 158, 11, 0.3) !important;
-        color: #fbbf24 !important;
+        color: var(--warning-light) !important;
     }
 
     .feedback-info {
-        background: rgba(59, 130, 246, 0.15) !important;
+        background: rgba(59, 130, 246, 0.1) !important;
         border: 1px solid rgba(59, 130, 246, 0.3) !important;
         color: #60a5fa !important;
     }
 
     /* ============================================
-       METRICS
+       METRICS - Glowing Cards
        ============================================ */
     .metric-card {
-        background: var(--bg-card) !important;
+        background: var(--gradient-card) !important;
         border: 1px solid var(--border-subtle) !important;
-        border-radius: var(--radius-lg) !important;
-        padding: var(--space-5) !important;
+        border-radius: var(--radius-xl) !important;
+        padding: var(--space-lg) !important;
         text-align: center !important;
+        position: relative !important;
+        overflow: hidden !important;
+        transition: all var(--transition-base) !important;
+    }
+
+    .metric-card:hover {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 30px var(--primary-glow) !important;
+        transform: translateY(-4px) !important;
     }
 
     .metric-value {
-        color: var(--text-primary) !important;
-        font-size: var(--text-2xl) !important;
-        font-weight: 700 !important;
+        font-size: 2.5rem !important;
+        font-weight: 800 !important;
+        background: var(--gradient-primary) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
         line-height: 1 !important;
-        margin-bottom: var(--space-1) !important;
+        margin-bottom: var(--space-xs) !important;
     }
 
     .metric-label {
         color: var(--text-muted) !important;
-        font-size: var(--text-sm) !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
     }
 
     /* ============================================
@@ -518,177 +691,122 @@ def get_css() -> str:
     .pill {
         display: inline-flex !important;
         align-items: center !important;
-        gap: var(--space-1) !important;
-        padding: var(--space-1) var(--space-3) !important;
-        border-radius: var(--radius-sm) !important;
-        font-size: var(--text-xs) !important;
-        font-weight: 500 !important;
+        gap: 6px !important;
+        padding: 6px 14px !important;
+        border-radius: var(--radius-full) !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        transition: all var(--transition-fast) !important;
     }
 
     .pill-primary {
-        background: rgba(99, 102, 241, 0.2) !important;
-        color: var(--accent-primary-hover) !important;
+        background: var(--bg-active) !important;
+        color: var(--primary-light) !important;
+        border: 1px solid rgba(99, 102, 241, 0.3) !important;
     }
 
     .pill-success {
-        background: rgba(34, 197, 94, 0.2) !important;
-        color: var(--accent-success) !important;
+        background: rgba(16, 185, 129, 0.15) !important;
+        color: var(--success-light) !important;
+        border: 1px solid rgba(16, 185, 129, 0.3) !important;
     }
 
     .pill-warning {
-        background: rgba(245, 158, 11, 0.2) !important;
-        color: var(--accent-warning) !important;
+        background: rgba(245, 158, 11, 0.15) !important;
+        color: var(--warning-light) !important;
+        border: 1px solid rgba(245, 158, 11, 0.3) !important;
     }
 
     .pill-error {
-        background: rgba(239, 68, 68, 0.2) !important;
-        color: var(--accent-error) !important;
-    }
-
-    .pill-muted {
-        background: var(--bg-input) !important;
-        color: var(--text-muted) !important;
+        background: rgba(239, 68, 68, 0.15) !important;
+        color: var(--error-light) !important;
+        border: 1px solid rgba(239, 68, 68, 0.3) !important;
     }
 
     /* ============================================
-       ALERTS
+       ALERTS - Streamlit Native
        ============================================ */
     .stAlert {
-        border-radius: var(--radius-md) !important;
+        border-radius: var(--radius-lg) !important;
     }
 
-    .stAlert > div {
-        padding: var(--space-4) !important;
-    }
-
-    /* Info alert */
-    div[data-baseweb="notification"][kind="info"],
-    .element-container div[data-testid="stAlert"] {
-        background: rgba(59, 130, 246, 0.1) !important;
-        border: 1px solid rgba(59, 130, 246, 0.2) !important;
-    }
-
-    /* Success alert */
-    div[data-baseweb="notification"][kind="positive"] {
-        background: rgba(34, 197, 94, 0.1) !important;
-        border: 1px solid rgba(34, 197, 94, 0.2) !important;
-    }
-
-    /* Warning alert */
-    div[data-baseweb="notification"][kind="warning"] {
-        background: rgba(245, 158, 11, 0.1) !important;
-        border: 1px solid rgba(245, 158, 11, 0.2) !important;
-    }
-
-    /* Error alert */
-    div[data-baseweb="notification"][kind="negative"] {
-        background: rgba(239, 68, 68, 0.1) !important;
-        border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    div[data-testid="stAlert"] {
+        background: var(--bg-glass) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: var(--radius-lg) !important;
     }
 
     /* ============================================
-       DIVIDERS
-       ============================================ */
-    hr, .stDivider {
-        border-color: var(--border-subtle) !important;
-        margin: var(--space-6) 0 !important;
-    }
-
-    /* ============================================
-       EXPANDER
+       EXPANDER - Accordion Style
        ============================================ */
     .streamlit-expanderHeader {
-        background: var(--bg-card) !important;
+        background: var(--bg-glass) !important;
         border: 1px solid var(--border-subtle) !important;
-        border-radius: var(--radius-md) !important;
+        border-radius: var(--radius-lg) !important;
         color: var(--text-primary) !important;
         font-weight: 500 !important;
+        padding: var(--space-md) !important;
+        transition: all var(--transition-fast) !important;
+    }
+
+    .streamlit-expanderHeader:hover {
+        background: var(--bg-hover) !important;
+        border-color: var(--border-medium) !important;
     }
 
     .streamlit-expanderContent {
-        background: var(--bg-secondary) !important;
+        background: var(--bg-elevated) !important;
         border: 1px solid var(--border-subtle) !important;
         border-top: none !important;
-        border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
-        padding: var(--space-4) !important;
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
+        padding: var(--space-md) !important;
     }
 
     /* ============================================
-       TABS
+       TABS - iOS Segmented Control
        ============================================ */
     .stTabs [data-baseweb="tab-list"] {
-        background: transparent !important;
-        gap: var(--space-2) !important;
-        border-bottom: 1px solid var(--border-subtle) !important;
-        padding-bottom: 0 !important;
+        background: var(--bg-glass) !important;
+        border-radius: var(--radius-lg) !important;
+        padding: 4px !important;
+        gap: 4px !important;
+        border: 1px solid var(--border-subtle) !important;
     }
 
     .stTabs [data-baseweb="tab"] {
         background: transparent !important;
         color: var(--text-muted) !important;
         border: none !important;
-        border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
-        padding: var(--space-3) var(--space-4) !important;
+        border-radius: var(--radius-md) !important;
+        padding: 10px 20px !important;
         font-weight: 500 !important;
+        transition: all var(--transition-fast) !important;
     }
 
     .stTabs [data-baseweb="tab"]:hover {
         color: var(--text-primary) !important;
-        background: var(--bg-card) !important;
+        background: var(--bg-hover) !important;
     }
 
     .stTabs [aria-selected="true"] {
-        color: var(--accent-primary) !important;
-        background: var(--bg-card) !important;
-        border-bottom: 2px solid var(--accent-primary) !important;
+        background: var(--bg-active) !important;
+        color: var(--primary-light) !important;
+        box-shadow: var(--shadow-sm) !important;
+    }
+
+    /* Tab panel */
+    .stTabs [data-baseweb="tab-panel"] {
+        padding-top: var(--space-lg) !important;
     }
 
     /* ============================================
-       COLUMNS
+       DIVIDERS
        ============================================ */
-    [data-testid="column"] {
-        padding: var(--space-2) !important;
-    }
-
-    /* ============================================
-       SPINNER
-       ============================================ */
-    .stSpinner > div {
-        border-color: var(--accent-primary) transparent transparent transparent !important;
-    }
-
-    /* ============================================
-       DOWNLOAD BUTTON
-       ============================================ */
-    .stDownloadButton > button {
-        background: var(--bg-card) !important;
-        border: 1px solid var(--border-medium) !important;
-        color: var(--text-primary) !important;
-    }
-
-    /* ============================================
-       FILE UPLOADER
-       ============================================ */
-    .stFileUploader > div {
-        background: var(--bg-input) !important;
-        border: 2px dashed var(--border-medium) !important;
-        border-radius: var(--radius-lg) !important;
-    }
-
-    /* ============================================
-       TOGGLE
-       ============================================ */
-    .stCheckbox > label > span {
-        color: var(--text-primary) !important;
-    }
-
-    /* ============================================
-       TOOLTIP
-       ============================================ */
-    [data-baseweb="tooltip"] {
-        background: var(--bg-card) !important;
-        border: 1px solid var(--border-medium) !important;
-        color: var(--text-primary) !important;
+    hr, .stDivider {
+        border: none !important;
+        height: 1px !important;
+        background: linear-gradient(90deg, transparent, var(--border-medium), transparent) !important;
+        margin: var(--space-xl) 0 !important;
     }
 
     /* ============================================
@@ -697,37 +815,128 @@ def get_css() -> str:
     .section-header {
         display: flex !important;
         align-items: center !important;
-        gap: var(--space-2) !important;
-        margin-bottom: var(--space-4) !important;
-        padding-bottom: var(--space-2) !important;
+        gap: var(--space-sm) !important;
+        margin-bottom: var(--space-md) !important;
+        padding-bottom: var(--space-sm) !important;
         border-bottom: 1px solid var(--border-subtle) !important;
     }
 
     .section-header-title {
         color: var(--text-primary) !important;
-        font-size: var(--text-lg) !important;
+        font-size: 1.1rem !important;
         font-weight: 600 !important;
-        margin: 0 !important;
+    }
+
+    /* ============================================
+       SLIDER - iOS Style
+       ============================================ */
+    .stSlider > div > div > div {
+        background: var(--bg-glass) !important;
+        height: 6px !important;
+        border-radius: var(--radius-full) !important;
+    }
+
+    .stSlider > div > div > div > div {
+        background: var(--gradient-primary) !important;
+    }
+
+    .stSlider [data-baseweb="slider"] [role="slider"] {
+        background: white !important;
+        border: 2px solid var(--primary) !important;
+        box-shadow: 0 0 10px var(--primary-glow) !important;
+        width: 22px !important;
+        height: 22px !important;
+    }
+
+    /* ============================================
+       TOGGLE/CHECKBOX
+       ============================================ */
+    .stCheckbox > label {
+        color: var(--text-primary) !important;
+    }
+
+    /* ============================================
+       FILE UPLOADER
+       ============================================ */
+    .stFileUploader > div {
+        background: var(--bg-glass) !important;
+        border: 2px dashed var(--border-medium) !important;
+        border-radius: var(--radius-xl) !important;
+        transition: all var(--transition-fast) !important;
+    }
+
+    .stFileUploader > div:hover {
+        border-color: var(--primary) !important;
+        background: var(--bg-hover) !important;
+    }
+
+    /* ============================================
+       SPINNER
+       ============================================ */
+    .stSpinner > div {
+        border-color: var(--primary) transparent transparent transparent !important;
+    }
+
+    /* ============================================
+       COLUMNS
+       ============================================ */
+    [data-testid="column"] {
+        padding: var(--space-sm) !important;
+    }
+
+    /* ============================================
+       CHAT BUBBLES
+       ============================================ */
+    .chat-message {
+        display: flex !important;
+        gap: var(--space-md) !important;
+        margin-bottom: var(--space-md) !important;
+        align-items: flex-start !important;
+    }
+
+    .chat-avatar {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: var(--radius-full) !important;
+        background: var(--gradient-primary) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.2rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    .chat-bubble {
+        background: var(--bg-glass) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: var(--radius-lg) !important;
+        padding: var(--space-md) !important;
+        max-width: 80% !important;
+        color: var(--text-primary) !important;
+        line-height: 1.5 !important;
+    }
+
+    .chat-message.user .chat-bubble {
+        background: var(--bg-active) !important;
+        border-color: var(--primary) !important;
     }
 
     /* ============================================
        ACCESSIBILITY
        ============================================ */
-
-    /* Focus states */
     button:focus-visible,
     input:focus-visible,
     textarea:focus-visible,
     select:focus-visible {
-        outline: 2px solid var(--accent-primary) !important;
+        outline: 2px solid var(--primary) !important;
         outline-offset: 2px !important;
     }
 
-    /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
-        * {
-            animation: none !important;
-            transition: none !important;
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
         }
     }
 
@@ -735,18 +944,16 @@ def get_css() -> str:
        UTILITY CLASSES
        ============================================ */
     .text-center { text-align: center !important; }
-    .text-left { text-align: left !important; }
-    .text-right { text-align: right !important; }
-
-    .mt-4 { margin-top: var(--space-4) !important; }
-    .mb-4 { margin-bottom: var(--space-4) !important; }
-    .my-4 { margin-top: var(--space-4) !important; margin-bottom: var(--space-4) !important; }
-
-    .p-4 { padding: var(--space-4) !important; }
-    .p-6 { padding: var(--space-6) !important; }
-
-    /* Hide elements */
-    .hidden { display: none !important; }
+    .text-gradient {
+        background: var(--gradient-primary) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+    }
+    .glow { box-shadow: var(--shadow-glow) !important; }
+    .glass {
+        background: var(--bg-glass) !important;
+        backdrop-filter: blur(20px) !important;
+    }
     </style>
     """
 
@@ -754,8 +961,8 @@ def get_css() -> str:
 def apply_theme() -> None:
     """Apply theme settings to the Streamlit app."""
     st.set_page_config(
-        page_title="Spanish Learning",
-        page_icon="🇪🇸",
+        page_title="VivaLingo Pro",
+        page_icon="🚀",
         layout="wide",
         initial_sidebar_state="expanded"
     )
@@ -763,7 +970,7 @@ def apply_theme() -> None:
 
 
 def render_hero(title: str, subtitle: str = "", pills: list = None) -> None:
-    """Render a clean hero section."""
+    """Render a premium hero section with glassmorphism."""
     pills_html = ""
     if pills:
         pills_html = '<div class="hero-pills">' + ''.join(
@@ -772,9 +979,11 @@ def render_hero(title: str, subtitle: str = "", pills: list = None) -> None:
 
     st.markdown(f"""
     <div class="hero">
-        {pills_html}
-        <div class="hero-title">{title}</div>
-        <div class="hero-subtitle">{subtitle}</div>
+        <div class="hero-content">
+            {pills_html}
+            <div class="hero-title">{title}</div>
+            <div class="hero-subtitle">{subtitle}</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -791,8 +1000,8 @@ def render_section_header(title: str, icon: str = "") -> None:
 
 
 def render_metric_card(value: str, label: str, icon: str = "") -> str:
-    """Return HTML for a metric card."""
-    icon_html = f'<div style="font-size: 1.5rem; margin-bottom: 0.5rem;">{icon}</div>' if icon else ''
+    """Return HTML for a glowing metric card."""
+    icon_html = f'<div style="font-size: 2rem; margin-bottom: 8px;">{icon}</div>' if icon else ''
     return f"""
     <div class="metric-card">
         {icon_html}
@@ -802,9 +1011,21 @@ def render_metric_card(value: str, label: str, icon: str = "") -> str:
     """
 
 
+def render_metric_grid(metrics: list) -> None:
+    """Render a grid of metric cards."""
+    cols = st.columns(len(metrics))
+    for col, metric in zip(cols, metrics):
+        with col:
+            st.markdown(render_metric_card(
+                metric.get("value", "0"),
+                metric.get("label", ""),
+                metric.get("icon", "")
+            ), unsafe_allow_html=True)
+
+
 def render_feedback(feedback_type: str, message: str, details: str = "") -> None:
-    """Render a feedback box with consistent styling."""
-    details_html = f'<div style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.9;">{details}</div>' if details else ''
+    """Render a feedback box with vibrant styling."""
+    details_html = f'<div style="margin-top: 8px; font-size: 0.9rem; opacity: 0.9;">{details}</div>' if details else ''
     st.markdown(f"""
     <div class="feedback-box feedback-{feedback_type}">
         {message}
@@ -816,7 +1037,7 @@ def render_feedback(feedback_type: str, message: str, details: str = "") -> None
 def render_exercise_card(exercise_type: str, prompt: str) -> None:
     """Render an exercise card with type badge and prompt."""
     st.markdown(f"""
-    <div class="card">
+    <div class="glass-card">
         <span class="exercise-type">{exercise_type}</span>
         <div class="exercise-prompt">{prompt}</div>
     </div>
@@ -824,7 +1045,7 @@ def render_exercise_card(exercise_type: str, prompt: str) -> None:
 
 
 def render_progress_bar(current: int, total: int, label: str = "") -> None:
-    """Render a progress indicator."""
+    """Render a progress indicator with label."""
     if label:
         st.caption(label)
     st.progress(current / total if total > 0 else 0)
@@ -835,26 +1056,66 @@ def render_pill(text: str, variant: str = "primary") -> str:
     return f'<span class="pill pill-{variant}">{text}</span>'
 
 
+def render_card(content: str, title: str = "") -> None:
+    """Render a glass card with optional title."""
+    title_html = f'<h4 style="margin-bottom: 12px;">{title}</h4>' if title else ''
+    st.markdown(f"""
+    <div class="glass-card">
+        {title_html}
+        {content}
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def render_domain_coverage(domains: dict) -> None:
+    """Render domain coverage visualization."""
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    for domain, coverage in domains.items():
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.progress(min(coverage / 100, 1.0))
+        with col2:
+            st.caption(f"{domain}: {coverage:.0f}%")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def render_quick_actions(actions: list) -> None:
+    """Render a row of quick action buttons."""
+    cols = st.columns(len(actions))
+    for col, action in zip(cols, actions):
+        with col:
+            if st.button(
+                f"{action.get('icon', '')} {action.get('label', '')}",
+                key=action.get('key', action.get('label')),
+                use_container_width=True,
+                type=action.get('type', 'secondary')
+            ):
+                if action.get('callback'):
+                    action['callback']()
+
+
 def render_profile_card(name: str, level: str, vocab_count: int, streak: int, is_active: bool = False) -> str:
-    """Render a profile card."""
+    """Render a profile card with glassmorphism."""
     active_badge = '<span class="pill pill-success">Active</span>' if is_active else ''
+    border_style = 'border-color: var(--primary); box-shadow: 0 0 20px var(--primary-glow);' if is_active else ''
+
     return f"""
-    <div class="card" style="{'border-color: var(--accent-primary);' if is_active else ''}">
-        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+    <div class="glass-card" style="{border_style}">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
             <div>
-                <div style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary);">{name}</div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{name}</div>
                 <div style="color: var(--text-muted); font-size: 0.875rem;">Level: {level}</div>
             </div>
             {active_badge}
         </div>
-        <div style="display: flex; gap: 1.5rem;">
+        <div style="display: flex; gap: 24px;">
             <div>
-                <div style="font-weight: 600; color: var(--text-primary);">{vocab_count}</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">Words</div>
+                <div style="font-weight: 700; font-size: 1.5rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{vocab_count}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Words</div>
             </div>
             <div>
-                <div style="font-weight: 600; color: var(--text-primary);">{streak}🔥</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">Streak</div>
+                <div style="font-weight: 700; font-size: 1.5rem; color: var(--warning);">{streak}🔥</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Streak</div>
             </div>
         </div>
     </div>
@@ -862,44 +1123,36 @@ def render_profile_card(name: str, level: str, vocab_count: int, streak: int, is
 
 
 def render_streak_badge(streak: int) -> None:
-    """Render a streak badge."""
+    """Render a glowing streak badge."""
     if streak > 0:
         st.markdown(f"""
-        <div style="display: inline-flex; align-items: center; gap: 0.5rem;
-                    background: rgba(245, 158, 11, 0.15); padding: 0.5rem 1rem;
-                    border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.3);">
-            <span style="font-size: 1.5rem;">🔥</span>
-            <span style="font-size: 1.25rem; font-weight: 700; color: #fbbf24;">{streak}</span>
-            <span style="color: var(--text-secondary);">day{'s' if streak != 1 else ''}</span>
+        <div style="display: inline-flex; align-items: center; gap: 10px;
+                    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(236, 72, 153, 0.1) 100%);
+                    padding: 12px 20px; border-radius: 16px;
+                    border: 1px solid rgba(245, 158, 11, 0.3);
+                    box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);">
+            <span style="font-size: 1.75rem;">🔥</span>
+            <span style="font-size: 1.5rem; font-weight: 800; color: #fbbf24;">{streak}</span>
+            <span style="color: var(--text-secondary); font-weight: 500;">day{'s' if streak != 1 else ''}</span>
         </div>
         """, unsafe_allow_html=True)
 
 
-# Backward compatibility aliases
+# Backward compatibility
 def get_design_system():
     """Return design tokens for programmatic access."""
     return {
-        "colors": {
-            "bg_primary": "#0f1117",
-            "bg_secondary": "#1a1d24",
-            "bg_card": "#1e222a",
-            "text_primary": "#f8fafc",
-            "text_secondary": "#cbd5e1",
-            "accent_primary": "#6366f1",
-            "success": "#22c55e",
-            "warning": "#f59e0b",
-            "error": "#ef4444",
-        },
+        "colors": COLORS,
         "spacing": {
-            "xs": "0.25rem",
-            "sm": "0.5rem",
-            "md": "1rem",
-            "lg": "1.5rem",
-            "xl": "2rem",
+            "xs": "4px",
+            "sm": "8px",
+            "md": "16px",
+            "lg": "24px",
+            "xl": "32px",
         },
         "typography": {
             "base_size": "1rem",
-            "heading_weight": 600,
+            "heading_weight": 700,
             "line_height": 1.5,
         }
     }
