@@ -6,7 +6,7 @@ from datetime import date
 from utils.theme import render_hero, render_section_header
 from utils.database import save_vocab_item, record_domain_exposure, record_progress
 from utils.content import TOPIC_DIVERSITY_DOMAINS
-from utils.helpers import sentence_split, extract_candidate_phrases, detect_domain
+from utils.helpers import sentence_split, extract_candidate_phrases, detect_domain, detect_language
 
 
 def render_content_ingest_page():
@@ -414,16 +414,34 @@ def render_cloze_practice(item: dict, index: int):
 
     user_answer = st.text_input("Fill in the blank:", key=f"cloze_{index}")
 
-    if st.button("Check", type="primary"):
-        if user_answer.lower().strip() == hidden_word.lower():
-            st.success("Correct!")
-            record_progress({"vocab_reviewed": 1})
-        else:
-            st.error(f"The answer was: {hidden_word}")
+    # Add hint button
+    if st.button("💡 Hint in English", key=f"cloze_hint_{index}"):
+        st.info(f"**Hint:** The missing word is a Spanish word from the phrase you're learning.")
 
-        if st.button("Next →"):
-            st.session_state.ci_practice_index = index + 1
-            st.rerun()
+    if st.button("Check", type="primary"):
+        if not user_answer.strip():
+            st.warning("Please enter your answer.")
+        else:
+            # Validate Spanish (only for longer answers)
+            if len(user_answer.split()) > 1:
+                lang_info = detect_language(user_answer)
+                if lang_info["language"] == "english":
+                    st.markdown("""
+                    <div class="feedback-box feedback-error">
+                        🌐 <strong>Please answer in Spanish!</strong>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    return
+
+            if user_answer.lower().strip() == hidden_word.lower():
+                st.success("Correct!")
+                record_progress({"vocab_reviewed": 1})
+            else:
+                st.error(f"The answer was: {hidden_word}")
+
+    if st.button("Next →"):
+        st.session_state.ci_practice_index = index + 1
+        st.rerun()
 
 
 def render_sentence_practice(item: dict, index: int):
@@ -438,16 +456,36 @@ def render_sentence_practice(item: dict, index: int):
 
     user_sentence = st.text_area("Your sentence:", height=80, key=f"sentence_{index}")
 
+    # Add hint button
+    if st.button("💡 Hint in English", key=f"sentence_hint_{index}"):
+        st.info(f"**Hint:** Write a sentence in Spanish using '{item['phrase']}'. Domain: {item.get('domain', 'General')}")
+
     if st.button("Submit", type="primary"):
         if user_sentence.strip():
-            if item['phrase'].lower() in user_sentence.lower():
+            # Validate Spanish language first
+            lang_info = detect_language(user_sentence)
+
+            if lang_info["language"] == "english":
+                st.markdown("""
+                <div class="feedback-box feedback-error">
+                    🌐 <strong>Please write in Spanish!</strong> Your sentence appears to be in English.
+                    Use the "Hint in English" button if you need help.
+                </div>
+                """, unsafe_allow_html=True)
+            elif lang_info["language"] == "mixed" and lang_info.get("confidence", 0) > 0.3:
+                st.markdown("""
+                <div class="feedback-box feedback-warning">
+                    🔀 <strong>Mixed language detected.</strong> Try writing entirely in Spanish.
+                </div>
+                """, unsafe_allow_html=True)
+            elif item['phrase'].lower() in user_sentence.lower():
                 st.success("Great! You've used the phrase in context.")
                 record_progress({"writing_words": len(user_sentence.split())})
             else:
                 st.warning(f"Try to include '{item['phrase']}' in your sentence.")
-
-            if st.button("Next →"):
-                st.session_state.ci_practice_index = index + 1
-                st.rerun()
         else:
             st.warning("Please write a sentence.")
+
+    if st.button("Next →"):
+        st.session_state.ci_practice_index = index + 1
+        st.rerun()

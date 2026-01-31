@@ -10,7 +10,7 @@ from utils.database import (
     record_progress
 )
 from utils.content import GRAMMAR_MICRODRILLS
-from utils.helpers import get_review_priority
+from utils.helpers import get_review_priority, detect_language
 
 
 def render_review_hub_page():
@@ -267,47 +267,71 @@ def render_error_card(card: dict):
 
     user_answer = st.text_input("Your correction:", key=f"error_{st.session_state.review_index}")
 
+    # Add hint button
+    if st.button("💡 Hint in English", key=f"error_hint_{st.session_state.review_index}"):
+        st.info(f"**Hint:** The error type is: {card.get('explanation', 'grammar error')[:100]}...")
+
     if st.button("Check", type="primary"):
-        correct = card.get("back", "")
-        item = card["item"]
-
-        # Normalize both answers for comparison
-        user_normalized = user_answer.lower().strip()
-        correct_normalized = correct.lower().strip()
-
-        # Check for exact match or close enough match (user answer should match the full correction)
-        # Use equality check instead of substring to avoid false positives like "de" matching "depender de"
-        is_correct = (
-            user_normalized == correct_normalized or
-            user_normalized == correct_normalized.replace("→", "").strip() or
-            correct_normalized.startswith(user_normalized + " ") is False and user_normalized == correct_normalized.split("/")[0].strip()
-        )
-
-        if is_correct:
-            st.markdown("""
-            <div class="feedback-box feedback-success">
-                ✅ <strong>Correct!</strong>
-            </div>
-            """, unsafe_allow_html=True)
-            record_progress({"errors_fixed": 1})
-
-            # Update SRS for error
-            if item.get("id"):
-                update_mistake_review(item["id"], 4)
+        if not user_answer.strip():
+            st.warning("Please enter your correction.")
         else:
-            st.markdown(f"""
-            <div class="feedback-box feedback-error">
-                ❌ The correct form is: <strong>{correct}</strong>
-            </div>
-            """, unsafe_allow_html=True)
+            # Validate Spanish language first
+            lang_info = detect_language(user_answer)
 
-            if item.get("id"):
-                update_mistake_review(item["id"], 1)
+            if lang_info["language"] == "english":
+                st.markdown("""
+                <div class="feedback-box feedback-error">
+                    🌐 <strong>Please write in Spanish!</strong> Your correction appears to be in English.
+                    Use the "Hint in English" button if you need help.
+                </div>
+                """, unsafe_allow_html=True)
+            elif lang_info["language"] == "mixed" and lang_info.get("confidence", 0) > 0.3:
+                st.markdown("""
+                <div class="feedback-box feedback-warning">
+                    🔀 <strong>Mixed language detected.</strong> Try writing entirely in Spanish.
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                correct = card.get("back", "")
+                item = card["item"]
 
-        st.info(f"**Remember:** {card.get('explanation', '')}")
+                # Normalize both answers for comparison
+                user_normalized = user_answer.lower().strip()
+                correct_normalized = correct.lower().strip()
 
-        if st.button("Next →", key="next_error"):
-            advance_review()
+                # Check for exact match or close enough match (user answer should match the full correction)
+                # Use equality check instead of substring to avoid false positives like "de" matching "depender de"
+                is_correct = (
+                    user_normalized == correct_normalized or
+                    user_normalized == correct_normalized.replace("→", "").strip() or
+                    correct_normalized.startswith(user_normalized + " ") is False and user_normalized == correct_normalized.split("/")[0].strip()
+                )
+
+                if is_correct:
+                    st.markdown("""
+                    <div class="feedback-box feedback-success">
+                        ✅ <strong>Correct!</strong>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    record_progress({"errors_fixed": 1})
+
+                    # Update SRS for error
+                    if item.get("id"):
+                        update_mistake_review(item["id"], 4)
+                else:
+                    st.markdown(f"""
+                    <div class="feedback-box feedback-error">
+                        ❌ The correct form is: <strong>{correct}</strong>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    if item.get("id"):
+                        update_mistake_review(item["id"], 1)
+
+                st.info(f"**Remember:** {card.get('explanation', '')}")
+
+    if st.button("Next →", key="next_error"):
+        advance_review()
 
 
 def advance_review():

@@ -9,7 +9,7 @@ from utils.database import (
     get_user_profile, record_progress
 )
 from utils.content import TOPIC_DIVERSITY_DOMAINS
-from utils.helpers import pick_domain_pair, seed_for_day, shuffle_with_seed
+from utils.helpers import pick_domain_pair, seed_for_day, shuffle_with_seed, detect_language
 
 
 def render_topic_diversity_page():
@@ -220,12 +220,29 @@ def render_domain_vocabulary(domain_data: dict, is_stretch: bool = False):
 
         user_answer = st.text_input("Your answer:", key=f"practice_{domain_name}")
 
+        # Add hint button
+        if st.button("💡 Hint in English", key=f"hint_{domain_name}"):
+            st.info(f"**Hint:** The word means: {practice_item.get('meaning', 'Check the context for clues')}")
+
         if st.button("Check Answer", key=f"check_{domain_name}"):
-            if user_answer.lower().strip() == practice_item["term"].lower():
-                st.success("🎉 Correct! Great job!")
-                record_progress({"vocab_reviewed": 1})
-                # Mark to get a new practice item next time
-                st.session_state[f"{practice_key}_changed"] = True
+            if not user_answer.strip():
+                st.warning("Please enter your answer.")
             else:
-                st.error(f"Not quite. The answer was: **{practice_item['term']}**")
-                st.markdown(f"**Meaning:** {practice_item['meaning']}")
+                # Validate Spanish language first
+                lang_info = detect_language(user_answer)
+
+                if lang_info["language"] == "english" and len(user_answer.split()) > 1:
+                    st.markdown("""
+                    <div class="feedback-box feedback-error">
+                        🌐 <strong>Please answer in Spanish!</strong> Your answer appears to be in English.
+                        Use the "Hint in English" button if you need help.
+                    </div>
+                    """, unsafe_allow_html=True)
+                elif user_answer.lower().strip() == practice_item["term"].lower():
+                    st.success("🎉 Correct! Great job!")
+                    record_progress({"vocab_reviewed": 1})
+                    # Mark to get a new practice item next time
+                    st.session_state[f"{practice_key}_changed"] = True
+                else:
+                    st.error(f"Not quite. The answer was: **{practice_item['term']}**")
+                    st.markdown(f"**Meaning:** {practice_item['meaning']}")

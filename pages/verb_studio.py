@@ -6,7 +6,7 @@ from datetime import date
 from utils.theme import render_hero, render_section_header
 from utils.database import record_progress, save_vocab_item
 from utils.content import VERB_CHOICE_STUDIO
-from utils.helpers import seed_for_day
+from utils.helpers import seed_for_day, detect_language
 
 
 def render_verb_studio_page():
@@ -114,21 +114,36 @@ def render_verb_scenario(scenario: dict, random_mode: bool = False):
                 st.rerun()
 
     # Explanation input
-    st.markdown("### Explain Your Choice")
+    st.markdown("### Explain Your Choice (in Spanish)")
 
     explanation = st.text_area(
-        "Why did you choose this verb? (One line is enough)",
+        "¿Por qué elegiste este verbo? (Una línea es suficiente)",
         value=st.session_state.vs_explanation,
         height=80,
-        key="verb_explanation"
+        key="verb_explanation",
+        placeholder="Escriba su explicación en español..."
     )
     st.session_state.vs_explanation = explanation
+
+    # Add hint button
+    if st.button("💡 Hint in English", key="verb_hint"):
+        st.info("**Hint:** Explain in Spanish why you think this verb is the best choice. Consider register (formal/informal), intensity, and context.")
 
     # Check answer button
     col1, col2 = st.columns([1, 1])
 
     with col1:
         if st.button("Check Answer", type="primary", use_container_width=True):
+            # Validate Spanish if explanation provided
+            if explanation.strip():
+                lang_info = detect_language(explanation)
+                if lang_info["language"] == "english":
+                    st.markdown("""
+                    <div class="feedback-box feedback-warning">
+                        🌐 <strong>Try explaining in Spanish!</strong> It's great practice.
+                        Use the "Hint in English" button if you need help.
+                    </div>
+                    """, unsafe_allow_html=True)
             st.session_state.vs_revealed = True
 
     with col2:

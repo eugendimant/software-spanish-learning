@@ -10,7 +10,7 @@ from utils.database import (
     record_progress, save_transcript, get_user_profile
 )
 from utils.content import DAILY_MISSION_TEMPLATES
-from utils.helpers import seed_for_day, analyze_constraints, check_text_for_mistakes
+from utils.helpers import seed_for_day, analyze_constraints, check_text_for_mistakes, detect_language
 
 
 def render_daily_missions_page():
@@ -212,10 +212,32 @@ def render_speaking_input(mission: dict):
     # Duration estimate
     duration = st.slider("Approximate speaking time (seconds):", 30, 120, 60)
 
+    # Add hint button
+    if st.button("💡 Hint in English", key="speaking_hint"):
+        constraints = mission.get("constraints", [])
+        st.info(f"**Hint:** Record yourself speaking in Spanish. Make sure to include: {', '.join(constraints[:3])}")
+
     # Submit
     if st.button("Submit Speaking Mission", type="primary", use_container_width=True):
         if transcript.strip():
-            process_mission_response(mission, transcript, duration)
+            # Validate Spanish language first
+            lang_info = detect_language(transcript)
+
+            if lang_info["language"] == "english":
+                st.markdown("""
+                <div class="feedback-box feedback-error">
+                    🌐 <strong>Please speak in Spanish!</strong> Your transcript appears to be in English.
+                    Use the "Hint in English" button if you need help.
+                </div>
+                """, unsafe_allow_html=True)
+            elif lang_info["language"] == "mixed" and lang_info.get("confidence", 0) > 0.3:
+                st.markdown("""
+                <div class="feedback-box feedback-warning">
+                    🔀 <strong>Mixed language detected.</strong> Try speaking entirely in Spanish.
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                process_mission_response(mission, transcript, duration)
         else:
             st.warning("Please enter your transcript before submitting.")
 
@@ -238,10 +260,32 @@ def render_writing_input(mission: dict):
     word_count = len(response.split()) if response else 0
     st.caption(f"Word count: {word_count}")
 
+    # Add hint button
+    if st.button("💡 Hint in English", key="writing_hint"):
+        constraints = mission.get("constraints", [])
+        st.info(f"**Hint:** Write 4-6 sentences in Spanish. Make sure to include: {', '.join(constraints[:3])}")
+
     # Submit
     if st.button("Submit Writing Mission", type="primary", use_container_width=True):
         if response.strip():
-            process_mission_response(mission, response)
+            # Validate Spanish language first
+            lang_info = detect_language(response)
+
+            if lang_info["language"] == "english":
+                st.markdown("""
+                <div class="feedback-box feedback-error">
+                    🌐 <strong>Please write in Spanish!</strong> Your response appears to be in English.
+                    Use the "Hint in English" button if you need help.
+                </div>
+                """, unsafe_allow_html=True)
+            elif lang_info["language"] == "mixed" and lang_info.get("confidence", 0) > 0.3:
+                st.markdown("""
+                <div class="feedback-box feedback-warning">
+                    🔀 <strong>Mixed language detected.</strong> Try writing entirely in Spanish.
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                process_mission_response(mission, response)
         else:
             st.warning("Please write your response before submitting.")
 
@@ -338,10 +382,35 @@ def process_mission_response(mission: dict, response: str, duration: int = 0):
         key="retry_response"
     )
 
+    # Add hint button for retry
+    if st.button("💡 Hint in English", key="retry_hint"):
+        if mistakes:
+            st.info(f"**Hint:** Fix these errors: {mistakes[0].get('original', '')} should be {mistakes[0].get('correction', '')}")
+        else:
+            st.info("**Hint:** Review the constraints above and make sure your Spanish is correct.")
+
     if st.button("Submit Retry"):
         if retry.strip():
-            retry_mistakes = check_text_for_mistakes(retry)
-            if len(retry_mistakes) < len(mistakes):
-                st.success("🎉 Great improvement! You fixed some errors.")
+            # Validate Spanish language first
+            lang_info = detect_language(retry)
+
+            if lang_info["language"] == "english":
+                st.markdown("""
+                <div class="feedback-box feedback-error">
+                    🌐 <strong>Please write in Spanish!</strong> Your retry appears to be in English.
+                </div>
+                """, unsafe_allow_html=True)
+            elif lang_info["language"] == "mixed" and lang_info.get("confidence", 0) > 0.3:
+                st.markdown("""
+                <div class="feedback-box feedback-warning">
+                    🔀 <strong>Mixed language detected.</strong> Try writing entirely in Spanish.
+                </div>
+                """, unsafe_allow_html=True)
             else:
-                st.info("Keep practicing! Review the corrections above.")
+                retry_mistakes = check_text_for_mistakes(retry)
+                # Filter out language warnings
+                retry_mistakes = [m for m in retry_mistakes if m.get("tag") != "language"]
+                if len(retry_mistakes) < len(mistakes):
+                    st.success("🎉 Great improvement! You fixed some errors.")
+                else:
+                    st.info("Keep practicing! Review the corrections above.")

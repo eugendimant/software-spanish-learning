@@ -7,7 +7,7 @@ from utils.database import (
     get_connection, get_mistakes_for_review, get_mistake_stats,
     update_mistake_review, record_progress, get_active_profile_id
 )
-from utils.helpers import format_time_ago
+from utils.helpers import format_time_ago, detect_language
 
 
 def render_error_notebook_page():
@@ -305,47 +305,71 @@ def render_error_practice():
         key=f"error_correction_{index}"
     )
 
+    # Add hint button
+    if st.button("💡 Hint in English", key=f"error_hint_{index}"):
+        st.info(f"**Hint:** Fix the error in: '{error.get('user_text', error.get('pattern', ''))}'. The error type is: {error.get('error_type', 'grammar').replace('_', ' ')}")
+
     if st.button("Check", type="primary"):
-        correct = error.get('corrected_text', '')
-        is_correct = user_correction.lower().strip() in correct.lower() or \
-                     correct.lower() in user_correction.lower().strip()
-
-        if is_correct:
-            st.markdown("""
-            <div class="feedback-box feedback-success">
-                ✅ <strong>Correct!</strong> You remembered this one.
-            </div>
-            """, unsafe_allow_html=True)
-
-            # Update SRS with good rating
-            if error.get('id'):
-                update_mistake_review(error['id'], 4)
-            record_progress({"errors_fixed": 1})
+        if not user_correction.strip():
+            st.warning("Please write your correction.")
         else:
-            st.markdown(f"""
-            <div class="feedback-box feedback-error">
-                ❌ <strong>Not quite.</strong><br>
-                Correct: <strong>{correct}</strong>
-            </div>
-            """, unsafe_allow_html=True)
+            # Validate Spanish language first
+            lang_info = detect_language(user_correction)
 
-            # Update SRS with poor rating
-            if error.get('id'):
-                update_mistake_review(error['id'], 1)
+            if lang_info["language"] == "english":
+                st.markdown("""
+                <div class="feedback-box feedback-error">
+                    🌐 <strong>Please write in Spanish!</strong> Your correction appears to be in English.
+                    Use the "Hint in English" button if you need help.
+                </div>
+                """, unsafe_allow_html=True)
+            elif lang_info["language"] == "mixed" and lang_info.get("confidence", 0) > 0.3:
+                st.markdown("""
+                <div class="feedback-box feedback-warning">
+                    🔀 <strong>Mixed language detected.</strong> Try writing entirely in Spanish.
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                correct = error.get('corrected_text', '')
+                is_correct = user_correction.lower().strip() in correct.lower() or \
+                             correct.lower() in user_correction.lower().strip()
 
-        st.info(f"**Remember:** {error.get('explanation', 'Review this pattern.')}")
+                if is_correct:
+                    st.markdown("""
+                    <div class="feedback-box feedback-success">
+                        ✅ <strong>Correct!</strong> You remembered this one.
+                    </div>
+                    """, unsafe_allow_html=True)
 
-        # Examples
-        if error.get('examples'):
-            import json
-            try:
-                examples = json.loads(error['examples'])
-                st.markdown("**Examples:**")
-                for ex in examples[:2]:
-                    st.markdown(f"- _{ex}_")
-            except (json.JSONDecodeError, TypeError):
-                pass
+                    # Update SRS with good rating
+                    if error.get('id'):
+                        update_mistake_review(error['id'], 4)
+                    record_progress({"errors_fixed": 1})
+                else:
+                    st.markdown(f"""
+                    <div class="feedback-box feedback-error">
+                        ❌ <strong>Not quite.</strong><br>
+                        Correct: <strong>{correct}</strong>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-        if st.button("Next Error →"):
-            st.session_state.error_practice_index += 1
-            st.rerun()
+                    # Update SRS with poor rating
+                    if error.get('id'):
+                        update_mistake_review(error['id'], 1)
+
+                st.info(f"**Remember:** {error.get('explanation', 'Review this pattern.')}")
+
+                # Examples
+                if error.get('examples'):
+                    import json
+                    try:
+                        examples = json.loads(error['examples'])
+                        st.markdown("**Examples:**")
+                        for ex in examples[:2]:
+                            st.markdown(f"- _{ex}_")
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+
+    if st.button("Next Error →"):
+        st.session_state.error_practice_index += 1
+        st.rerun()

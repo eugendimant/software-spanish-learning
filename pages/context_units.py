@@ -74,10 +74,31 @@ def render_context_units_page():
 
         comp_answer = st.text_input("Your answer:", key="comprehension_answer")
 
+        # Add hint button
+        if st.button("💡 Hint in English", key="comp_hint"):
+            st.info(f"**Hint:** The phrase '{unit['term']}' is commonly used to express: {unit.get('hint', unit.get('collocations', ['a specific concept'])[0])}")
+
         if st.button("Check Comprehension", key="check_comp"):
             if comp_answer.strip():
-                st.success("Good reflection! The key is understanding how context shapes meaning.")
-                record_progress({"vocab_reviewed": 1})
+                # Validate Spanish language
+                lang_info = detect_language(comp_answer)
+
+                if lang_info["language"] == "english":
+                    st.markdown("""
+                    <div class="feedback-box feedback-error">
+                        🌐 <strong>Please answer in Spanish!</strong> This is a Spanish learning app.
+                        Use the "Hint in English" button if you need help.
+                    </div>
+                    """, unsafe_allow_html=True)
+                elif lang_info["language"] == "mixed" and lang_info.get("confidence", 0) > 0.3:
+                    st.markdown("""
+                    <div class="feedback-box feedback-warning">
+                        🔀 <strong>Mixed language detected.</strong> Try answering entirely in Spanish.
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.success("Good reflection! The key is understanding how context shapes meaning.")
+                    record_progress({"vocab_reviewed": 1})
             else:
                 st.warning("Try to answer the question based on the contexts above.")
 
@@ -140,6 +161,10 @@ def render_context_units_page():
             height=100,
             key="user_sentence"
         )
+
+        # Add hint button
+        if st.button("💡 Hint in English", key="sentence_hint"):
+            st.info(f"**Hint:** Write a sentence in Spanish that includes '{unit['term']}'. Example context: {scenario}")
 
         if st.button("Submit Sentence", key="submit_sentence"):
             if user_sentence.strip():
@@ -212,23 +237,43 @@ def render_context_units_page():
                 key="swap_rewrite"
             )
 
+            # Add hint button for rewrite
+            if st.button("💡 Hint in English", key="rewrite_hint"):
+                st.info(f"**Hint:** Replace one word in '{base}' with one of: {', '.join(choices)}")
+
             if st.button("Check Rewrite", key="check_rewrite"):
                 if rewrite.strip():
-                    # Check if any of the choices is used
-                    used_choice = any(c.lower() in rewrite.lower() for c in choices)
-                    if used_choice:
+                    # Validate Spanish language first
+                    lang_info = detect_language(rewrite)
+
+                    if lang_info["language"] == "english":
                         st.markdown("""
-                        <div class="feedback-box feedback-success">
-                            ✅ <strong>Excellent!</strong> You've successfully modified the sentence while maintaining the structure.
+                        <div class="feedback-box feedback-error">
+                            🌐 <strong>Please write in Spanish!</strong> Your sentence appears to be in English.
                         </div>
                         """, unsafe_allow_html=True)
-                        record_progress({"vocab_reviewed": 1})
+                    elif lang_info["language"] == "mixed" and lang_info.get("confidence", 0) > 0.3:
+                        st.markdown("""
+                        <div class="feedback-box feedback-warning">
+                            🔀 <strong>Mixed language detected.</strong> Try writing entirely in Spanish.
+                        </div>
+                        """, unsafe_allow_html=True)
                     else:
-                        st.markdown(f"""
-                        <div class="feedback-box feedback-info">
-                            💡 Try using one of the suggested words: {', '.join(choices)}
-                        </div>
-                        """, unsafe_allow_html=True)
+                        # Check if any of the choices is used
+                        used_choice = any(c.lower() in rewrite.lower() for c in choices)
+                        if used_choice:
+                            st.markdown("""
+                            <div class="feedback-box feedback-success">
+                                ✅ <strong>Excellent!</strong> You've successfully modified the sentence while maintaining the structure.
+                            </div>
+                            """, unsafe_allow_html=True)
+                            record_progress({"vocab_reviewed": 1})
+                        else:
+                            st.markdown(f"""
+                            <div class="feedback-box feedback-info">
+                                💡 Try using one of the suggested words: {', '.join(choices)}
+                            </div>
+                            """, unsafe_allow_html=True)
                 else:
                     st.warning("Please write your rewritten sentence.")
 
