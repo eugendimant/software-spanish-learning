@@ -137,6 +137,100 @@ def get_css() -> str:
         line-height: 1.7;
     }
 
+    /* === READING WIDTH CONSTRAINTS === */
+    /* Constrain text to readable width (60-80 chars) */
+    .readable-width {
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .content-container {
+        max-width: 800px;
+        margin: 0 auto;
+        line-height: 1.75;
+    }
+
+    /* Exercise layout - consistent structure */
+    .exercise-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .exercise-prompt {
+        font-size: 1.15rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        padding: 1.25rem;
+        background: var(--bg-glass);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+    }
+
+    .exercise-context {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        padding: 0.75rem 1rem;
+        border-left: 3px solid var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .exercise-answer-zone {
+        margin: 1.5rem 0;
+    }
+
+    .exercise-hint-row {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .exercise-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    /* Calm error feedback - minimal, precise */
+    .error-callout {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+    }
+
+    .error-callout-icon {
+        color: var(--error);
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .error-callout-text {
+        color: var(--text-secondary);
+    }
+
+    .error-callout-text strong {
+        color: var(--error-light);
+    }
+
+    /* Time estimates badge */
+    .time-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.5rem;
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: 4px;
+        font-size: 0.75rem;
+        color: var(--primary-light);
+    }
+
     /* Form labels should be clearly visible */
     label, .stTextInput label, .stSelectbox label, .stTextArea label {
         color: #94a3b8 !important;
