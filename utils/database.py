@@ -84,6 +84,8 @@ def init_db() -> None:
                 dialect_preference TEXT DEFAULT 'Spain',
                 avatar_color TEXT DEFAULT '#6366f1',
                 is_active INTEGER DEFAULT 0,
+                focus_mode INTEGER DEFAULT 0,
+                accent_tolerance INTEGER DEFAULT 0,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
@@ -244,6 +246,21 @@ def init_db() -> None:
             )
         """)
 
+        # Issue reports for user feedback on corrections
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS issue_reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                profile_id INTEGER DEFAULT 1,
+                report_type TEXT NOT NULL,
+                context TEXT,
+                user_answer TEXT,
+                expected_answer TEXT,
+                user_comment TEXT,
+                status TEXT DEFAULT 'pending',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         # Legacy user_profile table (kept for backwards compatibility)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS user_profile (
@@ -365,30 +382,62 @@ def update_profile(profile_id: int, profile: dict) -> None:
     """Update a profile."""
     try:
         with get_connection() as conn:
-            conn.execute("""
-                UPDATE profiles SET
-                    name = ?,
-                    level = ?,
-                    weekly_goal = ?,
-                    placement_completed = ?,
-                    placement_score = ?,
-                    focus_areas = ?,
-                    dialect_preference = ?,
-                    avatar_color = ?,
-                    updated_at = ?
-                WHERE id = ?
-            """, (
-                profile.get("name", ""),
-                profile.get("level", "C1"),
-                profile.get("weekly_goal", 6),
-                profile.get("placement_completed", 0),
-                profile.get("placement_score"),
-                json.dumps(profile.get("focus_areas", [])),
-                profile.get("dialect_preference", "Spain"),
-                profile.get("avatar_color", "#6366f1"),
-                datetime.now().isoformat(),
-                profile_id
-            ))
+            # Try to update with new columns first
+            try:
+                conn.execute("""
+                    UPDATE profiles SET
+                        name = ?,
+                        level = ?,
+                        weekly_goal = ?,
+                        placement_completed = ?,
+                        placement_score = ?,
+                        focus_areas = ?,
+                        dialect_preference = ?,
+                        avatar_color = ?,
+                        focus_mode = ?,
+                        accent_tolerance = ?,
+                        updated_at = ?
+                    WHERE id = ?
+                """, (
+                    profile.get("name", ""),
+                    profile.get("level", "C1"),
+                    profile.get("weekly_goal", 6),
+                    profile.get("placement_completed", 0),
+                    profile.get("placement_score"),
+                    json.dumps(profile.get("focus_areas", [])),
+                    profile.get("dialect_preference", "Spain"),
+                    profile.get("avatar_color", "#6366f1"),
+                    profile.get("focus_mode", 0),
+                    profile.get("accent_tolerance", 0),
+                    datetime.now().isoformat(),
+                    profile_id
+                ))
+            except sqlite3.OperationalError:
+                # Fall back to old columns if new ones don't exist
+                conn.execute("""
+                    UPDATE profiles SET
+                        name = ?,
+                        level = ?,
+                        weekly_goal = ?,
+                        placement_completed = ?,
+                        placement_score = ?,
+                        focus_areas = ?,
+                        dialect_preference = ?,
+                        avatar_color = ?,
+                        updated_at = ?
+                    WHERE id = ?
+                """, (
+                    profile.get("name", ""),
+                    profile.get("level", "C1"),
+                    profile.get("weekly_goal", 6),
+                    profile.get("placement_completed", 0),
+                    profile.get("placement_score"),
+                    json.dumps(profile.get("focus_areas", [])),
+                    profile.get("dialect_preference", "Spain"),
+                    profile.get("avatar_color", "#6366f1"),
+                    datetime.now().isoformat(),
+                    profile_id
+                ))
             conn.commit()
     except Exception as e:
         logger.warning(f"Profile update failed for ID {profile_id}: {e}")
@@ -1134,3 +1183,457 @@ def save_transcript(text: str, duration: int = 0, mission_id: Optional[int] = No
             conn.commit()
     except Exception as e:
         logger.warning(f"Transcript save failed: {e}")
+
+
+# ============== Error Fingerprint Operations ==============
+
+# Error taxonomy for granular tracking
+ERROR_TAXONOMY = {
+    "verb_tense": {
+        "preterito_imperfecto": "Pretérito vs Imperfecto confusion",
+        "subjunctive_triggers": "Subjunctive trigger words (cuando, aunque, ojalá)",
+        "conditional_usage": "Conditional mood usage",
+        "future_ir_a": "Future tense vs ir a + infinitive",
+    },
+    "ser_estar": {
+        "permanent_temporary": "Ser vs estar for states",
+        "location_event": "Estar for location, ser for events",
+        "passive_voice": "Passive voice with ser vs estar",
+    },
+    "prepositions": {
+        "por_para": "Por vs para distinction",
+        "a_personal": "Personal 'a' before direct objects",
+        "en_a_location": "En vs a for location/direction",
+        "de_possession": "De for possession and origin",
+    },
+    "pronouns": {
+        "clitic_placement": "Clitic pronoun placement (me lo, se lo)",
+        "leismo": "Leísmo patterns (le vs lo)",
+        "reflexive_usage": "Reflexive pronoun usage",
+        "indirect_object": "Indirect object pronouns",
+    },
+    "agreement": {
+        "gender_noun": "Gender agreement with nouns",
+        "gender_adjective": "Gender agreement with adjectives",
+        "number_agreement": "Number (singular/plural) agreement",
+    },
+    "vocabulary": {
+        "false_friends": "False cognates (embarazada, sensible)",
+        "calques": "Literal translations from English",
+        "register_mismatch": "Formal/informal register mismatch",
+    },
+    "word_order": {
+        "adjective_position": "Adjective placement",
+        "adverb_position": "Adverb placement",
+        "question_formation": "Question word order",
+    },
+}
+
+
+def init_fingerprint_tables() -> None:
+    """Initialize error fingerprint tracking tables."""
+    try:
+        with get_connection() as conn:
+            # Error fingerprints table - tracks error patterns per user
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS error_fingerprints (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    profile_id INTEGER NOT NULL,
+                    category TEXT NOT NULL,
+                    subcategory TEXT NOT NULL,
+                    error_count INTEGER DEFAULT 0,
+                    correct_count INTEGER DEFAULT 0,
+                    last_error TEXT,
+                    last_correct TEXT,
+                    confidence REAL DEFAULT 0.5,
+                    priority_score REAL DEFAULT 0.0,
+                    rule_boundary TEXT,
+                    examples TEXT,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(profile_id, category, subcategory)
+                )
+            """)
+
+            # Near-miss tracking for "almost correct" answers
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS near_misses (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    profile_id INTEGER NOT NULL,
+                    fingerprint_id INTEGER,
+                    user_input TEXT NOT NULL,
+                    expected TEXT NOT NULL,
+                    rule_explanation TEXT,
+                    contrast_example TEXT,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (fingerprint_id) REFERENCES error_fingerprints(id)
+                )
+            """)
+
+            # Personal syllabus - prioritized learning items
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS personal_syllabus (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    profile_id INTEGER NOT NULL,
+                    fingerprint_id INTEGER,
+                    week_start TEXT NOT NULL,
+                    priority_rank INTEGER DEFAULT 0,
+                    target_practice_count INTEGER DEFAULT 5,
+                    actual_practice_count INTEGER DEFAULT 0,
+                    improvement_score REAL DEFAULT 0.0,
+                    status TEXT DEFAULT 'active',
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (fingerprint_id) REFERENCES error_fingerprints(id)
+                )
+            """)
+
+            # Pragmatics and culture patterns
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS pragmatics_exposure (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    profile_id INTEGER NOT NULL,
+                    pattern_type TEXT NOT NULL,
+                    pattern_name TEXT NOT NULL,
+                    dialect TEXT DEFAULT 'neutral',
+                    exposure_count INTEGER DEFAULT 0,
+                    production_count INTEGER DEFAULT 0,
+                    last_used TEXT,
+                    UNIQUE(profile_id, pattern_type, pattern_name, dialect)
+                )
+            """)
+
+            # Conversation outcomes for turn-taking practice
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS conversation_outcomes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    profile_id INTEGER NOT NULL,
+                    conversation_id INTEGER,
+                    outcome_type TEXT NOT NULL,
+                    achieved INTEGER DEFAULT 0,
+                    details TEXT,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (conversation_id) REFERENCES conversations(id)
+                )
+            """)
+
+            conn.commit()
+    except Exception as e:
+        logger.warning(f"Fingerprint tables initialization failed: {e}")
+
+
+def record_error_fingerprint(category: str, subcategory: str, is_error: bool = True,
+                             user_input: str = "", expected: str = "",
+                             rule_explanation: str = "", contrast_example: str = "") -> None:
+    """Record an error or correct usage in the fingerprint system."""
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            # Upsert the fingerprint record
+            if is_error:
+                conn.execute("""
+                    INSERT INTO error_fingerprints
+                    (profile_id, category, subcategory, error_count, last_error, updated_at)
+                    VALUES (?, ?, ?, 1, ?, ?)
+                    ON CONFLICT(profile_id, category, subcategory) DO UPDATE SET
+                        error_count = error_count + 1,
+                        last_error = excluded.last_error,
+                        updated_at = excluded.updated_at
+                """, (profile_id, category, subcategory, datetime.now().isoformat(),
+                      datetime.now().isoformat()))
+            else:
+                conn.execute("""
+                    INSERT INTO error_fingerprints
+                    (profile_id, category, subcategory, correct_count, last_correct, updated_at)
+                    VALUES (?, ?, ?, 1, ?, ?)
+                    ON CONFLICT(profile_id, category, subcategory) DO UPDATE SET
+                        correct_count = correct_count + 1,
+                        last_correct = excluded.last_correct,
+                        updated_at = excluded.updated_at
+                """, (profile_id, category, subcategory, datetime.now().isoformat(),
+                      datetime.now().isoformat()))
+
+            # Update confidence and priority scores
+            row = conn.execute("""
+                SELECT * FROM error_fingerprints
+                WHERE profile_id = ? AND category = ? AND subcategory = ?
+            """, (profile_id, category, subcategory)).fetchone()
+
+            if row:
+                total = row["error_count"] + row["correct_count"]
+                confidence = row["correct_count"] / total if total > 0 else 0.5
+                # Priority: more errors + lower confidence = higher priority
+                priority = (row["error_count"] * 2) * (1 - confidence) if total > 0 else 0
+
+                conn.execute("""
+                    UPDATE error_fingerprints SET
+                        confidence = ?, priority_score = ?
+                    WHERE id = ?
+                """, (confidence, priority, row["id"]))
+
+                # Record near-miss if applicable
+                if is_error and user_input and expected:
+                    conn.execute("""
+                        INSERT INTO near_misses
+                        (profile_id, fingerprint_id, user_input, expected,
+                         rule_explanation, contrast_example)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, (profile_id, row["id"], user_input, expected,
+                          rule_explanation, contrast_example))
+
+            conn.commit()
+    except Exception as e:
+        logger.warning(f"Error fingerprint recording failed: {e}")
+
+
+def get_error_fingerprints(limit: int = 20) -> list:
+    """Get error fingerprints for the active profile, sorted by priority."""
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM error_fingerprints
+                WHERE profile_id = ?
+                ORDER BY priority_score DESC, error_count DESC
+                LIMIT ?
+            """, (profile_id, limit)).fetchall()
+            return [dict(row) for row in rows]
+    except Exception:
+        return []
+
+
+def get_fingerprint_summary() -> dict:
+    """Get a summary of error fingerprints by category."""
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            rows = conn.execute("""
+                SELECT category,
+                       SUM(error_count) as total_errors,
+                       SUM(correct_count) as total_correct,
+                       AVG(confidence) as avg_confidence,
+                       MAX(priority_score) as max_priority
+                FROM error_fingerprints
+                WHERE profile_id = ?
+                GROUP BY category
+                ORDER BY total_errors DESC
+            """, (profile_id,)).fetchall()
+            return {row["category"]: dict(row) for row in rows}
+    except Exception:
+        return {}
+
+
+def generate_personal_syllabus() -> list:
+    """Generate a personal syllabus for the next 7-14 days based on fingerprints."""
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            # Get top priority fingerprints
+            fingerprints = conn.execute("""
+                SELECT * FROM error_fingerprints
+                WHERE profile_id = ? AND error_count > 0
+                ORDER BY priority_score DESC
+                LIMIT 5
+            """, (profile_id,)).fetchall()
+
+            week_start = date.today().isoformat()
+            syllabus = []
+
+            for i, fp in enumerate(fingerprints):
+                # Check if already in current syllabus
+                existing = conn.execute("""
+                    SELECT * FROM personal_syllabus
+                    WHERE profile_id = ? AND fingerprint_id = ? AND status = 'active'
+                """, (profile_id, fp["id"])).fetchone()
+
+                if not existing:
+                    conn.execute("""
+                        INSERT INTO personal_syllabus
+                        (profile_id, fingerprint_id, week_start, priority_rank, target_practice_count)
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (profile_id, fp["id"], week_start, i + 1, 5 + (5 - i)))
+                    conn.commit()
+
+                syllabus.append({
+                    "fingerprint": dict(fp),
+                    "rank": i + 1,
+                    "target": 5 + (5 - i)
+                })
+
+            return syllabus
+    except Exception:
+        return []
+
+
+def get_active_syllabus() -> list:
+    """Get the active personal syllabus items."""
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            rows = conn.execute("""
+                SELECT ps.*, ef.category, ef.subcategory, ef.error_count,
+                       ef.correct_count, ef.confidence
+                FROM personal_syllabus ps
+                JOIN error_fingerprints ef ON ps.fingerprint_id = ef.id
+                WHERE ps.profile_id = ? AND ps.status = 'active'
+                ORDER BY ps.priority_rank ASC
+            """, (profile_id,)).fetchall()
+            return [dict(row) for row in rows]
+    except Exception:
+        return []
+
+
+def record_syllabus_practice(fingerprint_id: int) -> None:
+    """Record a practice attempt for a syllabus item."""
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                UPDATE personal_syllabus SET
+                    actual_practice_count = actual_practice_count + 1
+                WHERE profile_id = ? AND fingerprint_id = ? AND status = 'active'
+            """, (profile_id, fingerprint_id))
+            conn.commit()
+    except Exception as e:
+        logger.warning(f"Syllabus practice recording failed: {e}")
+
+
+# ============== Pragmatics Operations ==============
+
+def record_pragmatics_usage(pattern_type: str, pattern_name: str,
+                            dialect: str = "neutral", is_production: bool = False) -> None:
+    """Record exposure or production of a pragmatic pattern."""
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            if is_production:
+                conn.execute("""
+                    INSERT INTO pragmatics_exposure
+                    (profile_id, pattern_type, pattern_name, dialect, production_count, last_used)
+                    VALUES (?, ?, ?, ?, 1, ?)
+                    ON CONFLICT(profile_id, pattern_type, pattern_name, dialect) DO UPDATE SET
+                        production_count = production_count + 1,
+                        last_used = excluded.last_used
+                """, (profile_id, pattern_type, pattern_name, dialect, datetime.now().isoformat()))
+            else:
+                conn.execute("""
+                    INSERT INTO pragmatics_exposure
+                    (profile_id, pattern_type, pattern_name, dialect, exposure_count, last_used)
+                    VALUES (?, ?, ?, ?, 1, ?)
+                    ON CONFLICT(profile_id, pattern_type, pattern_name, dialect) DO UPDATE SET
+                        exposure_count = exposure_count + 1,
+                        last_used = excluded.last_used
+                """, (profile_id, pattern_type, pattern_name, dialect, datetime.now().isoformat()))
+            conn.commit()
+    except Exception as e:
+        logger.warning(f"Pragmatics recording failed: {e}")
+
+
+def get_pragmatics_stats() -> dict:
+    """Get pragmatics usage statistics."""
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            rows = conn.execute("""
+                SELECT pattern_type,
+                       SUM(exposure_count) as total_exposure,
+                       SUM(production_count) as total_production
+                FROM pragmatics_exposure
+                WHERE profile_id = ?
+                GROUP BY pattern_type
+            """, (profile_id,)).fetchall()
+            return {row["pattern_type"]: dict(row) for row in rows}
+    except Exception:
+        return {}
+
+
+# ============== Conversation Outcome Operations ==============
+
+def record_conversation_outcome(conversation_id: int, outcome_type: str,
+                                achieved: bool, details: str = "") -> None:
+    """Record an outcome from a conversation (confirmation, clarification, etc.)."""
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                INSERT INTO conversation_outcomes
+                (profile_id, conversation_id, outcome_type, achieved, details)
+                VALUES (?, ?, ?, ?, ?)
+            """, (profile_id, conversation_id, outcome_type, 1 if achieved else 0, details))
+            conn.commit()
+    except Exception as e:
+        logger.warning(f"Conversation outcome recording failed: {e}")
+
+
+def get_conversation_outcome_stats() -> dict:
+    """Get statistics on conversation outcomes."""
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            rows = conn.execute("""
+                SELECT outcome_type,
+                       COUNT(*) as total_attempts,
+                       SUM(achieved) as successful
+                FROM conversation_outcomes
+                WHERE profile_id = ?
+                GROUP BY outcome_type
+            """, (profile_id,)).fetchall()
+            return {row["outcome_type"]: {
+                "total": row["total_attempts"],
+                "successful": row["successful"],
+                "rate": row["successful"] / row["total_attempts"] if row["total_attempts"] > 0 else 0
+            } for row in rows}
+    except Exception:
+        return {}
+
+
+# ============== Issue Report Operations ==============
+
+def save_issue_report(report_type: str, context: str, user_answer: str = "",
+                      expected_answer: str = "", user_comment: str = "") -> bool:
+    """Save an issue report from user feedback.
+
+    Args:
+        report_type: Type of issue (wrong_answer, unfair_marking, content_error, etc.)
+        context: The question or card content
+        user_answer: What the user answered (if applicable)
+        expected_answer: What the system expected (if applicable)
+        user_comment: User's explanation of the issue
+
+    Returns:
+        True if saved successfully, False otherwise
+    """
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                INSERT INTO issue_reports
+                (profile_id, report_type, context, user_answer, expected_answer, user_comment)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (profile_id, report_type, context, user_answer, expected_answer, user_comment))
+            conn.commit()
+            return True
+    except Exception as e:
+        logger.warning(f"Issue report save failed: {e}")
+        return False
+
+
+def get_issue_reports(status: str = None) -> list:
+    """Get issue reports, optionally filtered by status."""
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            if status:
+                rows = conn.execute("""
+                    SELECT * FROM issue_reports
+                    WHERE profile_id = ? AND status = ?
+                    ORDER BY created_at DESC
+                """, (profile_id, status)).fetchall()
+            else:
+                rows = conn.execute("""
+                    SELECT * FROM issue_reports
+                    WHERE profile_id = ?
+                    ORDER BY created_at DESC
+                """, (profile_id,)).fetchall()
+            return [dict(row) for row in rows]
+    except Exception:
+        return []

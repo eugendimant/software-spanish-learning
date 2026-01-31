@@ -3,10 +3,192 @@ import difflib
 import hashlib
 import random
 import re
+import unicodedata
 from datetime import date, timedelta
 from typing import Optional
 
 from utils.content import COMMON_MISTAKES, REGISTER_MARKERS
+
+
+# Accent normalization map for Spanish
+ACCENT_MAP = {
+    'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
+    'ü': 'u', 'ñ': 'n',
+    'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U',
+    'Ü': 'U', 'Ñ': 'N'
+}
+
+
+def normalize_accents(text: str) -> str:
+    """Remove Spanish accent marks from text for lenient comparison.
+
+    Examples:
+        normalize_accents("mañana") -> "manana"
+        normalize_accents("café") -> "cafe"
+        normalize_accents("así") -> "asi"
+    """
+    result = []
+    for char in text:
+        result.append(ACCENT_MAP.get(char, char))
+    return ''.join(result)
+
+
+def levenshtein_distance(s1: str, s2: str) -> int:
+    """Calculate the Levenshtein distance between two strings."""
+    if len(s1) < len(s2):
+        return levenshtein_distance(s2, s1)
+
+    if len(s2) == 0:
+        return len(s1)
+
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+
+    return previous_row[-1]
+
+
+def compare_answers(user_answer: str, correct_answer: str, accent_tolerant: bool = False,
+                    grading_mode: str = "balanced") -> tuple:
+    """Compare user answer with correct answer based on grading settings.
+
+    Args:
+        user_answer: The answer provided by the user
+        correct_answer: The expected correct answer
+        accent_tolerant: If True, accept answers without proper accents
+        grading_mode: "strict", "balanced", or "lenient"
+
+    Returns:
+        Tuple of (is_correct: bool, feedback_type: str)
+        feedback_type explains why the answer was accepted/rejected
+    """
+    # Normalize whitespace and case
+    user_normalized = user_answer.lower().strip()
+    correct_normalized = correct_answer.lower().strip()
+
+    # Exact match - always correct
+    if user_normalized == correct_normalized:
+        return (True, "exact_match")
+
+    # If accent tolerant, compare without accents
+    if accent_tolerant:
+        user_no_accent = normalize_accents(user_normalized)
+        correct_no_accent = normalize_accents(correct_normalized)
+        if user_no_accent == correct_no_accent:
+            return (True, "accent_tolerance")
+
+    # Strict mode: only exact matches (already handled above)
+    if grading_mode == "strict":
+        return (False, "strict_mismatch")
+
+    # Balanced mode: allow 1-2 character typos
+    if grading_mode in ["balanced", "lenient"]:
+        # Calculate edit distance
+        distance = levenshtein_distance(user_normalized, correct_normalized)
+
+        # Also check with accents normalized
+        user_no_accent = normalize_accents(user_normalized)
+        correct_no_accent = normalize_accents(correct_normalized)
+        distance_no_accent = levenshtein_distance(user_no_accent, correct_no_accent)
+
+        # Use the smaller distance (more lenient)
+        min_distance = min(distance, distance_no_accent)
+
+        # Allow typos based on word length
+        word_len = len(correct_normalized)
+        if word_len <= 4:
+            allowed_errors = 1 if grading_mode == "lenient" else 0
+        elif word_len <= 8:
+            allowed_errors = 2 if grading_mode == "lenient" else 1
+        else:
+            allowed_errors = 3 if grading_mode == "lenient" else 2
+
+        if min_distance <= allowed_errors:
+            return (True, f"typo_tolerance_{min_distance}")
+
+    # Lenient mode: also accept semantic variations
+    if grading_mode == "lenient":
+        # Check if user answer contains important words from correct answer
+        correct_words = set(correct_normalized.split())
+        user_words = set(user_normalized.split())
+
+        # Remove common articles/prepositions for comparison
+        stop_words = {"el", "la", "los", "las", "un", "una", "de", "a", "en", "y", "o", "que"}
+        correct_important = correct_words - stop_words
+        user_important = user_words - stop_words
+
+        if correct_important and user_important:
+            overlap = len(correct_important & user_important) / len(correct_important)
+            if overlap >= 0.7:  # 70% of important words match
+                return (True, "semantic_match")
+
+    return (False, "mismatch")
+
+
+def get_accent_feedback(user_answer: str, correct_answer: str) -> Optional[str]:
+    """If answer is correct except for accents, provide helpful feedback.
+
+    Returns None if answers don't match even without accents,
+    or a feedback string if only accents are wrong.
+    """
+    user_no_accent = normalize_accents(user_answer.lower().strip())
+    correct_no_accent = normalize_accents(correct_answer.lower().strip())
+
+    if user_no_accent == correct_no_accent and user_answer.lower().strip() != correct_answer.lower().strip():
+        # Find which accents are missing
+        missing_accents = []
+        for i, (user_char, correct_char) in enumerate(zip(user_answer.lower(), correct_answer.lower())):
+            if user_char != correct_char and normalize_accents(correct_char) == user_char:
+                missing_accents.append(f"'{user_char}' should be '{correct_char}'")
+
+        if missing_accents:
+            return f"Close! Just needs accent marks: {', '.join(missing_accents[:3])}"
+        return "Close! Check your accent marks."
+
+    return None
+
+
+def check_false_friends(text: str) -> list:
+    """Check user text for potential false friend usage.
+
+    Returns list of warnings for any false friends detected.
+    """
+    from utils.content import FALSE_FRIENDS
+
+    warnings = []
+    text_lower = text.lower()
+    words = set(re.findall(r'\b[a-záéíóúüñ]+\b', text_lower))
+
+    for false_friend, info in FALSE_FRIENDS.items():
+        # Check if the false friend word appears in the text
+        if false_friend in words:
+            warnings.append({
+                "word": false_friend,
+                "looks_like": info["looks_like"],
+                "actually_means": info["actually_means"],
+                "correct_word": info["correct_word"],
+                "warning": info["warning"],
+                "example_right": info["example_right"]
+            })
+
+    return warnings
+
+
+def get_collocation_suggestions(word: str) -> list:
+    """Get common collocations for a given verb/word.
+
+    Returns list of chunks with their meanings.
+    """
+    from utils.content import COLLOCATIONS
+
+    word_lower = word.lower().strip()
+    return COLLOCATIONS.get(word_lower, [])
 
 
 def seed_for_week(week_date: date, name: str) -> int:

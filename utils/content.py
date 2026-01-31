@@ -682,6 +682,10 @@ CONVERSATION_SCENARIOS = [
     {
         "title": "Negociar un reembolso",
         "brief": "El servicio fallo y necesitas un reembolso parcial sin romper la relacion.",
+        "formality": "formal",
+        "relationship": "service_provider",
+        "relationship_label": "Stranger (Customer Service)",
+        "register_tips": "Use 'usted'. Be polite but firm. Avoid overly casual expressions.",
         "hidden_targets": [
             "Usa 2 mitigadores (quiza, tal vez, me parece).",
             "Incluye una concesion (aunque, si bien).",
@@ -693,6 +697,10 @@ CONVERSATION_SCENARIOS = [
     {
         "title": "Resolver un conflicto en el trabajo",
         "brief": "Un colega no cumplio plazos y necesitas renegociar el cronograma.",
+        "formality": "neutral",
+        "relationship": "coworker",
+        "relationship_label": "Coworker (Equal Status)",
+        "register_tips": "Use 'tu'. Balance directness with collegiality. Stay professional but not stiff.",
         "hidden_targets": [
             "Usa 1 verbo preciso (afrontar, plantear, desactivar).",
             "Incluye una peticion indirecta (seria posible...?).",
@@ -704,6 +712,10 @@ CONVERSATION_SCENARIOS = [
     {
         "title": "Negociar un alquiler",
         "brief": "Quieres negociar el precio del alquiler con argumentos solidos.",
+        "formality": "formal",
+        "relationship": "stranger",
+        "relationship_label": "Stranger (Potential Landlord)",
+        "register_tips": "Use 'usted'. Be respectful and professional. Show you're a reliable tenant.",
         "hidden_targets": [
             "Usa registro formal con usted.",
             "Incluye 2 frases de cortesia.",
@@ -715,6 +727,10 @@ CONVERSATION_SCENARIOS = [
     {
         "title": "Pedir una extension de plazo",
         "brief": "Necesitas mas tiempo para un entregable sin parecer poco profesional.",
+        "formality": "formal",
+        "relationship": "authority",
+        "relationship_label": "Authority Figure (Your Manager)",
+        "register_tips": "Use 'usted' or formal 'tu' depending on workplace culture. Be humble but confident.",
         "hidden_targets": [
             "Justifica con razones concretas.",
             "Ofrece una solucion parcial.",
@@ -726,6 +742,10 @@ CONVERSATION_SCENARIOS = [
     {
         "title": "Queja formal en un hotel",
         "brief": "Tu habitacion tiene problemas y quieres solucion y compensacion.",
+        "formality": "formal",
+        "relationship": "service_provider",
+        "relationship_label": "Stranger (Hotel Staff)",
+        "register_tips": "Use 'usted'. Be firm but polite. Document specific issues. Expect professionalism.",
         "hidden_targets": [
             "Mantén tono firme pero educado.",
             "Enumera los problemas claramente.",
@@ -911,3 +931,622 @@ PLACEMENT_QUESTIONS = [
         "skill": "subjunctive",
     },
 ]
+
+# ============== PRAGMATICS PATTERNS ==============
+
+PRAGMATICS_PATTERNS = {
+    "greetings": {
+        "formal": [
+            {"phrase": "Buenos días, ¿en qué puedo ayudarle?", "context": "professional", "dialect": "neutral"},
+            {"phrase": "Buenas tardes, encantado/a de conocerle.", "context": "introductions", "dialect": "neutral"},
+            {"phrase": "¿Qué tal? ¿Cómo ha ido el fin de semana?", "context": "office_small_talk", "dialect": "neutral"},
+        ],
+        "informal": [
+            {"phrase": "¡Hola! ¿Qué tal?", "context": "friends", "dialect": "neutral"},
+            {"phrase": "¿Qué hay? ¿Cómo estás?", "context": "casual", "dialect": "neutral"},
+            {"phrase": "¡Buenas! ¿Todo bien?", "context": "casual", "dialect": "Spain"},
+            {"phrase": "¡Hola, che! ¿Cómo andás?", "context": "casual", "dialect": "Argentina"},
+            {"phrase": "¿Qué onda?", "context": "casual", "dialect": "Mexico"},
+        ],
+    },
+    "softeners": {
+        "hedging": [
+            {"phrase": "Me parece que...", "use": "expressing opinion tentatively", "intensity": "medium"},
+            {"phrase": "Quizá/Tal vez...", "use": "suggesting possibility", "intensity": "low"},
+            {"phrase": "Podría ser que...", "use": "conditional possibility", "intensity": "low"},
+            {"phrase": "A mi modo de ver...", "use": "personal perspective", "intensity": "medium"},
+            {"phrase": "Diría que...", "use": "cautious assertion", "intensity": "medium"},
+            {"phrase": "No sé si...", "use": "introducing uncertainty", "intensity": "low"},
+        ],
+        "requests": [
+            {"phrase": "¿Te importaría...?", "use": "polite informal request", "intensity": "low"},
+            {"phrase": "¿Sería posible...?", "use": "formal polite request", "intensity": "low"},
+            {"phrase": "¿Podrías...?", "use": "informal request", "intensity": "medium"},
+            {"phrase": "¿Le importaría...?", "use": "formal request", "intensity": "low"},
+            {"phrase": "Si no es mucha molestia...", "use": "very polite preface", "intensity": "low"},
+            {"phrase": "Cuando puedas...", "use": "non-urgent request", "intensity": "low"},
+        ],
+    },
+    "backchanneling": {
+        "understanding": [
+            {"phrase": "Claro", "use": "showing understanding", "frequency": "very_common"},
+            {"phrase": "Ajá", "use": "minimal response", "frequency": "very_common"},
+            {"phrase": "Ya", "use": "acknowledgment", "frequency": "common"},
+            {"phrase": "Entiendo", "use": "explicit understanding", "frequency": "common"},
+            {"phrase": "Vale", "use": "agreement/understanding", "frequency": "common", "dialect": "Spain"},
+            {"phrase": "Ok", "use": "casual acknowledgment", "frequency": "common"},
+            {"phrase": "Sí, sí", "use": "emphatic agreement", "frequency": "common"},
+        ],
+        "interest": [
+            {"phrase": "¿En serio?", "use": "expressing surprise", "frequency": "common"},
+            {"phrase": "¡No me digas!", "use": "expressing disbelief", "frequency": "common"},
+            {"phrase": "¿De verdad?", "use": "seeking confirmation", "frequency": "common"},
+            {"phrase": "¡Qué interesante!", "use": "showing interest", "frequency": "common"},
+            {"phrase": "¿Y qué pasó?", "use": "encouraging continuation", "frequency": "common"},
+        ],
+    },
+    "repair_skills": {
+        "asking_clarification": [
+            {"phrase": "Perdón, no entendí. ¿Puede repetirlo?", "register": "formal"},
+            {"phrase": "¿Puede hablar más despacio, por favor?", "register": "formal"},
+            {"phrase": "¿Cómo dice? No le he oído bien.", "register": "formal"},
+            {"phrase": "Perdona, ¿qué has dicho?", "register": "informal"},
+            {"phrase": "¿Me lo puedes explicar de otra forma?", "register": "informal"},
+            {"phrase": "No me queda claro. ¿A qué te refieres con...?", "register": "neutral"},
+        ],
+        "self_correction": [
+            {"phrase": "Quise decir...", "use": "correcting yourself"},
+            {"phrase": "Me refería a...", "use": "clarifying meaning"},
+            {"phrase": "O sea...", "use": "rephrasing"},
+            {"phrase": "Es decir...", "use": "formal rephrasing"},
+            {"phrase": "Bueno, más bien...", "use": "softening correction"},
+            {"phrase": "Perdón, me he expresado mal.", "use": "acknowledging error"},
+        ],
+        "confirming_understanding": [
+            {"phrase": "Entonces, lo que dices es que...", "use": "paraphrasing"},
+            {"phrase": "Si he entendido bien...", "use": "checking comprehension"},
+            {"phrase": "¿Quieres decir que...?", "use": "confirming meaning"},
+            {"phrase": "A ver si lo he entendido...", "use": "summarizing"},
+            {"phrase": "Resumiendo...", "use": "formal summary"},
+        ],
+    },
+    "turn_closers": {
+        "informal": [
+            {"phrase": "Bueno, te dejo.", "use": "ending conversation"},
+            {"phrase": "Venga, hablamos.", "use": "ending casually", "dialect": "Spain"},
+            {"phrase": "Nos vemos.", "use": "saying goodbye"},
+            {"phrase": "Hasta luego.", "use": "neutral goodbye"},
+            {"phrase": "Cuídate.", "use": "caring goodbye"},
+        ],
+        "formal": [
+            {"phrase": "Ha sido un placer hablar con usted.", "use": "polite closing"},
+            {"phrase": "Gracias por su tiempo.", "use": "acknowledging time"},
+            {"phrase": "Quedamos en contacto.", "use": "maintaining relationship"},
+            {"phrase": "Le mantengo informado/a.", "use": "promising follow-up"},
+            {"phrase": "Sin más, me despido atentamente.", "use": "email closing"},
+        ],
+    },
+    "disagreement": {
+        "polite": [
+            {"phrase": "Entiendo tu punto, pero...", "intensity": "low"},
+            {"phrase": "Comprendo lo que dices, aunque...", "intensity": "low"},
+            {"phrase": "No estoy del todo de acuerdo.", "intensity": "medium"},
+            {"phrase": "Veo lo que quieres decir, sin embargo...", "intensity": "low"},
+            {"phrase": "Respeto tu opinión, pero yo creo que...", "intensity": "medium"},
+        ],
+        "direct": [
+            {"phrase": "No comparto esa visión.", "intensity": "medium"},
+            {"phrase": "No estoy de acuerdo.", "intensity": "high"},
+            {"phrase": "Eso no es exactamente así.", "intensity": "medium"},
+            {"phrase": "Me temo que no.", "intensity": "medium"},
+        ],
+    },
+    "topic_changers": [
+        {"phrase": "Por cierto...", "use": "introducing related topic"},
+        {"phrase": "Cambiando de tema...", "use": "explicit change"},
+        {"phrase": "A propósito...", "use": "introducing relevant aside"},
+        {"phrase": "Antes de que se me olvide...", "use": "remembering something"},
+        {"phrase": "Oye, y hablando de otra cosa...", "use": "casual change"},
+    ],
+}
+
+# ============== PRAGMATICS WARNINGS ==============
+
+PRAGMATICS_WARNINGS = [
+    {
+        "pattern": "Yo quiero que tú...",
+        "issue": "too_direct",
+        "explanation": "Usar 'quiero que' directamente puede sonar demandante. Mejor usar formas indirectas.",
+        "alternatives": ["¿Te importaría...?", "¿Podrías...?", "Me gustaría que..."],
+        "example_bad": "Quiero que me lo envíes hoy.",
+        "example_good": "¿Te importaría enviármelo hoy?",
+    },
+    {
+        "pattern": "Necesito esto para ayer",
+        "issue": "calque_aggression",
+        "explanation": "Esta frase puede sonar agresiva en español. Es un calco del inglés 'I needed this yesterday'.",
+        "alternatives": ["Esto es urgente.", "Necesito esto lo antes posible.", "¿Podría ser prioritario?"],
+        "example_bad": "Lo necesitaba para ayer.",
+        "example_good": "Es bastante urgente, ¿podemos priorizarlo?",
+    },
+    {
+        "pattern": "Tú debes/Tienes que",
+        "issue": "too_imposing",
+        "explanation": "En muchos contextos, 'debes' o 'tienes que' puede sonar autoritario.",
+        "alternatives": ["Sería conveniente que...", "Te recomendaría...", "Quizá podrías..."],
+        "example_bad": "Tienes que entregar esto mañana.",
+        "example_good": "Sería importante tenerlo para mañana, si es posible.",
+    },
+    {
+        "pattern": "No problem",
+        "issue": "false_friend_register",
+        "explanation": "'No hay problema' está bien, pero mejor usar expresiones más naturales.",
+        "alternatives": ["De nada", "No hay de qué", "Con gusto", "Faltaría más"],
+        "example_bad": "No problema.",
+        "example_good": "De nada, con mucho gusto.",
+    },
+]
+
+# ============== ENHANCED CONVERSATION SCENARIOS ==============
+
+NEGOTIATION_SCENARIOS = [
+    {
+        "title": "Reservar cita de peluquería - completo",
+        "brief": "El peluquero está completo pero necesitas el corte esta semana.",
+        "objectives": [
+            {"type": "confirmation", "target": "confirm_alternative_time", "description": "Confirmar hora alternativa"},
+            {"type": "confirmation", "target": "confirm_price", "description": "Confirmar precio"},
+            {"type": "clarification", "target": "ask_duration", "description": "Preguntar duración"},
+            {"type": "closure", "target": "natural_goodbye", "description": "Despedida natural"},
+        ],
+        "partner_responses": [
+            {"trigger": "greeting", "response": "Buenos días, ¿en qué puedo ayudarle?"},
+            {"trigger": "request_appointment", "response": "Uy, esta semana estamos completos. Solo me queda un hueco el viernes a las 8 de la mañana."},
+            {"trigger": "negotiate_time", "response": "Déjeme ver... Podría hacerle un hueco el jueves a las 14:00 si no le importa la hora de la comida."},
+            {"trigger": "ask_price", "response": "El corte son 18 euros, y si quiere lavado son 22."},
+            {"trigger": "confirm", "response": "Perfecto, le apunto para el jueves a las 14:00. ¿A qué nombre?"},
+            {"trigger": "goodbye", "response": "Muy bien, nos vemos el jueves entonces. ¡Hasta luego!"},
+        ],
+        "scoring_rubric": {
+            "confirmed_details": 25,
+            "used_politeness": 20,
+            "paraphrased": 15,
+            "natural_closure": 20,
+            "negotiated_alternative": 20,
+        },
+    },
+    {
+        "title": "Reclamación en tienda - producto defectuoso",
+        "brief": "Compraste un dispositivo que dejó de funcionar. Quieres devolución o cambio.",
+        "objectives": [
+            {"type": "explanation", "target": "explain_problem", "description": "Explicar el problema claramente"},
+            {"type": "request", "target": "request_solution", "description": "Pedir solución específica"},
+            {"type": "confirmation", "target": "confirm_process", "description": "Confirmar proceso de devolución"},
+            {"type": "documentation", "target": "get_reference", "description": "Obtener número de referencia"},
+        ],
+        "partner_responses": [
+            {"trigger": "greeting", "response": "Buenos días, bienvenido a atención al cliente. ¿En qué puedo ayudarle?"},
+            {"trigger": "explain_problem", "response": "Entiendo. ¿Tiene el ticket de compra? ¿Cuándo lo compró?"},
+            {"trigger": "provide_details", "response": "Vale, déjeme comprobar en el sistema... Sí, veo la compra. Tiene dos opciones: devolución del importe o cambio por otro igual."},
+            {"trigger": "request_refund", "response": "De acuerdo, procesamos la devolución. Tardará 3-5 días hábiles en reflejarse en su cuenta."},
+            {"trigger": "ask_reference", "response": "Su número de referencia es el 2024-7834. Guárdelo por si necesita hacer seguimiento."},
+            {"trigger": "goodbye", "response": "Gracias por su paciencia. Sentimos las molestias. Hasta luego."},
+        ],
+        "scoring_rubric": {
+            "clear_explanation": 25,
+            "polite_but_firm": 20,
+            "got_solution": 25,
+            "documented": 15,
+            "natural_closure": 15,
+        },
+    },
+]
+
+# ============== WRITING COACH TEMPLATES ==============
+
+WRITING_COACH_TEMPLATES = {
+    "error_feedback": {
+        "gender_agreement": {
+            "rule": "Los adjetivos deben concordar en género con el sustantivo al que modifican.",
+            "examples": [
+                {"wrong": "la mesa blanco", "correct": "la mesa blanca"},
+                {"wrong": "el problema nueva", "correct": "el problema nuevo"},
+            ],
+            "practice_prompts": [
+                "Escribe una oración con 'decisión' y un adjetivo.",
+                "Describe 'el sistema' con dos adjetivos.",
+            ],
+        },
+        "ser_estar": {
+            "rule": "Usa 'ser' para características permanentes/identidad y 'estar' para estados/ubicación.",
+            "examples": [
+                {"wrong": "El café está caliente por naturaleza", "correct": "El café es una bebida caliente"},
+                {"wrong": "La oficina es en el centro", "correct": "La oficina está en el centro"},
+            ],
+            "practice_prompts": [
+                "Describe dónde está tu oficina y cómo es.",
+                "Compara cómo eres normalmente vs. cómo estás hoy.",
+            ],
+        },
+        "por_para": {
+            "rule": "Usa 'para' para propósito/destino y 'por' para causa/intercambio/duración.",
+            "examples": [
+                {"wrong": "Estudio por aprobar", "correct": "Estudio para aprobar"},
+                {"wrong": "Gracias para ayudarme", "correct": "Gracias por ayudarme"},
+            ],
+            "practice_prompts": [
+                "Explica para qué estudias español.",
+                "Di por qué llegaste tarde.",
+            ],
+        },
+        "subjunctive_triggers": {
+            "rule": "El subjuntivo se usa después de expresiones de deseo, duda, emoción y ciertas conjunciones.",
+            "examples": [
+                {"wrong": "Quiero que vienes", "correct": "Quiero que vengas"},
+                {"wrong": "Cuando llegas, avísame", "correct": "Cuando llegues, avísame"},
+            ],
+            "practice_prompts": [
+                "Expresa algo que quieres que alguien haga.",
+                "Escribe qué harás cuando termines el proyecto.",
+            ],
+        },
+    },
+    "tone_rewrites": {
+        "formal_to_informal": {
+            "instruction": "Reescribe el mensaje para un colega cercano.",
+            "example_formal": "Le agradecería que me enviara los documentos a la mayor brevedad posible.",
+            "example_informal": "Oye, ¿me puedes pasar los documentos cuando puedas?",
+        },
+        "informal_to_formal": {
+            "instruction": "Reescribe el mensaje para un cliente importante.",
+            "example_informal": "Oye, el proyecto va retrasado.",
+            "example_formal": "Le informo de que el proyecto ha sufrido un retraso. Estamos trabajando para minimizar el impacto.",
+        },
+        "direct_to_polite": {
+            "instruction": "Suaviza el mensaje manteniendo el contenido.",
+            "example_direct": "Necesito que lo hagas hoy.",
+            "example_polite": "¿Sería posible tenerlo para hoy? Te lo agradecería mucho.",
+        },
+    },
+    "constraint_rewrites": [
+        {
+            "instruction": "Reescribe usando el imperfecto en lugar del pretérito.",
+            "original": "Ayer fui al mercado y compré fruta.",
+            "constraint": "imperfecto",
+            "example": "Antes iba al mercado y compraba fruta.",
+        },
+        {
+            "instruction": "Reescribe usando el condicional para ser más cortés.",
+            "original": "Quiero que me ayudes.",
+            "constraint": "conditional",
+            "example": "¿Podrías ayudarme? / Me gustaría que me ayudaras.",
+        },
+        {
+            "instruction": "Reescribe usando voz pasiva.",
+            "original": "El equipo completó el proyecto.",
+            "constraint": "passive",
+            "example": "El proyecto fue completado por el equipo.",
+        },
+    ],
+}
+
+# ============== RULE BOUNDARY EXPLANATIONS ==============
+
+RULE_BOUNDARIES = {
+    "preterito_imperfecto": {
+        "rule": "Pretérito: acciones puntuales/completadas. Imperfecto: contexto/descripción/hábito.",
+        "boundary_cases": [
+            {
+                "case": "Interruption pattern",
+                "explanation": "Imperfecto para acción en curso, pretérito para la interrupción.",
+                "example": "Mientras estudiaba (imperfecto - fondo), llamaron a la puerta (pretérito - interrupción).",
+            },
+            {
+                "case": "Conocer a alguien",
+                "explanation": "'Conocí' = met for first time. 'Conocía' = I knew/used to know.",
+                "example": "Conocí a María ayer (first meeting) vs. Ya conocía a María (prior knowledge).",
+            },
+            {
+                "case": "Saber algo",
+                "explanation": "'Supe' = found out. 'Sabía' = already knew.",
+                "example": "Supe la verdad ayer (discovery) vs. Ya sabía la verdad (prior knowledge).",
+            },
+        ],
+    },
+    "ser_estar": {
+        "rule": "Ser: identidad, origen, material, tiempo, eventos. Estar: ubicación, estados temporales, emociones.",
+        "boundary_cases": [
+            {
+                "case": "Adjectives that change meaning",
+                "explanation": "Algunos adjetivos cambian significado con ser vs estar.",
+                "example": "Es listo (clever) vs. Está listo (ready). Es malo (evil) vs. Está malo (sick).",
+            },
+            {
+                "case": "Events vs. locations",
+                "explanation": "Los eventos usan 'ser' aunque tengan lugar en un sitio.",
+                "example": "La fiesta es en mi casa (event) vs. Mi casa está en el centro (location).",
+            },
+        ],
+    },
+    "por_para": {
+        "rule": "Para: propósito, destino, deadline, recipient. Por: causa, medio, intercambio, duración.",
+        "boundary_cases": [
+            {
+                "case": "Movement through vs. toward",
+                "explanation": "'Por' indica movimiento a través de, 'para' indica destino.",
+                "example": "Pasé por el parque (through) vs. Voy para el parque (toward/destination).",
+            },
+            {
+                "case": "Working for someone",
+                "explanation": "'Para' = employed by. 'Por' = on behalf of/in place of.",
+                "example": "Trabajo para Google (employer) vs. Trabajo por mi hermano hoy (replacing him).",
+            },
+        ],
+    },
+}
+
+# ============== DIALECT CONVERTER ==============
+
+DIALECT_CONVERTER = {
+    "greetings": {
+        "neutral": "Hola, ¿cómo estás?",
+        "Spain": "¡Hola! ¿Qué tal?",
+        "Mexico": "¡Hola! ¿Cómo estás? / ¿Qué onda?",
+        "Argentina": "¡Hola! ¿Cómo andás?",
+        "Colombia": "¡Hola! ¿Cómo está? / ¿Bien o qué?",
+    },
+    "affirmative": {
+        "neutral": "Sí, de acuerdo.",
+        "Spain": "Vale, perfecto.",
+        "Mexico": "Órale, está bien.",
+        "Argentina": "Dale, bárbaro.",
+        "Colombia": "Listo, de una.",
+    },
+    "expressing_cool": {
+        "neutral": "Eso es muy bueno.",
+        "Spain": "Eso mola mucho. / ¡Qué guay!",
+        "Mexico": "¡Qué padre! / ¡Está chido!",
+        "Argentina": "¡Qué copado! / ¡Es genial!",
+        "Colombia": "¡Qué chévere! / ¡Bacano!",
+    },
+    "work_casual": {
+        "neutral": "Tengo mucho trabajo.",
+        "Spain": "Tengo un montón de curro.",
+        "Mexico": "Tengo un chingo de chamba.",
+        "Argentina": "Tengo un montón de laburo.",
+        "Colombia": "Tengo mucho camello.",
+    },
+    "you_informal": {
+        "neutral": "¿Tú qué opinas?",
+        "Spain": "¿Tú qué opinas?",
+        "Mexico": "¿Tú qué opinas?",
+        "Argentina": "¿Vos qué opinás?",
+        "Colombia": "¿Usted qué opina? / ¿Tú qué opinas?",
+    },
+}
+
+# ============== FALSE FRIENDS (NEGATIVE TRANSFER) ==============
+# Common words that English speakers misuse due to similarity with English
+
+FALSE_FRIENDS = {
+    "embarazada": {
+        "looks_like": "embarrassed",
+        "actually_means": "pregnant",
+        "correct_word": "avergonzado/a",
+        "example_wrong": "Estoy embarazada por mi error.",
+        "example_right": "Estoy avergonzada por mi error.",
+        "warning": "🚨 'Embarazada' means pregnant, not embarrassed! Use 'avergonzado/a' instead."
+    },
+    "constipado": {
+        "looks_like": "constipated",
+        "actually_means": "having a cold",
+        "correct_word": "estreñido/a",
+        "example_wrong": "Estoy constipado, no puedo ir al baño.",
+        "example_right": "Estoy constipado, tengo la nariz tapada. / Estoy estreñido, no puedo ir al baño.",
+        "warning": "🚨 'Constipado' means having a cold! For constipation, use 'estreñido/a'."
+    },
+    "asistir": {
+        "looks_like": "assist",
+        "actually_means": "to attend",
+        "correct_word": "ayudar",
+        "example_wrong": "Voy a asistirte con tu tarea.",
+        "example_right": "Voy a asistir a la reunión. / Voy a ayudarte con tu tarea.",
+        "warning": "🚨 'Asistir' means to attend an event! For 'to help', use 'ayudar'."
+    },
+    "actual": {
+        "looks_like": "actual",
+        "actually_means": "current, present",
+        "correct_word": "real, verdadero",
+        "example_wrong": "El actual problema es diferente.",
+        "example_right": "El problema actual es la inflación. / El verdadero problema es diferente.",
+        "warning": "🚨 'Actual' means current/present! For 'real', use 'real' or 'verdadero'."
+    },
+    "realizar": {
+        "looks_like": "realize",
+        "actually_means": "to carry out, accomplish",
+        "correct_word": "darse cuenta",
+        "example_wrong": "Realicé que era tarde.",
+        "example_right": "Me di cuenta de que era tarde. / Realicé el proyecto.",
+        "warning": "🚨 'Realizar' means to carry out! For 'to realize', use 'darse cuenta de'."
+    },
+    "sensible": {
+        "looks_like": "sensible",
+        "actually_means": "sensitive",
+        "correct_word": "sensato/a",
+        "example_wrong": "Es una decisión sensible.",
+        "example_right": "Es una persona sensible. / Es una decisión sensata.",
+        "warning": "🚨 'Sensible' means sensitive! For 'sensible', use 'sensato/a'."
+    },
+    "librería": {
+        "looks_like": "library",
+        "actually_means": "bookstore",
+        "correct_word": "biblioteca",
+        "example_wrong": "Fui a la librería a estudiar.",
+        "example_right": "Fui a la librería a comprar libros. / Fui a la biblioteca a estudiar.",
+        "warning": "🚨 'Librería' is a bookstore! For library, use 'biblioteca'."
+    },
+    "éxito": {
+        "looks_like": "exit",
+        "actually_means": "success",
+        "correct_word": "salida",
+        "example_wrong": "El éxito está a la derecha.",
+        "example_right": "El proyecto fue un éxito. / La salida está a la derecha.",
+        "warning": "🚨 'Éxito' means success! For exit, use 'salida'."
+    },
+    "largo": {
+        "looks_like": "large",
+        "actually_means": "long",
+        "correct_word": "grande",
+        "example_wrong": "Es una casa muy larga.",
+        "example_right": "Es un camino largo. / Es una casa muy grande.",
+        "warning": "🚨 'Largo' means long! For large, use 'grande'."
+    },
+    "recordar": {
+        "looks_like": "record",
+        "actually_means": "to remember",
+        "correct_word": "grabar",
+        "example_wrong": "Voy a recordar la canción.",
+        "example_right": "Voy a recordar tu cumpleaños. / Voy a grabar la canción.",
+        "warning": "🚨 'Recordar' means to remember! For 'to record', use 'grabar'."
+    },
+    "pretender": {
+        "looks_like": "pretend",
+        "actually_means": "to try, attempt, aspire",
+        "correct_word": "fingir",
+        "example_wrong": "Pretendo que estoy enfermo.",
+        "example_right": "Pretendo conseguir el trabajo. / Finjo que estoy enfermo.",
+        "warning": "🚨 'Pretender' means to try/aspire! For 'to pretend', use 'fingir'."
+    },
+    "soportar": {
+        "looks_like": "support",
+        "actually_means": "to tolerate, endure",
+        "correct_word": "apoyar",
+        "example_wrong": "Voy a soportar tu decisión.",
+        "example_right": "No soporto el ruido. / Voy a apoyar tu decisión.",
+        "warning": "🚨 'Soportar' means to tolerate! For 'to support', use 'apoyar'."
+    },
+    "carpeta": {
+        "looks_like": "carpet",
+        "actually_means": "folder",
+        "correct_word": "alfombra",
+        "example_wrong": "La carpeta del salón es roja.",
+        "example_right": "Guarda los documentos en la carpeta. / La alfombra del salón es roja.",
+        "warning": "🚨 'Carpeta' means folder! For carpet, use 'alfombra'."
+    },
+    "atender": {
+        "looks_like": "attend",
+        "actually_means": "to serve, pay attention to",
+        "correct_word": "asistir",
+        "example_wrong": "Voy a atender la conferencia.",
+        "example_right": "Voy a atender a los clientes. / Voy a asistir a la conferencia.",
+        "warning": "🚨 'Atender' means to serve/help! For 'to attend', use 'asistir a'."
+    },
+}
+
+# ============== COLLOCATIONS AND CHUNKS ==============
+# Common word partnerships that should be taught together
+
+COLLOCATIONS = {
+    "tomar": [
+        {"chunk": "tomar un café", "meaning": "have a coffee", "context": "¿Quieres tomar un café?"},
+        {"chunk": "tomar una decisión", "meaning": "make a decision", "context": "Necesito tomar una decisión importante."},
+        {"chunk": "tomar el autobús", "meaning": "take the bus", "context": "Siempre tomo el autobús al trabajo."},
+        {"chunk": "tomar el sol", "meaning": "sunbathe", "context": "Me gusta tomar el sol en la playa."},
+        {"chunk": "tomar nota", "meaning": "take notes", "context": "Voy a tomar nota de esto."},
+    ],
+    "echar": [
+        {"chunk": "echar de menos", "meaning": "to miss (someone/something)", "context": "Te echo de menos mucho."},
+        {"chunk": "echar una siesta", "meaning": "take a nap", "context": "Voy a echar una siesta después de comer."},
+        {"chunk": "echar un vistazo", "meaning": "take a look", "context": "Déjame echar un vistazo al documento."},
+        {"chunk": "echar una mano", "meaning": "lend a hand", "context": "¿Me puedes echar una mano?"},
+        {"chunk": "echarse a reír", "meaning": "burst out laughing", "context": "Se echó a reír cuando lo escuchó."},
+    ],
+    "hacer": [
+        {"chunk": "hacer caso", "meaning": "pay attention to", "context": "No me hace caso cuando hablo."},
+        {"chunk": "hacer falta", "meaning": "to be needed/necessary", "context": "Hace falta más tiempo."},
+        {"chunk": "hacer cola", "meaning": "stand in line", "context": "Tuvimos que hacer cola por una hora."},
+        {"chunk": "hacerse daño", "meaning": "hurt oneself", "context": "Ten cuidado, no te hagas daño."},
+        {"chunk": "hacer gracia", "meaning": "to find funny", "context": "No me hace gracia ese chiste."},
+    ],
+    "dar": [
+        {"chunk": "dar igual", "meaning": "not matter", "context": "Me da igual lo que piensen."},
+        {"chunk": "dar las gracias", "meaning": "give thanks", "context": "Quiero darte las gracias por tu ayuda."},
+        {"chunk": "dar un paseo", "meaning": "take a walk", "context": "Vamos a dar un paseo por el parque."},
+        {"chunk": "dar miedo", "meaning": "to scare", "context": "Esta película me da miedo."},
+        {"chunk": "darse cuenta", "meaning": "to realize", "context": "Me di cuenta de mi error."},
+    ],
+    "llevar": [
+        {"chunk": "llevar tiempo", "meaning": "to take time", "context": "Esto va a llevar tiempo."},
+        {"chunk": "llevarse bien", "meaning": "get along", "context": "Nos llevamos bien con los vecinos."},
+        {"chunk": "llevar razón", "meaning": "to be right", "context": "Creo que llevas razón."},
+        {"chunk": "llevar puesto", "meaning": "to be wearing", "context": "¿Qué llevas puesto hoy?"},
+        {"chunk": "llevar la cuenta", "meaning": "keep track", "context": "¿Quién lleva la cuenta?"},
+    ],
+    "poner": [
+        {"chunk": "poner en duda", "meaning": "call into question", "context": "No quiero poner en duda tu palabra."},
+        {"chunk": "ponerse nervioso", "meaning": "get nervous", "context": "Me pongo nervioso antes de hablar."},
+        {"chunk": "poner la mesa", "meaning": "set the table", "context": "Ayúdame a poner la mesa."},
+        {"chunk": "ponerse de acuerdo", "meaning": "come to an agreement", "context": "Tenemos que ponernos de acuerdo."},
+        {"chunk": "poner música", "meaning": "play music", "context": "Pon algo de música."},
+    ],
+}
+
+# ============== SMALL FUNCTION WORDS DRILLS ==============
+# Critical words that cause big errors
+
+SMALL_WORDS_DRILLS = {
+    "lo_la_le": {
+        "description": "Direct vs indirect object pronouns",
+        "exercises": [
+            {"prompt": "Vi a María ayer. __ saludé.", "answer": "La", "explanation": "María is direct object (whom did you greet?)"},
+            {"prompt": "Juan necesitaba ayuda. __ di mi número.", "answer": "Le", "explanation": "Juan is indirect object (to whom did you give?)"},
+            {"prompt": "El libro es interesante. __ leí en un día.", "answer": "Lo", "explanation": "El libro (masc.) is direct object"},
+            {"prompt": "A mis padres __ envío fotos cada semana.", "answer": "les", "explanation": "Mis padres is indirect object (to whom?)"},
+        ],
+    },
+    "se_uses": {
+        "description": "Multiple uses of 'se'",
+        "exercises": [
+            {"prompt": "María __ lava las manos.", "answer": "se", "explanation": "Reflexive: she washes (herself)"},
+            {"prompt": "__ venden casas aquí.", "answer": "Se", "explanation": "Impersonal/passive: 'Houses are sold here'"},
+            {"prompt": "__ lo di a él.", "answer": "Se", "explanation": "'Le' becomes 'se' before 'lo'"},
+            {"prompt": "Juan __ fue sin despedirse.", "answer": "se", "explanation": "Pronominal verb: 'irse' (to leave)"},
+        ],
+    },
+    "que_de_que": {
+        "description": "When to use 'de' before 'que'",
+        "exercises": [
+            {"prompt": "Creo __ tienes razón.", "answer": "que", "explanation": "'Creer' doesn't require 'de'"},
+            {"prompt": "Me alegro __ que hayas venido.", "answer": "de", "explanation": "'Alegrarse de' requires 'de'"},
+            {"prompt": "Estoy seguro __ que va a llover.", "answer": "de", "explanation": "'Seguro de que' (certain that)"},
+            {"prompt": "Pienso __ es una buena idea.", "answer": "que", "explanation": "'Pensar' doesn't require 'de'"},
+        ],
+    },
+    "a_en": {
+        "description": "Direction (a) vs location (en)",
+        "exercises": [
+            {"prompt": "Voy __ la oficina.", "answer": "a", "explanation": "Direction/destination: going TO"},
+            {"prompt": "Estoy __ la oficina.", "answer": "en", "explanation": "Location: I'm AT/IN"},
+            {"prompt": "Llegamos __ Madrid a las 5.", "answer": "a", "explanation": "Arrival destination: arrived TO"},
+            {"prompt": "Vivimos __ Madrid.", "answer": "en", "explanation": "Location: we live IN"},
+        ],
+    },
+    "ya_todavia": {
+        "description": "Already (ya) vs still/yet (todavía)",
+        "exercises": [
+            {"prompt": "¿__ has terminado?", "answer": "Ya", "explanation": "Already (completed action)"},
+            {"prompt": "No, __ no he terminado.", "answer": "todavía", "explanation": "Not yet (action pending)"},
+            {"prompt": "__ estás aquí? Pensé que te fuiste.", "answer": "¿Todavía", "explanation": "Still (continuing state)"},
+            {"prompt": "__ sé la respuesta.", "answer": "Ya", "explanation": "Already (I know it now)"},
+        ],
+    },
+    "pero_sino": {
+        "description": "But (pero) vs but rather (sino)",
+        "exercises": [
+            {"prompt": "No es rojo, __ azul.", "answer": "sino", "explanation": "Contradicts negative: 'not X, but rather Y'"},
+            {"prompt": "Es difícil, __ no imposible.", "answer": "pero", "explanation": "Simple contrast: 'but'"},
+            {"prompt": "No quiero café, __ té.", "answer": "sino", "explanation": "Replaces what was negated"},
+            {"prompt": "Tengo hambre, __ no quiero comer.", "answer": "pero", "explanation": "Contrast without negation replacement"},
+        ],
+    },
+}

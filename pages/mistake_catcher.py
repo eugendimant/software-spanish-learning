@@ -10,9 +10,9 @@ from utils.helpers import check_text_for_mistakes, generate_corrected_text, high
 def render_mistake_catcher_page():
     """Render the Real-Time Mistake Catcher page."""
     render_hero(
-        title="Mistake Catcher",
-        subtitle="Real-time error detection for gender, agreement, tense, clitics, and common mistakes. Fix errors before they fossilize.",
-        pills=["Gender", "Agreement", "Ser/Estar", "Prepositions", "Clitics"]
+        title="Writing Check",
+        subtitle="Get helpful feedback on your Spanish writing. Each suggestion helps you write more naturally.",
+        pills=["Gender", "Agreement", "Ser/Estar", "Prepositions"]
     )
 
     # Initialize session state
@@ -124,12 +124,12 @@ def render_text_checker():
                     </div>
                     """, unsafe_allow_html=True)
 
-        # Show grammar issues if any
+        # Show grammar suggestions if any
         if grammar_issues:
-            # Summary
+            # Summary - encouraging tone
             st.markdown(f"""
-            <div class="card" style="border-left: 4px solid var(--warning);">
-                <strong>Found {len(grammar_issues)} grammar issue{'s' if len(grammar_issues) > 1 else ''}:</strong>
+            <div class="card" style="border-left: 4px solid var(--primary);">
+                <strong>Here are {len(grammar_issues)} suggestion{'s' if len(grammar_issues) > 1 else ''} to improve your writing:</strong>
             </div>
             """, unsafe_allow_html=True)
 
@@ -143,21 +143,21 @@ def render_text_checker():
                 </div>
                 """, unsafe_allow_html=True)
 
-            # Detailed mistakes
-            st.markdown("### Detailed Corrections")
+            # Detailed suggestions
+            st.markdown("### Suggestions")
 
             for i, mistake in enumerate(grammar_issues, 1):
-                error_icon = {
+                suggestion_icon = {
                     "gender": "👤",
                     "preposition": "📍",
                     "copula": "🔄",
                     "calque": "🌐",
-                    "false_friend": "⚠️",
+                    "false_friend": "💡",
                     "style": "✨",
                     "language": "🌐",
-                }.get(mistake.get("tag", ""), "❌")
+                }.get(mistake.get("tag", ""), "💡")
 
-                with st.expander(f"{error_icon} Issue {i}: {mistake['original']} → {mistake['correction']}", expanded=i == 1):
+                with st.expander(f"{suggestion_icon} {mistake['original']} → {mistake['correction']}", expanded=i == 1):
                     col1, col2 = st.columns([3, 1])
 
                     with col1:
@@ -288,15 +288,16 @@ def render_grammar_drills():
                 st.session_state.gd_answered[drill_idx] = True
                 st.markdown("""
                 <div class="feedback-box feedback-success">
-                    ✅ <strong>Correct!</strong>
+                    <strong>That's right!</strong> Well done.
                 </div>
                 """, unsafe_allow_html=True)
                 record_progress({"grammar_reviewed": 1})
             else:
                 st.session_state.gd_answered[drill_idx] = False
                 st.markdown(f"""
-                <div class="feedback-box feedback-error">
-                    ❌ The correct answer is: <strong>{correct}</strong>
+                <div class="feedback-box feedback-info">
+                    <strong>Not quite.</strong> The answer is: <strong>{correct}</strong>
+                    <br><em>This is a tricky one - see the explanation below.</em>
                 </div>
                 """, unsafe_allow_html=True)
 

@@ -413,11 +413,55 @@ def render_preferences():
 
         show_hints = st.toggle("Show hints during exercises", value=True)
 
+    st.divider()
+
+    # Focus Mode and Grading Options - important UX options
+    st.markdown("### Display & Input Options")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        focus_mode = st.toggle(
+            "Focus Mode",
+            value=bool(profile.get("focus_mode", 0)),
+            help="Hide gamification elements like streaks, XP, and achievements to reduce distractions"
+        )
+        st.caption("Hides streaks, XP, achievements, and leaderboards")
+
+    with col2:
+        accent_tolerance = st.toggle(
+            "Accent Tolerance Mode",
+            value=bool(profile.get("accent_tolerance", 0)),
+            help="Accept answers even without proper accent marks (á, é, í, ó, ú, ñ)"
+        )
+        st.caption("Accepts 'manana' as 'mañana', 'cafe' as 'café'")
+
+    st.markdown("### Grading Strictness")
+    st.caption("Control how strictly your answers are evaluated")
+
+    grading_mode = st.radio(
+        "Grading mode:",
+        ["strict", "balanced", "lenient"],
+        index=["strict", "balanced", "lenient"].index(profile.get("grading_mode", "balanced")),
+        horizontal=True,
+        help="Strict: exact spelling required. Balanced: minor typos forgiven. Lenient: meaning-first, focus on concepts."
+    )
+
+    grading_descriptions = {
+        "strict": "Exact spelling and grammar required. Best for advanced learners preparing for exams.",
+        "balanced": "Minor typos forgiven (1-2 characters). Accents handled based on toggle above.",
+        "lenient": "Meaning-first approach. Accepts reasonable variations and focuses on concepts over form."
+    }
+    st.info(grading_descriptions[grading_mode])
+
     # Save preferences
     if st.button("Save Preferences", type="primary"):
         update_user_profile({
             **profile,
-            "dialect_preference": dialect
+            "dialect_preference": dialect,
+            "focus_mode": 1 if focus_mode else 0,
+            "accent_tolerance": 1 if accent_tolerance else 0,
+            "grading_mode": grading_mode
         })
         st.success("Preferences saved!")
 
