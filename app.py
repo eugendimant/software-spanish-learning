@@ -1,514 +1,614 @@
 """
-VivaLingo Pro - Advanced Spanish Learning Platform
-A comprehensive, production-quality Spanish learning application for C1-C2 learners.
-Features futuristic UI and multi-profile support.
+VivaLingo - Spanish Learning Platform
+Clean, focused interface for C1-C2 learners.
 """
 import streamlit as st
 from datetime import date
-import json
 
 # Initialize database and theme first
 from utils.database import (
     init_db, get_user_profile, update_user_profile, get_total_stats,
-    get_domain_exposure, get_vocab_for_review, get_mistakes_for_review,
-    get_progress_history, get_all_profiles, create_profile, get_profile,
-    set_active_profile_id, get_active_profile_id, get_profile_stats,
-    init_profile_domains, delete_profile
+    get_vocab_for_review, get_mistakes_for_review, get_grammar_for_review,
+    get_progress_history, get_all_profiles, create_profile,
+    set_active_profile_id, get_active_profile_id, get_profile_stats
 )
 from utils.theme import (
-    get_css, render_hero, render_section_header,
-    render_streak_badge, render_profile_card
+    get_css, render_hero, render_section_header, render_stat_card,
+    render_action_card, render_feedback, render_streak_badge,
+    render_empty_state, render_loading_skeleton
 )
-from utils.helpers import get_streak_days, pick_domain_pair
-from utils.content import TOPIC_DIVERSITY_DOMAINS, GRAMMAR_MICRODRILLS
+from utils.helpers import get_streak_days
 
-# Page configuration must be first Streamlit command
+# Page configuration - must be first Streamlit command
 st.set_page_config(
-    page_title="VivaLingo Pro",
-    page_icon="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>",
+    page_title="VivaLingo",
+    page_icon="🇪🇸",
     layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items={
-        'Get Help': 'https://github.com/vivalingo/help',
-        'Report a bug': 'https://github.com/vivalingo/issues',
-        'About': '# VivaLingo Pro\nAdvanced Spanish Learning Platform for C1-C2 Mastery'
-    }
+    initial_sidebar_state="expanded"
 )
 
-# Apply custom theme
+# Apply theme
 st.markdown(get_css(), unsafe_allow_html=True)
 
-# Initialize database with error handling
+# Initialize database
 try:
     init_db()
 except Exception as e:
-    st.error(f"Database initialization error: {str(e)}. Please refresh the page.")
+    st.error(f"Database error: {str(e)}")
 
+
+# ============================================
+# SESSION STATE
+# ============================================
 
 def init_session_state():
-    """Initialize session state variables."""
-    if "initialized" not in st.session_state:
-        st.session_state.initialized = True
-        st.session_state.current_page = "Home"
-        st.session_state.review_queue = []
-        st.session_state.current_exercise = 0
-        st.session_state.daily_mission_active = False
-        st.session_state.conversation_messages = []
-        st.session_state.placement_answers = {}
-        st.session_state.quick_session_mode = False
-        st.session_state.show_profile_selector = False
-        st.session_state.show_create_profile = False
+    """Initialize session state."""
+    defaults = {
+        "initialized": True,
+        "current_page": "Home",
+        "review_queue": [],
+        "active_profile_id": None,
+        "show_onboarding": False,
+        "onboarding_step": 0,
+        "last_session": None,  # For "Continue" feature
+    }
 
-    # Initialize active profile from database or create default
-    if "active_profile_id" not in st.session_state:
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+
+    # Load active profile
+    if st.session_state.active_profile_id is None:
         profiles = get_all_profiles()
         if profiles:
             st.session_state.active_profile_id = profiles[0]["id"]
+            set_active_profile_id(profiles[0]["id"])
         else:
-            # No profiles exist, show profile creation
-            st.session_state.active_profile_id = None
-            st.session_state.show_create_profile = True
-
-    # Sync with database module
-    if st.session_state.active_profile_id:
-        set_active_profile_id(st.session_state.active_profile_id)
+            st.session_state.show_onboarding = True
 
 
 init_session_state()
 
 
-def render_profile_creation():
-    """Render the profile creation screen."""
-    st.markdown("""
-    <div style="text-align: center; padding: 2rem 0;">
-        <div style="font-size: 4rem; margin-bottom: 1rem;">🚀</div>
-        <h1 style="margin-bottom: 0.5rem;">Welcome to VivaLingo Pro</h1>
-        <p style="color: var(--text-secondary); font-size: 1.1rem;">
-            Create your profile to start your Spanish mastery journey
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+# ============================================
+# NAVIGATION CONFIG
+# ============================================
 
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown("""
-        <div class="card" style="padding: 2rem;">
-            <h3 style="text-align: center; margin-bottom: 1.5rem;">Create Your Profile</h3>
-        </div>
-        """, unsafe_allow_html=True)
+# Learner-facing navigation only
+NAV_ITEMS = [
+    {"icon": "🏠", "label": "Home", "page": "Home"},
+    {"icon": "📚", "label": "Learn", "page": "Learn"},
+    {"icon": "🔄", "label": "Review", "page": "Review"},
+    {"icon": "🎯", "label": "Practice", "page": "Practice"},
+    {"icon": "📊", "label": "Progress", "page": "Progress"},
+    {"icon": "⚙️", "label": "Settings", "page": "Settings"},
+]
 
-        name = st.text_input("Your Name", placeholder="Enter your name...", max_chars=50)
-        level = st.selectbox("Current Level", ["B2", "C1", "C2"], index=1)
+# Sub-pages for Practice
+PRACTICE_PAGES = {
+    "Vocabulary": "Topic Diversity",
+    "Verbs": "Verb Studio",
+    "Conversation": "Conversation",
+    "Writing": "Writing Coach",
+}
 
-        if st.button("Start Learning", type="primary", use_container_width=True):
-            cleaned_name = name.strip()
-            # Input validation
-            if not cleaned_name:
-                st.error("Please enter your name to continue.")
-            elif len(cleaned_name) < 2:
-                st.error("Name must be at least 2 characters long.")
-            elif len(cleaned_name) > 50:
-                st.error("Name must be 50 characters or less.")
-            elif not cleaned_name.replace(" ", "").replace("-", "").replace("'", "").isalnum():
-                st.error("Name can only contain letters, numbers, spaces, hyphens, and apostrophes.")
-            else:
-                try:
-                    profile_id = create_profile(cleaned_name, level)
-                    if profile_id:
-                        st.session_state.active_profile_id = profile_id
-                        st.session_state.show_create_profile = False
-                        set_active_profile_id(profile_id)
-                        st.rerun()
-                    else:
-                        st.error("Failed to create profile. Please try again.")
-                except Exception as e:
-                    st.error(f"Error creating profile: {str(e)}")
+# Tools (accessible from Practice)
+TOOLS = {
+    "Dialect Guide": "Dialects",
+    "Memory Palace": "Memory Palace",
+    "Error Patterns": "Mistake Catcher",
+}
 
 
-def render_profile_selector():
-    """Render the profile selector modal."""
-    profiles = get_all_profiles()
-
-    st.markdown("### Switch Profile")
-
-    if profiles:
-        cols = st.columns(min(len(profiles) + 1, 4))
-
-        for i, profile in enumerate(profiles):
-            with cols[i % 4]:
-                stats = get_profile_stats(profile["id"])
-                streak = get_streak_days(get_progress_history())
-                is_active = profile["id"] == st.session_state.active_profile_id
-
-                st.markdown(render_profile_card(
-                    profile.get("name", "Unknown"),
-                    profile.get("level", "C1"),
-                    stats.get("vocab_count", 0),
-                    streak,
-                    is_active
-                ), unsafe_allow_html=True)
-
-                if st.button(
-                    "Active" if is_active else "Select",
-                    key=f"profile_{profile['id']}",
-                    use_container_width=True,
-                    type="primary" if is_active else "secondary",
-                    disabled=is_active
-                ):
-                    st.session_state.active_profile_id = profile["id"]
-                    set_active_profile_id(profile["id"])
-                    st.session_state.show_profile_selector = False
-                    st.rerun()
-
-        # Add new profile button
-        with cols[min(len(profiles), 3)]:
-            st.markdown("""
-            <div class="profile-card" style="border-style: dashed;">
-                <div class="profile-avatar" style="background: var(--bg-tertiary);">+</div>
-                <div class="profile-name">New Profile</div>
-                <div class="profile-stats">Create a new learner profile</div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button("Create New", key="create_new_profile", use_container_width=True):
-                st.session_state.show_create_profile = True
-                st.session_state.show_profile_selector = False
-                st.rerun()
-    else:
-        st.info("No profiles found. Create your first profile!")
-        if st.button("Create Profile", type="primary"):
-            st.session_state.show_create_profile = True
-            st.session_state.show_profile_selector = False
-            st.rerun()
-
-    if st.button("Close", use_container_width=True):
-        st.session_state.show_profile_selector = False
-        st.rerun()
-
+# ============================================
+# SIDEBAR
+# ============================================
 
 def render_sidebar():
-    """Render the navigation sidebar."""
+    """Render clean, learner-focused sidebar."""
     with st.sidebar:
-        # Logo and title
+        # App header
         st.markdown("""
-        <div style="text-align: center; padding: 1.5rem 0 1rem 0;">
-            <div style="font-size: 3rem; margin-bottom: 0.5rem; filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));">🚀</div>
-            <h1 style="font-size: 1.4rem; margin: 0; background: linear-gradient(135deg, #f8fafc 0%, #818cf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">VivaLingo Pro</h1>
-            <p style="font-size: 0.75rem; color: #64748b; margin: 0.25rem 0 0 0;">Spanish Mastery Lab</p>
+        <div style="padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 16px;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">
+                🇪🇸 VivaLingo
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted);">Spanish Mastery</div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Current profile display
+        # Profile info
         profile = get_user_profile()
-        profile_name = profile.get("name", "")
-
-        if profile_name:
-            initial = profile_name[0].upper()
+        if profile.get("name"):
+            streak = get_streak_days(get_progress_history())
             st.markdown(f"""
-            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; margin: 0.5rem 0;
-                        background: rgba(99, 102, 241, 0.1); border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.2);
-                        cursor: pointer;" onclick="document.querySelector('[data-testid=stButton] button').click()">
-                <div style="width: 40px; height: 40px; border-radius: 50%;
-                            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-                            display: flex; align-items: center; justify-content: center;
-                            font-size: 1.1rem; font-weight: 700; color: white;
-                            box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);">{initial}</div>
-                <div>
-                    <div style="font-weight: 600; color: #f8fafc; font-size: 0.95rem;">{profile_name}</div>
-                    <div style="font-size: 0.7rem; color: #64748b;">Level {profile.get('level', 'C1')}</div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px;
+                        background: var(--bg-surface); border-radius: 8px; margin-bottom: 16px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%;
+                            background: var(--accent); display: flex; align-items: center;
+                            justify-content: center; color: white; font-weight: 600;">
+                    {profile['name'][0].upper()}
                 </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 500; color: var(--text-primary);">{profile['name']}</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Level {profile.get('level', 'C1')}</div>
+                </div>
+                {f'<div style="font-size: 14px;">🔥 {streak}</div>' if streak > 0 else ''}
             </div>
             """, unsafe_allow_html=True)
 
-        if st.button("👤 Switch Profile", use_container_width=True, type="secondary"):
-            st.session_state.show_profile_selector = True
-            st.rerun()
-
-        # Check if focus mode is enabled (hide gamification)
-        focus_mode = profile.get("focus_mode", 0)
-
-        # Streak counter - only show if not in focus mode
-        if not focus_mode:
-            streak = get_streak_days(get_progress_history())
-            render_streak_badge(streak)
-
-        # Items due badges
+        # Review due badge
         vocab_due = len(get_vocab_for_review())
         errors_due = len(get_mistakes_for_review())
         total_due = vocab_due + errors_due
 
         if total_due > 0:
             st.markdown(f"""
-            <div style="display: flex; gap: 0.5rem; justify-content: center; margin: 0.75rem 0;">
-                <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; padding: 0.3rem 0.6rem;
-                            border-radius: 9999px; font-size: 0.7rem; font-weight: 600;
-                            border: 1px solid rgba(99, 102, 241, 0.3);">
-                    📚 {vocab_due} vocab
-                </span>
-                <span style="background: rgba(239, 68, 68, 0.15); color: #f87171; padding: 0.3rem 0.6rem;
-                            border-radius: 9999px; font-size: 0.7rem; font-weight: 600;
-                            border: 1px solid rgba(239, 68, 68, 0.3);">
-                    ✗ {errors_due} errors
-                </span>
+            <div style="background: var(--accent-muted); border: 1px solid rgba(99, 102, 241, 0.3);
+                        border-radius: 8px; padding: 10px 12px; margin-bottom: 16px;">
+                <div style="font-size: 13px; color: var(--accent);">
+                    <strong>{total_due}</strong> items due for review
+                </div>
             </div>
             """, unsafe_allow_html=True)
 
-        st.divider()
+        # Main navigation
+        st.markdown("#### Navigation")
 
-        # Quick session button
-        if st.button("⚡ Quick 5-min Session", use_container_width=True, type="primary"):
+        for item in NAV_ITEMS:
+            is_active = st.session_state.current_page == item["page"]
+            if st.button(
+                f"{item['icon']} {item['label']}",
+                key=f"nav_{item['page']}",
+                use_container_width=True,
+                type="primary" if is_active else "secondary"
+            ):
+                st.session_state.current_page = item["page"]
+                st.rerun()
+
+        # Admin tools - only show if user has admin flag (hidden for normal users)
+        profile = get_user_profile()
+        if profile.get("is_admin"):
+            st.divider()
+            st.markdown("#### Developer")
+            admin_pages = [
+                ("Content Ingest", "Content Ingest"),
+                ("Error Notebook", "Error Notebook"),
+                ("Fingerprint", "Fingerprint"),
+            ]
+            for label, page in admin_pages:
+                if st.button(label, key=f"admin_{page}", use_container_width=True):
+                    st.session_state.current_page = page
+                    st.rerun()
+
+
+# ============================================
+# ONBOARDING
+# ============================================
+
+def render_onboarding():
+    """Render onboarding flow for new users."""
+    step = st.session_state.onboarding_step
+
+    # Center container
+    col1, col2, col3 = st.columns([1, 2, 1])
+
+    with col2:
+        st.markdown("""
+        <div style="text-align: center; padding: 32px 0;">
+            <div style="font-size: 48px; margin-bottom: 16px;">🇪🇸</div>
+            <h1 style="margin-bottom: 8px;">Welcome to VivaLingo</h1>
+            <p style="color: var(--text-secondary);">Let's set up your learning profile</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if step == 0:
+            # Name
+            st.markdown("### What's your name?")
+            name = st.text_input("Name", placeholder="Enter your name", label_visibility="collapsed")
+
+            if st.button("Continue", type="primary", use_container_width=True, disabled=not name.strip()):
+                st.session_state.onboarding_name = name.strip()
+                st.session_state.onboarding_step = 1
+                st.rerun()
+
+        elif step == 1:
+            # Level
+            st.markdown("### What's your current Spanish level?")
+            level = st.radio(
+                "Level",
+                ["B2 - Upper Intermediate", "C1 - Advanced", "C2 - Proficiency"],
+                label_visibility="collapsed"
+            )
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                if st.button("← Back", use_container_width=True):
+                    st.session_state.onboarding_step = 0
+                    st.rerun()
+            with col_b:
+                if st.button("Continue →", type="primary", use_container_width=True):
+                    st.session_state.onboarding_level = level.split(" - ")[0]
+                    st.session_state.onboarding_step = 2
+                    st.rerun()
+
+        elif step == 2:
+            # Goal
+            st.markdown("### What's your main goal?")
+            goal = st.radio(
+                "Goal",
+                ["Professional communication", "Academic study", "Travel & culture", "General fluency"],
+                label_visibility="collapsed"
+            )
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                if st.button("← Back", use_container_width=True):
+                    st.session_state.onboarding_step = 1
+                    st.rerun()
+            with col_b:
+                if st.button("Start Learning", type="primary", use_container_width=True):
+                    # Create profile
+                    name = st.session_state.get("onboarding_name", "Learner")
+                    level = st.session_state.get("onboarding_level", "C1")
+
+                    profile_id = create_profile(name, level)
+                    if profile_id:
+                        st.session_state.active_profile_id = profile_id
+                        set_active_profile_id(profile_id)
+                        st.session_state.show_onboarding = False
+                        st.session_state.onboarding_step = 0
+                        st.rerun()
+
+        # Skip option
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Skip setup", type="secondary"):
+            profile_id = create_profile("Learner", "C1")
+            if profile_id:
+                st.session_state.active_profile_id = profile_id
+                set_active_profile_id(profile_id)
+                st.session_state.show_onboarding = False
+                st.rerun()
+
+
+# ============================================
+# HOME / TODAY DASHBOARD
+# ============================================
+
+def render_home_page():
+    """Render Today dashboard with useful modules filling the space."""
+    profile = get_user_profile()
+    stats = get_total_stats()
+
+    # Get review counts
+    vocab_due = len(get_vocab_for_review())
+    errors_due = len(get_mistakes_for_review())
+    grammar_due = len(get_grammar_for_review())
+    total_due = vocab_due + errors_due + grammar_due
+
+    # Greeting
+    name = profile.get('name', 'there')
+    st.markdown(f"## Good to see you, {name}")
+
+    # ============================================
+    # DASHBOARD GRID: Main (60%) + Rail (40%)
+    # ============================================
+
+    main_col, rail_col = st.columns([3, 2])
+
+    with main_col:
+        # ----------------------------------------
+        # CONTINUE CARD (Primary action)
+        # ----------------------------------------
+        last_page = st.session_state.get("last_session", "Topic Diversity")
+
+        st.markdown(f"""
+        <div class="action-card action-card-primary" style="margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="font-size: 32px;">▶️</div>
+                <div style="flex: 1;">
+                    <div class="action-card-title">Continue Learning</div>
+                    <div class="action-card-subtitle">Pick up where you left off</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("Continue", type="primary", use_container_width=True, key="btn_continue"):
+            st.session_state.current_page = last_page
+            st.rerun()
+
+        # ----------------------------------------
+        # REVIEW DUE CARD
+        # ----------------------------------------
+        if total_due > 0:
+            review_time = max(1, total_due // 2)
+            st.markdown(f"""
+            <div class="action-card" style="margin-bottom: 16px; margin-top: 16px;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div style="font-size: 32px;">🔄</div>
+                    <div style="flex: 1;">
+                        <div class="action-card-title">Review Due</div>
+                        <div class="action-card-subtitle">{total_due} items ready • ~{review_time} min</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="pill pill-accent">{vocab_due} vocab</span>
+                        {f'<span class="pill pill-error" style="margin-left: 4px;">{errors_due} errors</span>' if errors_due > 0 else ''}
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if st.button("Start Review", use_container_width=True, key="btn_review"):
+                st.session_state.current_page = "Review"
+                st.rerun()
+
+        # ----------------------------------------
+        # QUICK 5 MIN SESSION
+        # ----------------------------------------
+        st.markdown("""
+        <div class="action-card" style="margin-top: 16px;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="font-size: 32px;">⚡</div>
+                <div style="flex: 1;">
+                    <div class="action-card-title">Quick 5 min session</div>
+                    <div class="action-card-subtitle">Mixed practice: vocab + grammar + listening</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("Start Quick Session", use_container_width=True, key="btn_quick"):
             st.session_state.quick_session_mode = True
             st.session_state.current_page = "Review"
             st.rerun()
 
-        st.divider()
+        # ----------------------------------------
+        # RECOMMENDED NEXT
+        # ----------------------------------------
+        st.markdown("### Recommended")
 
-        # Navigation
-        st.markdown("### Navigation")
-
-        # Simplified navigation - clear labels, grouped logically
-        st.markdown("#### Practice")
-        practice_pages = [
-            ("🔄 Review Due Items", "Review"),
-            ("📚 Learn Vocabulary", "Topic Diversity"),
-            ("🔤 Verb Studio", "Verb Studio"),
-            ("💬 Conversation", "Conversation"),
-            ("✍️ Writing Coach", "Writing Coach"),
+        rec_cols = st.columns(2)
+        recommendations = [
+            {"icon": "💬", "title": "Conversation Practice", "desc": "Practice speaking scenarios", "page": "Conversation"},
+            {"icon": "✍️", "title": "Writing Coach", "desc": "Get feedback on your writing", "page": "Writing Coach"},
         ]
 
-        for label, page_key in practice_pages:
-            if st.button(label, use_container_width=True,
-                         type="primary" if st.session_state.current_page == page_key else "secondary"):
-                st.session_state.current_page = page_key
-                st.rerun()
+        for i, rec in enumerate(recommendations):
+            with rec_cols[i]:
+                st.markdown(f"""
+                <div class="card" style="text-align: center; padding: 20px;">
+                    <div style="font-size: 28px; margin-bottom: 8px;">{rec['icon']}</div>
+                    <div style="font-weight: 600; margin-bottom: 4px;">{rec['title']}</div>
+                    <div style="font-size: 13px; color: var(--text-muted);">{rec['desc']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button("Start", key=f"rec_{i}", use_container_width=True):
+                    st.session_state.current_page = rec['page']
+                    st.rerun()
 
-        st.markdown("#### Tools")
-        tool_pages = [
-            ("✏️ Check My Writing", "Mistake Catcher"),
-            ("🌎 Dialect Guide", "Dialects"),
-            ("🏛️ Memory Palace", "Memory Palace"),
-        ]
+    # ----------------------------------------
+    # RIGHT RAIL - Stats
+    # ----------------------------------------
+    with rail_col:
+        # Streak
+        streak = get_streak_days(get_progress_history())
+        st.markdown(f"""
+        <div class="stat-card" style="margin-bottom: 12px; text-align: center;">
+            <div style="font-size: 36px; margin-bottom: 4px;">🔥</div>
+            <div class="stat-value">{streak}</div>
+            <div class="stat-label">Day Streak</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        for label, page_key in tool_pages:
-            if st.button(label, use_container_width=True,
-                         type="primary" if st.session_state.current_page == page_key else "secondary"):
-                st.session_state.current_page = page_key
-                st.rerun()
+        # Weekly goal
+        weekly_goal = profile.get('weekly_goal', 6)
+        # TODO: Calculate actual sessions this week
+        sessions_this_week = min(3, weekly_goal)  # Placeholder
+        progress_pct = sessions_this_week / weekly_goal if weekly_goal > 0 else 0
 
-        st.markdown("#### Progress")
-        progress_pages = [
-            ("📖 My Spanish", "My Spanish"),
-            ("📊 My Fingerprint", "Fingerprint"),
-            ("📋 Error Notebook", "Error Notebook"),
-        ]
+        st.markdown(f"""
+        <div class="stat-card" style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-weight: 500;">Weekly Goal</span>
+                <span style="color: var(--text-muted);">{sessions_this_week}/{weekly_goal}</span>
+            </div>
+            <div style="background: var(--bg-elevated); height: 8px; border-radius: 4px; overflow: hidden;">
+                <div style="background: var(--accent); height: 100%; width: {progress_pct * 100}%; border-radius: 4px;"></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        for label, page_key in progress_pages:
-            if st.button(label, use_container_width=True,
-                         type="primary" if st.session_state.current_page == page_key else "secondary"):
-                st.session_state.current_page = page_key
-                st.rerun()
+        # Words learned
+        st.markdown(f"""
+        <div class="stat-card" style="margin-bottom: 12px;">
+            <div class="stat-value">{stats.get('total_vocab', 0)}</div>
+            <div class="stat-label">Words Learned</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.divider()
+        # Speaking time
+        st.markdown(f"""
+        <div class="stat-card" style="margin-bottom: 12px;">
+            <div class="stat-value">{stats.get('total_speaking', 0):.0f}</div>
+            <div class="stat-label">Minutes Speaking</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        other_pages = [
-            ("🏠 Home", "Home"),
-            ("⚙️ Settings", "Settings"),
-        ]
-
-        for label, page_key in other_pages:
-            if st.button(label, use_container_width=True,
-                         type="primary" if st.session_state.current_page == page_key else "secondary"):
-                st.session_state.current_page = page_key
-                st.rerun()
-
-        st.divider()
-
-        # Quick stats
-        stats = get_total_stats()
-        if stats:
-            st.markdown("### Your Stats")
+        # Weak areas
+        st.markdown("### Focus Areas")
+        # TODO: Get actual weak areas from analytics
+        weak_areas = ["Subjunctive mood", "Ser vs Estar", "Preterite vs Imperfect"]
+        for area in weak_areas[:3]:
             st.markdown(f"""
-            <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                📊 <strong style="color: var(--text-primary);">{stats.get('total_vocab', 0)}</strong> words reviewed<br>
-                🎤 <strong style="color: var(--text-primary);">{stats.get('total_speaking', 0):.0f}</strong> min speaking<br>
-                🎯 <strong style="color: var(--text-primary);">{stats.get('total_missions', 0)}</strong> missions done
+            <div style="padding: 8px 12px; background: var(--bg-surface); border-radius: 6px;
+                        margin-bottom: 8px; font-size: 13px; border-left: 3px solid var(--warning);">
+                {area}
             </div>
             """, unsafe_allow_html=True)
 
 
-def render_home_page():
-    """Render the home/dashboard page - calm, focused daily plan."""
-    profile = get_user_profile()
-    stats = get_total_stats()
-    focus_mode = profile.get("focus_mode", 0)
+# ============================================
+# LEARN PAGE
+# ============================================
 
-    # Simple greeting
-    name = profile.get('name', '')
-    greeting = f"Welcome back, {name}!" if name else "Welcome!"
-
-    # Check items due for review
-    vocab_due = len(get_vocab_for_review())
-    errors_due = len(get_mistakes_for_review())
-    total_due = vocab_due + errors_due
-    review_time = max(1, total_due // 2)  # Estimate ~30 sec per item
-
-    render_hero(title=greeting, subtitle="Your daily plan", pills=[])
-
-    # Placement test override
-    if not profile.get("placement_completed"):
-        st.markdown("""
-        <div class="feedback-box feedback-info" style="padding: 1.5rem; text-align: center; max-width: 600px; margin: 0 auto;">
-            <strong>Let's personalize your learning</strong>
-            <p style="margin: 0.5rem 0; opacity: 0.9;">A quick assessment helps us recommend the right content.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Take Assessment", type="primary", use_container_width=True):
-                st.session_state.current_page = "Settings"
-                st.rerun()
-        with col2:
-            if st.button("Skip for Now", use_container_width=True):
-                st.session_state.current_page = "Topic Diversity"
-                st.rerun()
-        return
-
-    # ============================================
-    # TWO PRIMARY ACTIONS - Continue & Review
-    # ============================================
-    st.markdown("""
-    <div style="max-width: 650px; margin: 0 auto;">
-    """, unsafe_allow_html=True)
+def render_learn_page():
+    """Render Learn page with vocabulary and grammar paths."""
+    st.markdown("## Learn")
+    st.markdown("Build your vocabulary and grammar skills")
 
     col1, col2 = st.columns(2)
 
     with col1:
-        # Continue (next lesson)
         st.markdown("""
-        <div class="card" style="text-align: center; padding: 1.5rem;">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📚</div>
-            <strong>Continue Learning</strong>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.5rem 0;">New vocabulary & skills</p>
-            <span style="background: rgba(34, 197, 94, 0.15); color: #22c55e; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">~10 min</span>
+        <div class="card">
+            <div style="font-size: 32px; margin-bottom: 12px;">📚</div>
+            <h3>Vocabulary</h3>
+            <p style="color: var(--text-muted);">Learn new words in context with the Topic Diversity Engine</p>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("Start Lesson", type="primary", use_container_width=True, key="btn_continue"):
+        if st.button("Start Vocabulary", type="primary", use_container_width=True, key="learn_vocab"):
             st.session_state.current_page = "Topic Diversity"
+            st.session_state.last_session = "Topic Diversity"
             st.rerun()
 
     with col2:
-        # Review (due items)
-        if total_due > 0:
-            st.markdown(f"""
-            <div class="card" style="text-align: center; padding: 1.5rem; border: 2px solid var(--primary);">
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔄</div>
-                <strong>Review Due</strong>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.5rem 0;">{total_due} items ready</p>
-                <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">~{review_time} min</span>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button("Start Review", type="primary", use_container_width=True, key="btn_review"):
-                st.session_state.current_page = "Review"
-                st.rerun()
-        else:
-            st.markdown("""
-            <div class="card" style="text-align: center; padding: 1.5rem; opacity: 0.6;">
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">✅</div>
-                <strong>All Caught Up</strong>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.5rem 0;">No reviews due</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # ============================================
-    # SECONDARY LINKS - Quick access, not competing
-    # ============================================
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Collapsible secondary options
-    with st.expander("🎯 Quick sessions", expanded=False):
-        cols = st.columns(4)
-        sessions = [
-            ("💬 Speak", "Conversation", "5 min"),
-            ("✍️ Write", "Writing Coach", "7 min"),
-            ("🔤 Verbs", "Verb Studio", "5 min"),
-            ("🏛️ Memory", "Memory Palace", "10 min"),
-        ]
-        for col, (label, page, time) in zip(cols, sessions):
-            with col:
-                st.markdown(f"<div style='text-align:center;'><small>{time}</small></div>", unsafe_allow_html=True)
-                if st.button(label, key=f"qs_{page}", use_container_width=True):
-                    st.session_state.current_page = page
-                    st.rerun()
-
-    # Stats - only if not in focus mode, hidden by default
-    if not focus_mode:
-        with st.expander("📊 Stats", expanded=False):
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Words Learned", stats.get('total_vocab', 0))
-            with col2:
-                st.metric("Speaking", f"{stats.get('total_speaking', 0):.0f} min")
-            with col3:
-                streak = get_streak_days(get_progress_history())
-                st.metric("Streak", f"🔥 {streak}" if streak > 0 else "0 days")
+        st.markdown("""
+        <div class="card">
+            <div style="font-size: 32px; margin-bottom: 12px;">🔤</div>
+            <h3>Verb Mastery</h3>
+            <p style="color: var(--text-muted);">Master verb nuances, tenses, and near-synonyms</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Start Verbs", type="primary", use_container_width=True, key="learn_verbs"):
+            st.session_state.current_page = "Verb Studio"
+            st.session_state.last_session = "Verb Studio"
+            st.rerun()
 
 
+# ============================================
+# PRACTICE PAGE
+# ============================================
 
-def render_learn_page():
-    """Render the general learning hub page."""
-    render_hero(
-        title="Learning Hub",
-        subtitle="Choose your learning path: vocabulary, verbs, grammar, or full immersion.",
-        pills=["Vocabulary", "Verb Precision", "Grammar", "Context"]
-    )
+def render_practice_page():
+    """Render Practice page with different skill modes."""
+    st.markdown("## Practice")
+    st.markdown("Apply your skills in realistic scenarios")
 
-    # Learning paths
-    paths = [
-        {
-            "icon": "🎯",
-            "title": "Topic Diversity Engine",
-            "desc": "Rotate through underexposed domains with 70/30 familiar/stretch mix",
-            "page": "Topic Diversity"
-        },
-        {
-            "icon": "📝",
-            "title": "Context-First Units",
-            "desc": "Learn phrases in dialogue, messages, and mini-paragraphs",
-            "page": "Context Units"
-        },
-        {
-            "icon": "🔤",
-            "title": "Verb Choice Studio",
-            "desc": "Master nuance, tone, and near-synonyms for advanced verbs",
-            "page": "Verb Studio"
-        },
-        {
-            "icon": "✍️",
-            "title": "Mistake Catcher",
-            "desc": "Real-time error detection for gender, agreement, and more",
-            "page": "Mistake Catcher"
-        },
+    # Practice modes
+    modes = [
+        {"icon": "💬", "title": "Conversation", "desc": "Practice speaking in real scenarios", "page": "Conversation"},
+        {"icon": "✍️", "title": "Writing", "desc": "Get feedback on your written Spanish", "page": "Writing Coach"},
+        {"icon": "🔤", "title": "Verbs", "desc": "Drill verb conjugations and usage", "page": "Verb Studio"},
+        {"icon": "🎯", "title": "Quick Drills", "desc": "Fast-paced mixed practice", "page": "Topic Diversity"},
     ]
 
     cols = st.columns(2)
-    for i, path in enumerate(paths):
+    for i, mode in enumerate(modes):
         with cols[i % 2]:
             st.markdown(f"""
             <div class="card">
-                <div class="card-header">
-                    <div class="card-icon">{path['icon']}</div>
-                    <h3 class="card-title">{path['title']}</h3>
-                </div>
-                <p style="color: var(--text-muted);">{path['desc']}</p>
+                <div style="font-size: 28px; margin-bottom: 8px;">{mode['icon']}</div>
+                <h4>{mode['title']}</h4>
+                <p style="color: var(--text-muted); font-size: 14px;">{mode['desc']}</p>
             </div>
             """, unsafe_allow_html=True)
-            if st.button(f"Start {path['title']}", key=f"path_{i}", use_container_width=True):
-                st.session_state.current_page = path["page"]
+            if st.button(f"Start {mode['title']}", key=f"practice_{i}", use_container_width=True):
+                st.session_state.current_page = mode['page']
+                st.session_state.last_session = mode['page']
+                st.rerun()
+
+    # Tools section
+    st.divider()
+    st.markdown("### Tools")
+
+    tool_cols = st.columns(3)
+    tools = [
+        {"icon": "🌎", "title": "Dialect Guide", "page": "Dialects"},
+        {"icon": "🏛️", "title": "Memory Palace", "page": "Memory Palace"},
+        {"icon": "✏️", "title": "Error Patterns", "page": "Mistake Catcher"},
+    ]
+
+    for i, tool in enumerate(tools):
+        with tool_cols[i]:
+            if st.button(f"{tool['icon']} {tool['title']}", key=f"tool_{i}", use_container_width=True):
+                st.session_state.current_page = tool['page']
                 st.rerun()
 
 
-# Import page renderers
+# ============================================
+# PROGRESS PAGE
+# ============================================
+
+def render_progress_page():
+    """Render Progress page with stats and history."""
+    st.markdown("## Progress")
+
+    stats = get_total_stats()
+    profile = get_user_profile()
+    streak = get_streak_days(get_progress_history())
+
+    # Stats grid
+    cols = st.columns(4)
+
+    with cols[0]:
+        st.markdown(f"""
+        <div class="stat-card" style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 4px;">🔥</div>
+            <div class="stat-value">{streak}</div>
+            <div class="stat-label">Day Streak</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with cols[1]:
+        st.markdown(f"""
+        <div class="stat-card" style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 4px;">📚</div>
+            <div class="stat-value">{stats.get('total_vocab', 0)}</div>
+            <div class="stat-label">Words</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with cols[2]:
+        st.markdown(f"""
+        <div class="stat-card" style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 4px;">🎤</div>
+            <div class="stat-value">{stats.get('total_speaking', 0):.0f}</div>
+            <div class="stat-label">Min Speaking</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with cols[3]:
+        st.markdown(f"""
+        <div class="stat-card" style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 4px;">🎯</div>
+            <div class="stat-value">{stats.get('total_missions', 0)}</div>
+            <div class="stat-label">Missions</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # More details
+    st.divider()
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("### My Spanish Portfolio")
+        if st.button("View Full Portfolio", use_container_width=True):
+            st.session_state.current_page = "My Spanish"
+            st.rerun()
+
+    with col2:
+        st.markdown("### Error Patterns")
+        if st.button("View Error Analysis", use_container_width=True):
+            st.session_state.current_page = "Error Notebook"
+            st.rerun()
+
+
+# ============================================
+# PAGE IMPORTS
+# ============================================
+
 from pages.topic_diversity import render_topic_diversity_page
 from pages.context_units import render_context_units_page
 from pages.verb_studio import render_verb_studio_page
@@ -526,60 +626,48 @@ from pages.memory_palace import render_memory_palace_page
 from pages.my_spanish import render_my_spanish_page
 
 
+# ============================================
+# MAIN
+# ============================================
+
 def main():
     """Main application entry point."""
-    # Check if we need to show profile creation
-    if st.session_state.get("show_create_profile") or st.session_state.active_profile_id is None:
-        render_profile_creation()
+    # Show onboarding for new users
+    if st.session_state.show_onboarding or st.session_state.active_profile_id is None:
+        render_onboarding()
         return
 
-    # Check if we need to show profile selector
-    if st.session_state.get("show_profile_selector"):
-        render_sidebar()
-        render_profile_selector()
-        return
-
+    # Render sidebar
     render_sidebar()
 
-    # Route to the appropriate page
+    # Route to page
     page = st.session_state.current_page
 
-    if page == "Home":
-        render_home_page()
-    elif page == "Learn":
-        render_learn_page()
-    elif page == "Topic Diversity":
-        render_topic_diversity_page()
-    elif page == "Context Units":
-        render_context_units_page()
-    elif page == "Verb Studio":
-        render_verb_studio_page()
-    elif page == "Mistake Catcher":
-        render_mistake_catcher_page()
-    elif page == "Daily Missions":
-        render_daily_missions_page()
-    elif page == "Conversation":
-        render_conversation_page()
-    elif page == "Writing Coach":
-        render_writing_coach_page()
-    elif page == "Dialects":
-        render_dialect_navigator_page()
-    elif page == "Memory Palace":
-        render_memory_palace_page()
-    elif page == "My Spanish":
-        render_my_spanish_page()
-    elif page == "Fingerprint":
-        render_fingerprint_dashboard()
-    elif page == "Review":
-        render_review_hub_page()
-    elif page == "Error Notebook":
-        render_error_notebook_page()
-    elif page == "Content Ingest":
-        render_content_ingest_page()
-    elif page == "Settings":
-        render_settings_page()
-    else:
-        render_home_page()
+    page_map = {
+        "Home": render_home_page,
+        "Learn": render_learn_page,
+        "Practice": render_practice_page,
+        "Progress": render_progress_page,
+        "Review": render_review_hub_page,
+        "Settings": render_settings_page,
+        # Sub-pages
+        "Topic Diversity": render_topic_diversity_page,
+        "Context Units": render_context_units_page,
+        "Verb Studio": render_verb_studio_page,
+        "Mistake Catcher": render_mistake_catcher_page,
+        "Daily Missions": render_daily_missions_page,
+        "Conversation": render_conversation_page,
+        "Writing Coach": render_writing_coach_page,
+        "Dialects": render_dialect_navigator_page,
+        "Memory Palace": render_memory_palace_page,
+        "My Spanish": render_my_spanish_page,
+        "Error Notebook": render_error_notebook_page,
+        "Fingerprint": render_fingerprint_dashboard,
+        "Content Ingest": render_content_ingest_page,
+    }
+
+    renderer = page_map.get(page, render_home_page)
+    renderer()
 
 
 if __name__ == "__main__":
