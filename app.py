@@ -272,6 +272,7 @@ def render_sidebar():
             "💬 Conversation": "Conversation",
             "📝 Writing Coach": "Writing Coach",
             "🌎 Dialects": "Dialects",
+            "🏛️ Memory Palace": "Memory Palace",
             "🧬 My Fingerprint": "Fingerprint",
             "🔄 Review Hub": "Review",
             "📊 Error Notebook": "Error Notebook",
@@ -560,6 +561,7 @@ from pages.settings import render_settings_page
 from pages.fingerprint_dashboard import render_fingerprint_dashboard
 from pages.writing_coach import render_writing_coach_page
 from pages.dialect_navigator import render_dialect_navigator_page
+from pages.memory_palace import render_memory_palace_page
 
 
 def main():
@@ -600,6 +602,8 @@ def main():
         render_writing_coach_page()
     elif page == "Dialects":
         render_dialect_navigator_page()
+    elif page == "Memory Palace":
+        render_memory_palace_page()
     elif page == "Fingerprint":
         render_fingerprint_dashboard()
     elif page == "Review":
