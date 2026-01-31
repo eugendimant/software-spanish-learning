@@ -477,21 +477,48 @@ def render_report_issue(context: str, user_answer: str = "", expected_answer: st
 
 def render_grammar_card(card: dict):
     """Render a grammar review card."""
+    # Initialize answer checked state for this card
+    checked_key = f"grammar_checked_{st.session_state.review_index}"
+    result_key = f"grammar_result_{st.session_state.review_index}"
+
+    if checked_key not in st.session_state:
+        st.session_state[checked_key] = False
+        st.session_state[result_key] = None
+
     st.markdown(f"""
     <div class="card">
-        <h3>{card['front']}</h3>
+        <div class="exercise-prompt">{card['front']}</div>
     </div>
     """, unsafe_allow_html=True)
 
     # Options
     options = card.get("options", [])
-    selected = st.radio("Select your answer:", options, key=f"grammar_{st.session_state.review_index}")
+    correct = card.get("answer", "")
 
-    if st.button("Check", type="primary"):
-        correct = card.get("answer", "")
-        is_correct = selected == correct
+    st.markdown("Select your answer:")
+    selected = st.radio(
+        "Select your answer:",
+        options,
+        key=f"grammar_{st.session_state.review_index}",
+        label_visibility="collapsed"
+    )
 
-        if is_correct:
+    # Show Check button if not yet checked
+    if not st.session_state[checked_key]:
+        if st.button("Check", type="primary", key=f"check_grammar_{st.session_state.review_index}"):
+            is_correct = selected == correct
+            st.session_state[checked_key] = True
+            st.session_state[result_key] = {
+                "is_correct": is_correct,
+                "selected": selected,
+                "correct": correct
+            }
+            st.rerun()
+    else:
+        # Show result
+        result = st.session_state[result_key]
+
+        if result["is_correct"]:
             st.markdown("""
             <div class="feedback-box feedback-success">
                 ✅ <strong>Correct!</strong>
@@ -501,21 +528,24 @@ def render_grammar_card(card: dict):
         else:
             st.markdown(f"""
             <div class="feedback-box feedback-info">
-                <strong>Not quite.</strong> The correct answer is: <strong>{correct}</strong>
+                <strong>Not quite.</strong> The correct answer is: <strong>{result['correct']}</strong>
             </div>
             """, unsafe_allow_html=True)
 
             # Show report issue option for wrong answers
             render_report_issue(
                 context=card['front'],
-                user_answer=selected,
-                expected_answer=correct,
+                user_answer=result['selected'],
+                expected_answer=result['correct'],
                 key_prefix="grammar"
             )
 
         st.info(f"**Explanation:** {card.get('explanation', '')}")
 
-        if st.button("Next →", key="next_grammar"):
+        if st.button("Next →", type="primary", key=f"next_grammar_{st.session_state.review_index}"):
+            # Clean up state for this card
+            del st.session_state[checked_key]
+            del st.session_state[result_key]
             advance_review()
 
 

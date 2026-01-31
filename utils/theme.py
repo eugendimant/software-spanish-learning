@@ -342,6 +342,26 @@ def get_css() -> str:
         max-width: 600px;
     }
 
+    .hero-title {
+        color: #f8fafc !important;
+        font-size: 2rem !important;
+        font-weight: 800 !important;
+        margin-bottom: 0.75rem !important;
+        position: relative;
+        z-index: 1;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        color: #94a3b8 !important;
+        font-size: 1.05rem !important;
+        margin: 0 !important;
+        position: relative;
+        z-index: 1;
+        max-width: 600px;
+        line-height: 1.6;
+    }
+
     .hero-pills {
         display: flex;
         gap: 0.75rem;
@@ -1677,6 +1697,67 @@ def get_css() -> str:
         color: #ffffff !important;
     }
 
+    /* === FIX MULTISELECT DROPDOWN TEXT VISIBILITY === */
+    /* Force dark background on all dropdown menus */
+    [data-baseweb="popover"] [data-baseweb="menu"],
+    [data-baseweb="select"] [data-baseweb="menu"],
+    div[data-baseweb="popover"] > div,
+    ul[role="listbox"],
+    div[role="listbox"] {
+        background-color: #12121a !important;
+        background: #12121a !important;
+    }
+
+    /* Ensure dropdown options have visible text */
+    [data-baseweb="menu"] [role="option"],
+    ul[role="listbox"] li,
+    div[role="listbox"] div[role="option"],
+    [data-baseweb="menu"] li {
+        background-color: transparent !important;
+        color: #f8fafc !important;
+    }
+
+    [data-baseweb="menu"] [role="option"]:hover,
+    ul[role="listbox"] li:hover,
+    div[role="listbox"] div[role="option"]:hover,
+    [data-baseweb="menu"] li:hover {
+        background-color: rgba(99, 102, 241, 0.2) !important;
+        color: #ffffff !important;
+    }
+
+    /* Fix highlighted/selected option */
+    [data-baseweb="menu"] [aria-selected="true"],
+    [data-baseweb="menu"] [data-highlighted="true"],
+    ul[role="listbox"] li[aria-selected="true"],
+    div[role="option"][aria-selected="true"] {
+        background-color: rgba(99, 102, 241, 0.3) !important;
+        color: #ffffff !important;
+    }
+
+    /* Override any inline styles on popover */
+    [data-baseweb="popover"] {
+        background: #12121a !important;
+    }
+
+    /* Ensure the inner container of popover is also dark */
+    [data-baseweb="popover"] > div {
+        background: #12121a !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: var(--radius-md) !important;
+    }
+
+    /* Fix input container inside multiselect */
+    .stMultiSelect [data-baseweb="input"],
+    .stMultiSelect input {
+        color: #f8fafc !important;
+        background: transparent !important;
+    }
+
+    /* Placeholder text in multiselect */
+    .stMultiSelect input::placeholder {
+        color: #64748b !important;
+    }
+
     /* === DATE INPUT === */
     .stDateInput > div > div > input {
         background: rgba(18, 18, 26, 0.95) !important;
@@ -1869,18 +1950,20 @@ def apply_theme() -> None:
 
 
 def render_hero(title: str, subtitle: str, pills: list[str] = None) -> None:
-    """Render a hero section with futuristic styling."""
+    """Render a hero section with futuristic styling using native Streamlit components."""
+    # Use a container with custom styling
     pills_html = ""
     if pills:
         pills_html = '<div class="hero-pills">' + ''.join(
             f'<span class="hero-pill">{pill}</span>' for pill in pills
         ) + '</div>'
 
+    # Render hero with proper HTML structure that Streamlit handles correctly
     st.markdown(f"""
     <div class="hero animate-fade-in">
         {pills_html}
-        <h1>{title}</h1>
-        <p>{subtitle}</p>
+        <div class="hero-title">{title}</div>
+        <div class="hero-subtitle">{subtitle}</div>
     </div>
     """, unsafe_allow_html=True)
 
