@@ -15,6 +15,11 @@ from utils.helpers import get_review_priority, detect_language, compare_answers,
 
 def render_review_hub_page():
     """Render the Two-Layer Spaced Repetition Review Hub page."""
+    # Check if micro-drill is active
+    if st.session_state.get("microdrill_active"):
+        render_microdrill()
+        return
+
     render_hero(
         title="Review Hub",
         subtitle="Two-layer spaced repetition: vocabulary and grammar as separate streams, each with its own forgetting curve.",
@@ -69,6 +74,123 @@ def render_review_hub_page():
         render_start_review()
     else:
         render_review_session()
+
+
+def render_microdrill():
+    """Render a 90-second micro-drill for a specific error pattern."""
+    pattern = st.session_state.get("microdrill_pattern", {})
+
+    render_hero(
+        title="🔧 Fix It Now - Micro Drill",
+        subtitle=f"90-second focused practice for: {pattern.get('error_type', 'grammar')} errors",
+        pills=["Quick Fix", "Pattern Practice", "Reinforce"]
+    )
+
+    # Initialize drill state
+    if "microdrill_step" not in st.session_state:
+        st.session_state.microdrill_step = 0
+    if "microdrill_correct" not in st.session_state:
+        st.session_state.microdrill_correct = 0
+
+    step = st.session_state.microdrill_step
+    correct_answer = pattern.get("correct", "")
+    explanation = pattern.get("explanation", "")
+    original_pattern = pattern.get("pattern", "")
+
+    # Progress indicator
+    st.progress((step + 1) / 4)
+    st.caption(f"Step {step + 1} of 4")
+
+    if step == 0:
+        # Step 1: Show the rule and explain
+        st.markdown("### Step 1: Understand the Rule")
+        st.markdown(f"""
+        <div class="feedback-box feedback-info">
+            <strong>Original error:</strong> {original_pattern}
+            <br><strong>Correct form:</strong> {correct_answer}
+        </div>
+        """, unsafe_allow_html=True)
+        st.info(f"**Why?** {explanation}")
+
+        st.markdown("**Read and understand the rule above, then continue.**")
+        if st.button("I understand → Continue", type="primary", use_container_width=True):
+            st.session_state.microdrill_step = 1
+            st.rerun()
+
+    elif step == 1:
+        # Step 2: Type the correct answer from memory
+        st.markdown("### Step 2: Write It Yourself")
+        st.markdown("Now type the **correct form** from memory:")
+
+        user_input = st.text_input("Your answer:", key="microdrill_input_1")
+
+        if st.button("Check", type="primary"):
+            if user_input.strip().lower() == correct_answer.lower():
+                st.success("Correct! You've got it.")
+                st.session_state.microdrill_correct += 1
+                st.session_state.microdrill_step = 2
+                st.rerun()
+            else:
+                st.warning(f"Not quite. The correct answer is: **{correct_answer}**")
+                st.caption("Try again or continue to the next step.")
+                if st.button("Continue anyway →"):
+                    st.session_state.microdrill_step = 2
+                    st.rerun()
+
+    elif step == 2:
+        # Step 3: Explain why in your own words
+        st.markdown("### Step 3: Explain It")
+        st.markdown("In your own words, why is the following correct?")
+        st.markdown(f"**{correct_answer}**")
+
+        user_explanation = st.text_area("Your explanation:", key="microdrill_explain",
+                                         placeholder="e.g., 'Because after prepositions we use...'")
+
+        if st.button("Submit & Continue", type="primary"):
+            if user_explanation.strip():
+                st.success("Good reflection! Teaching yourself helps reinforce learning.")
+                st.session_state.microdrill_correct += 1
+            st.session_state.microdrill_step = 3
+            st.rerun()
+
+    elif step == 3:
+        # Step 4: Final quick recall
+        st.markdown("### Step 4: Quick Recall")
+        st.markdown("One more time - type the **correct form**:")
+
+        user_final = st.text_input("Final answer:", key="microdrill_final")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Check & Finish", type="primary", use_container_width=True):
+                if user_final.strip().lower() == correct_answer.lower():
+                    st.session_state.microdrill_correct += 1
+                    st.balloons()
+                    st.success(f"Excellent! You got {st.session_state.microdrill_correct}/3 correct.")
+                else:
+                    st.warning(f"The correct answer was: **{correct_answer}**")
+                    st.info(f"You got {st.session_state.microdrill_correct}/3 in this drill.")
+
+                # Show completion
+                st.markdown("---")
+                st.markdown("### Micro-drill complete!")
+                st.caption("This pattern has been reinforced. You'll see it again in review.")
+
+                if st.button("Return to Review", use_container_width=True):
+                    # Clean up
+                    st.session_state.microdrill_active = False
+                    st.session_state.microdrill_pattern = None
+                    st.session_state.microdrill_step = 0
+                    st.session_state.microdrill_correct = 0
+                    st.rerun()
+
+        with col2:
+            if st.button("Skip & Return", use_container_width=True):
+                st.session_state.microdrill_active = False
+                st.session_state.microdrill_pattern = None
+                st.session_state.microdrill_step = 0
+                st.session_state.microdrill_correct = 0
+                st.rerun()
 
 
 def render_start_review():
@@ -490,21 +612,26 @@ def render_error_card(card: dict):
                 else:
                     item = card["item"]
 
-                    # Get user profile for accent tolerance setting
+                    # Get user profile for grading settings
                     profile = get_user_profile()
                     accent_tolerant = bool(profile.get("accent_tolerance", 0))
+                    grading_mode = profile.get("grading_mode", "balanced")
 
-                    # Use smart answer comparison with accent tolerance
-                    is_correct = compare_answers(user_answer, correct, accent_tolerant=accent_tolerant)
+                    # Use smart answer comparison with grading mode
+                    is_correct, match_type = compare_answers(
+                        user_answer, correct,
+                        accent_tolerant=accent_tolerant,
+                        grading_mode=grading_mode
+                    )
 
                     # Also check for alternative correct forms (with →, /)
                     if not is_correct:
                         correct_normalized = correct.lower().strip()
                         user_normalized = user_answer.lower().strip()
-                        is_correct = (
-                            user_normalized == correct_normalized.replace("→", "").strip() or
-                            user_normalized == correct_normalized.split("/")[0].strip()
-                        )
+                        if (user_normalized == correct_normalized.replace("→", "").strip() or
+                            user_normalized == correct_normalized.split("/")[0].strip()):
+                            is_correct = True
+                            match_type = "alternative_form"
 
                     if is_correct:
                         st.markdown("""
@@ -543,13 +670,28 @@ def render_error_card(card: dict):
                             if item.get("id"):
                                 update_mistake_review(item["id"], 1)
 
-                            # Show report issue option
-                            render_report_issue(
-                                context=card['front'],
-                                user_answer=user_answer,
-                                expected_answer=correct,
-                                key_prefix="error"
-                            )
+                            # "Fix it now" micro-drill option
+                            st.markdown("---")
+                            col_fix, col_report = st.columns(2)
+                            with col_fix:
+                                if st.button("🔧 Fix It Now", key="fix_now", help="90-second micro-drill for this pattern"):
+                                    # Store error pattern for micro-drill
+                                    st.session_state.microdrill_pattern = {
+                                        "pattern": card['front'],
+                                        "correct": correct,
+                                        "explanation": explanation,
+                                        "error_type": item.get("error_type", "grammar")
+                                    }
+                                    st.session_state.microdrill_active = True
+                                    st.rerun()
+                            with col_report:
+                                # Show report issue option
+                                render_report_issue(
+                                    context=card['front'],
+                                    user_answer=user_answer,
+                                    expected_answer=correct,
+                                    key_prefix="error"
+                                )
 
                     st.info(f"**Why?** {explanation}")
 

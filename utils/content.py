@@ -1324,3 +1324,229 @@ DIALECT_CONVERTER = {
         "Colombia": "¿Usted qué opina? / ¿Tú qué opinas?",
     },
 }
+
+# ============== FALSE FRIENDS (NEGATIVE TRANSFER) ==============
+# Common words that English speakers misuse due to similarity with English
+
+FALSE_FRIENDS = {
+    "embarazada": {
+        "looks_like": "embarrassed",
+        "actually_means": "pregnant",
+        "correct_word": "avergonzado/a",
+        "example_wrong": "Estoy embarazada por mi error.",
+        "example_right": "Estoy avergonzada por mi error.",
+        "warning": "🚨 'Embarazada' means pregnant, not embarrassed! Use 'avergonzado/a' instead."
+    },
+    "constipado": {
+        "looks_like": "constipated",
+        "actually_means": "having a cold",
+        "correct_word": "estreñido/a",
+        "example_wrong": "Estoy constipado, no puedo ir al baño.",
+        "example_right": "Estoy constipado, tengo la nariz tapada. / Estoy estreñido, no puedo ir al baño.",
+        "warning": "🚨 'Constipado' means having a cold! For constipation, use 'estreñido/a'."
+    },
+    "asistir": {
+        "looks_like": "assist",
+        "actually_means": "to attend",
+        "correct_word": "ayudar",
+        "example_wrong": "Voy a asistirte con tu tarea.",
+        "example_right": "Voy a asistir a la reunión. / Voy a ayudarte con tu tarea.",
+        "warning": "🚨 'Asistir' means to attend an event! For 'to help', use 'ayudar'."
+    },
+    "actual": {
+        "looks_like": "actual",
+        "actually_means": "current, present",
+        "correct_word": "real, verdadero",
+        "example_wrong": "El actual problema es diferente.",
+        "example_right": "El problema actual es la inflación. / El verdadero problema es diferente.",
+        "warning": "🚨 'Actual' means current/present! For 'real', use 'real' or 'verdadero'."
+    },
+    "realizar": {
+        "looks_like": "realize",
+        "actually_means": "to carry out, accomplish",
+        "correct_word": "darse cuenta",
+        "example_wrong": "Realicé que era tarde.",
+        "example_right": "Me di cuenta de que era tarde. / Realicé el proyecto.",
+        "warning": "🚨 'Realizar' means to carry out! For 'to realize', use 'darse cuenta de'."
+    },
+    "sensible": {
+        "looks_like": "sensible",
+        "actually_means": "sensitive",
+        "correct_word": "sensato/a",
+        "example_wrong": "Es una decisión sensible.",
+        "example_right": "Es una persona sensible. / Es una decisión sensata.",
+        "warning": "🚨 'Sensible' means sensitive! For 'sensible', use 'sensato/a'."
+    },
+    "librería": {
+        "looks_like": "library",
+        "actually_means": "bookstore",
+        "correct_word": "biblioteca",
+        "example_wrong": "Fui a la librería a estudiar.",
+        "example_right": "Fui a la librería a comprar libros. / Fui a la biblioteca a estudiar.",
+        "warning": "🚨 'Librería' is a bookstore! For library, use 'biblioteca'."
+    },
+    "éxito": {
+        "looks_like": "exit",
+        "actually_means": "success",
+        "correct_word": "salida",
+        "example_wrong": "El éxito está a la derecha.",
+        "example_right": "El proyecto fue un éxito. / La salida está a la derecha.",
+        "warning": "🚨 'Éxito' means success! For exit, use 'salida'."
+    },
+    "largo": {
+        "looks_like": "large",
+        "actually_means": "long",
+        "correct_word": "grande",
+        "example_wrong": "Es una casa muy larga.",
+        "example_right": "Es un camino largo. / Es una casa muy grande.",
+        "warning": "🚨 'Largo' means long! For large, use 'grande'."
+    },
+    "recordar": {
+        "looks_like": "record",
+        "actually_means": "to remember",
+        "correct_word": "grabar",
+        "example_wrong": "Voy a recordar la canción.",
+        "example_right": "Voy a recordar tu cumpleaños. / Voy a grabar la canción.",
+        "warning": "🚨 'Recordar' means to remember! For 'to record', use 'grabar'."
+    },
+    "pretender": {
+        "looks_like": "pretend",
+        "actually_means": "to try, attempt, aspire",
+        "correct_word": "fingir",
+        "example_wrong": "Pretendo que estoy enfermo.",
+        "example_right": "Pretendo conseguir el trabajo. / Finjo que estoy enfermo.",
+        "warning": "🚨 'Pretender' means to try/aspire! For 'to pretend', use 'fingir'."
+    },
+    "soportar": {
+        "looks_like": "support",
+        "actually_means": "to tolerate, endure",
+        "correct_word": "apoyar",
+        "example_wrong": "Voy a soportar tu decisión.",
+        "example_right": "No soporto el ruido. / Voy a apoyar tu decisión.",
+        "warning": "🚨 'Soportar' means to tolerate! For 'to support', use 'apoyar'."
+    },
+    "carpeta": {
+        "looks_like": "carpet",
+        "actually_means": "folder",
+        "correct_word": "alfombra",
+        "example_wrong": "La carpeta del salón es roja.",
+        "example_right": "Guarda los documentos en la carpeta. / La alfombra del salón es roja.",
+        "warning": "🚨 'Carpeta' means folder! For carpet, use 'alfombra'."
+    },
+    "atender": {
+        "looks_like": "attend",
+        "actually_means": "to serve, pay attention to",
+        "correct_word": "asistir",
+        "example_wrong": "Voy a atender la conferencia.",
+        "example_right": "Voy a atender a los clientes. / Voy a asistir a la conferencia.",
+        "warning": "🚨 'Atender' means to serve/help! For 'to attend', use 'asistir a'."
+    },
+}
+
+# ============== COLLOCATIONS AND CHUNKS ==============
+# Common word partnerships that should be taught together
+
+COLLOCATIONS = {
+    "tomar": [
+        {"chunk": "tomar un café", "meaning": "have a coffee", "context": "¿Quieres tomar un café?"},
+        {"chunk": "tomar una decisión", "meaning": "make a decision", "context": "Necesito tomar una decisión importante."},
+        {"chunk": "tomar el autobús", "meaning": "take the bus", "context": "Siempre tomo el autobús al trabajo."},
+        {"chunk": "tomar el sol", "meaning": "sunbathe", "context": "Me gusta tomar el sol en la playa."},
+        {"chunk": "tomar nota", "meaning": "take notes", "context": "Voy a tomar nota de esto."},
+    ],
+    "echar": [
+        {"chunk": "echar de menos", "meaning": "to miss (someone/something)", "context": "Te echo de menos mucho."},
+        {"chunk": "echar una siesta", "meaning": "take a nap", "context": "Voy a echar una siesta después de comer."},
+        {"chunk": "echar un vistazo", "meaning": "take a look", "context": "Déjame echar un vistazo al documento."},
+        {"chunk": "echar una mano", "meaning": "lend a hand", "context": "¿Me puedes echar una mano?"},
+        {"chunk": "echarse a reír", "meaning": "burst out laughing", "context": "Se echó a reír cuando lo escuchó."},
+    ],
+    "hacer": [
+        {"chunk": "hacer caso", "meaning": "pay attention to", "context": "No me hace caso cuando hablo."},
+        {"chunk": "hacer falta", "meaning": "to be needed/necessary", "context": "Hace falta más tiempo."},
+        {"chunk": "hacer cola", "meaning": "stand in line", "context": "Tuvimos que hacer cola por una hora."},
+        {"chunk": "hacerse daño", "meaning": "hurt oneself", "context": "Ten cuidado, no te hagas daño."},
+        {"chunk": "hacer gracia", "meaning": "to find funny", "context": "No me hace gracia ese chiste."},
+    ],
+    "dar": [
+        {"chunk": "dar igual", "meaning": "not matter", "context": "Me da igual lo que piensen."},
+        {"chunk": "dar las gracias", "meaning": "give thanks", "context": "Quiero darte las gracias por tu ayuda."},
+        {"chunk": "dar un paseo", "meaning": "take a walk", "context": "Vamos a dar un paseo por el parque."},
+        {"chunk": "dar miedo", "meaning": "to scare", "context": "Esta película me da miedo."},
+        {"chunk": "darse cuenta", "meaning": "to realize", "context": "Me di cuenta de mi error."},
+    ],
+    "llevar": [
+        {"chunk": "llevar tiempo", "meaning": "to take time", "context": "Esto va a llevar tiempo."},
+        {"chunk": "llevarse bien", "meaning": "get along", "context": "Nos llevamos bien con los vecinos."},
+        {"chunk": "llevar razón", "meaning": "to be right", "context": "Creo que llevas razón."},
+        {"chunk": "llevar puesto", "meaning": "to be wearing", "context": "¿Qué llevas puesto hoy?"},
+        {"chunk": "llevar la cuenta", "meaning": "keep track", "context": "¿Quién lleva la cuenta?"},
+    ],
+    "poner": [
+        {"chunk": "poner en duda", "meaning": "call into question", "context": "No quiero poner en duda tu palabra."},
+        {"chunk": "ponerse nervioso", "meaning": "get nervous", "context": "Me pongo nervioso antes de hablar."},
+        {"chunk": "poner la mesa", "meaning": "set the table", "context": "Ayúdame a poner la mesa."},
+        {"chunk": "ponerse de acuerdo", "meaning": "come to an agreement", "context": "Tenemos que ponernos de acuerdo."},
+        {"chunk": "poner música", "meaning": "play music", "context": "Pon algo de música."},
+    ],
+}
+
+# ============== SMALL FUNCTION WORDS DRILLS ==============
+# Critical words that cause big errors
+
+SMALL_WORDS_DRILLS = {
+    "lo_la_le": {
+        "description": "Direct vs indirect object pronouns",
+        "exercises": [
+            {"prompt": "Vi a María ayer. __ saludé.", "answer": "La", "explanation": "María is direct object (whom did you greet?)"},
+            {"prompt": "Juan necesitaba ayuda. __ di mi número.", "answer": "Le", "explanation": "Juan is indirect object (to whom did you give?)"},
+            {"prompt": "El libro es interesante. __ leí en un día.", "answer": "Lo", "explanation": "El libro (masc.) is direct object"},
+            {"prompt": "A mis padres __ envío fotos cada semana.", "answer": "les", "explanation": "Mis padres is indirect object (to whom?)"},
+        ],
+    },
+    "se_uses": {
+        "description": "Multiple uses of 'se'",
+        "exercises": [
+            {"prompt": "María __ lava las manos.", "answer": "se", "explanation": "Reflexive: she washes (herself)"},
+            {"prompt": "__ venden casas aquí.", "answer": "Se", "explanation": "Impersonal/passive: 'Houses are sold here'"},
+            {"prompt": "__ lo di a él.", "answer": "Se", "explanation": "'Le' becomes 'se' before 'lo'"},
+            {"prompt": "Juan __ fue sin despedirse.", "answer": "se", "explanation": "Pronominal verb: 'irse' (to leave)"},
+        ],
+    },
+    "que_de_que": {
+        "description": "When to use 'de' before 'que'",
+        "exercises": [
+            {"prompt": "Creo __ tienes razón.", "answer": "que", "explanation": "'Creer' doesn't require 'de'"},
+            {"prompt": "Me alegro __ que hayas venido.", "answer": "de", "explanation": "'Alegrarse de' requires 'de'"},
+            {"prompt": "Estoy seguro __ que va a llover.", "answer": "de", "explanation": "'Seguro de que' (certain that)"},
+            {"prompt": "Pienso __ es una buena idea.", "answer": "que", "explanation": "'Pensar' doesn't require 'de'"},
+        ],
+    },
+    "a_en": {
+        "description": "Direction (a) vs location (en)",
+        "exercises": [
+            {"prompt": "Voy __ la oficina.", "answer": "a", "explanation": "Direction/destination: going TO"},
+            {"prompt": "Estoy __ la oficina.", "answer": "en", "explanation": "Location: I'm AT/IN"},
+            {"prompt": "Llegamos __ Madrid a las 5.", "answer": "a", "explanation": "Arrival destination: arrived TO"},
+            {"prompt": "Vivimos __ Madrid.", "answer": "en", "explanation": "Location: we live IN"},
+        ],
+    },
+    "ya_todavia": {
+        "description": "Already (ya) vs still/yet (todavía)",
+        "exercises": [
+            {"prompt": "¿__ has terminado?", "answer": "Ya", "explanation": "Already (completed action)"},
+            {"prompt": "No, __ no he terminado.", "answer": "todavía", "explanation": "Not yet (action pending)"},
+            {"prompt": "__ estás aquí? Pensé que te fuiste.", "answer": "¿Todavía", "explanation": "Still (continuing state)"},
+            {"prompt": "__ sé la respuesta.", "answer": "Ya", "explanation": "Already (I know it now)"},
+        ],
+    },
+    "pero_sino": {
+        "description": "But (pero) vs but rather (sino)",
+        "exercises": [
+            {"prompt": "No es rojo, __ azul.", "answer": "sino", "explanation": "Contradicts negative: 'not X, but rather Y'"},
+            {"prompt": "Es difícil, __ no imposible.", "answer": "pero", "explanation": "Simple contrast: 'but'"},
+            {"prompt": "No quiero café, __ té.", "answer": "sino", "explanation": "Replaces what was negated"},
+            {"prompt": "Tengo hambre, __ no quiero comer.", "answer": "pero", "explanation": "Contrast without negation replacement"},
+        ],
+    },
+}
