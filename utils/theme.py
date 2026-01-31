@@ -899,6 +899,16 @@ def get_css() -> str:
         color: var(--primary-light) !important;
     }
 
+    .feedback-warning {
+        background: rgba(245, 158, 11, 0.15);
+        border-color: rgba(245, 158, 11, 0.4);
+        color: #fbbf24 !important;
+    }
+
+    .feedback-box strong {
+        color: inherit !important;
+    }
+
     /* === DIFF HIGHLIGHTING === */
     .diff-added {
         background: rgba(16, 185, 129, 0.2);
@@ -1322,6 +1332,432 @@ def get_css() -> str:
     .stProgress > div > div > div {
         background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%) !important;
         border-radius: 9999px;
+    }
+
+    /* === ENHANCED BUTTON VISIBILITY === */
+    /* All buttons should have clear, readable text */
+    .stButton button {
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        letter-spacing: 0.01em;
+    }
+
+    .stButton button p,
+    .stButton button span,
+    .stButton button div {
+        color: inherit !important;
+        font-weight: inherit !important;
+    }
+
+    /* Primary buttons - white text on gradient */
+    button[data-testid="stBaseButton-primary"],
+    .stButton > button[kind="primary"] {
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    button[data-testid="stBaseButton-primary"] p,
+    button[data-testid="stBaseButton-primary"] span {
+        color: #ffffff !important;
+    }
+
+    /* Secondary/default buttons - visible text */
+    button[data-testid="stBaseButton-secondary"],
+    .stButton > button:not([kind="primary"]) {
+        background: rgba(30, 30, 45, 0.9) !important;
+        color: #e2e8f0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+
+    button[data-testid="stBaseButton-secondary"] p,
+    button[data-testid="stBaseButton-secondary"] span {
+        color: #e2e8f0 !important;
+    }
+
+    button[data-testid="stBaseButton-secondary"]:hover {
+        background: rgba(99, 102, 241, 0.2) !important;
+        border-color: var(--primary) !important;
+        color: #ffffff !important;
+    }
+
+    /* === CHECKBOX STYLING === */
+    .stCheckbox {
+        padding: 0.5rem 0;
+    }
+
+    .stCheckbox > label {
+        color: #e2e8f0 !important;
+        font-weight: 500 !important;
+    }
+
+    .stCheckbox > label > span {
+        color: #e2e8f0 !important;
+    }
+
+    .stCheckbox [data-testid="stCheckbox"] {
+        background: rgba(18, 18, 26, 0.95) !important;
+    }
+
+    /* Checkbox checked state */
+    .stCheckbox input:checked + div {
+        background: var(--primary) !important;
+        border-color: var(--primary) !important;
+    }
+
+    /* === SLIDER STYLING === */
+    .stSlider {
+        padding: 0.5rem 0;
+    }
+
+    .stSlider > div > div > div {
+        color: #e2e8f0 !important;
+    }
+
+    .stSlider [data-testid="stTickBar"] > div {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .stSlider [data-baseweb="slider"] > div > div {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .stSlider [data-baseweb="slider"] > div > div > div {
+        background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%) !important;
+    }
+
+    .stSlider [data-baseweb="slider"] [data-testid="stThumbValue"] {
+        color: #ffffff !important;
+        background: var(--primary) !important;
+        font-weight: 600;
+    }
+
+    /* Slider thumb */
+    .stSlider [role="slider"] {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%) !important;
+        border: 2px solid #ffffff !important;
+        box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+    }
+
+    /* Slider value label */
+    .stSlider label {
+        color: #94a3b8 !important;
+        font-weight: 500 !important;
+    }
+
+    /* === NUMBER INPUT === */
+    .stNumberInput > div > div > input {
+        background: rgba(18, 18, 26, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: var(--radius-md);
+        color: #f8fafc !important;
+        font-weight: 500;
+    }
+
+    .stNumberInput > div > div > input:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .stNumberInput button {
+        background: rgba(99, 102, 241, 0.2) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    }
+
+    .stNumberInput button:hover {
+        background: rgba(99, 102, 241, 0.4) !important;
+    }
+
+    /* === RADIO BUTTON IMPROVEMENTS === */
+    .stRadio > label {
+        color: #94a3b8 !important;
+        font-weight: 500 !important;
+        margin-bottom: 0.5rem;
+    }
+
+    .stRadio > div > label {
+        color: #e2e8f0 !important;
+        font-weight: 500 !important;
+    }
+
+    .stRadio > div > label p,
+    .stRadio > div > label span {
+        color: #e2e8f0 !important;
+    }
+
+    .stRadio > div > label > div:first-child {
+        background: rgba(18, 18, 26, 0.95) !important;
+        border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .stRadio > div > label:hover > div:first-child {
+        border-color: var(--primary) !important;
+    }
+
+    /* Selected radio */
+    .stRadio > div > label[data-checked="true"] > div:first-child,
+    .stRadio input:checked + div {
+        background: var(--primary) !important;
+        border-color: var(--primary) !important;
+    }
+
+    /* === SELECT BOX IMPROVEMENTS === */
+    .stSelectbox label,
+    .stMultiSelect label {
+        color: #94a3b8 !important;
+        font-weight: 500 !important;
+        font-size: 0.9rem !important;
+    }
+
+    /* Select box container */
+    .stSelectbox [data-baseweb="select"],
+    .stMultiSelect [data-baseweb="select"] {
+        background: rgba(18, 18, 26, 0.95) !important;
+    }
+
+    .stSelectbox [data-baseweb="select"] > div,
+    .stMultiSelect [data-baseweb="select"] > div {
+        background: rgba(18, 18, 26, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: var(--radius-md);
+        color: #f8fafc !important;
+        font-weight: 500;
+    }
+
+    .stSelectbox [data-baseweb="select"] > div:hover,
+    .stMultiSelect [data-baseweb="select"] > div:hover {
+        border-color: var(--primary) !important;
+    }
+
+    /* Selected value text */
+    .stSelectbox [data-baseweb="select"] span,
+    .stSelectbox [data-baseweb="select"] div[data-baseweb="tag"] span {
+        color: #f8fafc !important;
+        font-weight: 500 !important;
+    }
+
+    /* Dropdown arrow */
+    .stSelectbox svg,
+    .stMultiSelect svg {
+        fill: #94a3b8 !important;
+    }
+
+    /* Dropdown menu */
+    [data-baseweb="popover"] {
+        background: rgba(18, 18, 26, 0.98) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: var(--radius-md);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    [data-baseweb="menu"] {
+        background: transparent !important;
+    }
+
+    [data-baseweb="menu"] li {
+        color: #e2e8f0 !important;
+        font-weight: 500 !important;
+        padding: 0.75rem 1rem !important;
+    }
+
+    [data-baseweb="menu"] li:hover {
+        background: rgba(99, 102, 241, 0.15) !important;
+        color: #ffffff !important;
+    }
+
+    [data-baseweb="menu"] li[aria-selected="true"] {
+        background: rgba(99, 102, 241, 0.25) !important;
+        color: #ffffff !important;
+    }
+
+    /* === MULTISELECT TAGS === */
+    .stMultiSelect [data-baseweb="tag"] {
+        background: rgba(99, 102, 241, 0.2) !important;
+        border: 1px solid rgba(99, 102, 241, 0.4) !important;
+        color: #ffffff !important;
+        border-radius: var(--radius-sm);
+    }
+
+    .stMultiSelect [data-baseweb="tag"] span {
+        color: #ffffff !important;
+    }
+
+    /* === DATE INPUT === */
+    .stDateInput > div > div > input {
+        background: rgba(18, 18, 26, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: var(--radius-md);
+        color: #f8fafc !important;
+    }
+
+    /* === FILE UPLOADER === */
+    .stFileUploader > div {
+        background: rgba(18, 18, 26, 0.95) !important;
+        border: 2px dashed rgba(255, 255, 255, 0.15) !important;
+        border-radius: var(--radius-lg);
+    }
+
+    .stFileUploader > div:hover {
+        border-color: var(--primary) !important;
+        background: rgba(99, 102, 241, 0.05) !important;
+    }
+
+    .stFileUploader label {
+        color: #94a3b8 !important;
+    }
+
+    .stFileUploader small {
+        color: #64748b !important;
+    }
+
+    /* === EXPANDER IMPROVEMENTS === */
+    .streamlit-expanderHeader {
+        background: rgba(26, 26, 37, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        color: #e2e8f0 !important;
+        font-weight: 600 !important;
+    }
+
+    .streamlit-expanderHeader:hover {
+        background: rgba(99, 102, 241, 0.1) !important;
+        border-color: var(--primary) !important;
+    }
+
+    .streamlit-expanderHeader p,
+    .streamlit-expanderHeader span {
+        color: #e2e8f0 !important;
+    }
+
+    .streamlit-expanderContent {
+        background: rgba(18, 18, 26, 0.5) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-top: none !important;
+    }
+
+    /* === CAPTION AND SMALL TEXT === */
+    .stCaption, caption, .caption {
+        color: #64748b !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* === COLUMN LAYOUT FIX === */
+    [data-testid="column"] {
+        padding: 0 0.5rem;
+    }
+
+    /* === TOOLTIP STYLING === */
+    [data-baseweb="tooltip"] {
+        background: rgba(18, 18, 26, 0.98) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #f8fafc !important;
+        border-radius: var(--radius-sm);
+    }
+
+    /* === SPINNER/LOADING === */
+    .stSpinner > div {
+        border-color: var(--primary) !important;
+        border-right-color: transparent !important;
+    }
+
+    /* === CODE BLOCKS === */
+    code {
+        background: rgba(99, 102, 241, 0.15) !important;
+        color: #a5b4fc !important;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9em;
+    }
+
+    pre {
+        background: rgba(18, 18, 26, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: var(--radius-md);
+        padding: 1rem !important;
+    }
+
+    /* === LIGHT MODE OVERRIDES === */
+    @media (prefers-color-scheme: light) {
+        /* For users who prefer light mode, maintain dark theme for consistency */
+        /* But ensure text is always readable */
+    }
+
+    /* === HIGH CONTRAST MODE === */
+    @media (prefers-contrast: high) {
+        :root {
+            --text-primary: #ffffff;
+            --text-secondary: #d1d5db;
+            --border: rgba(255, 255, 255, 0.2);
+        }
+
+        .stButton button {
+            border: 2px solid currentColor !important;
+        }
+
+        .card, .metric-card, .exercise-card {
+            border-width: 2px;
+        }
+    }
+
+    /* === REDUCED MOTION === */
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+
+        .progress-bar::after {
+            animation: none !important;
+        }
+    }
+
+    /* === FOCUS STATES FOR ACCESSIBILITY === */
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [role="button"]:focus-visible {
+        outline: 2px solid var(--primary) !important;
+        outline-offset: 2px;
+    }
+
+    /* === ENSURE ALL TEXT IS READABLE === */
+    .stMarkdown p,
+    .stMarkdown li,
+    .stMarkdown span,
+    .stText p {
+        color: #cbd5e1 !important;
+    }
+
+    .stMarkdown h1,
+    .stMarkdown h2,
+    .stMarkdown h3,
+    .stMarkdown h4 {
+        color: #f1f5f9 !important;
+    }
+
+    .stMarkdown strong,
+    .stMarkdown b {
+        color: #f8fafc !important;
+        font-weight: 700;
+    }
+
+    .stMarkdown em,
+    .stMarkdown i {
+        color: #94a3b8 !important;
+    }
+
+    /* Links */
+    a {
+        color: var(--primary-light) !important;
+        text-decoration: none;
+    }
+
+    a:hover {
+        color: var(--secondary) !important;
+        text-decoration: underline;
     }
     </style>
     """
