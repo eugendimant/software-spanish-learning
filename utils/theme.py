@@ -3,6 +3,7 @@ Beautiful iOS-style design system with glassmorphism effects.
 Modern 2026 aesthetics with smooth gradients and elegant UI.
 """
 import streamlit as st
+from textwrap import dedent
 
 
 # ============================================
@@ -60,7 +61,8 @@ def get_css() -> str:
     .main .block-container {
         background: linear-gradient(180deg, #0c0c0f 0%, #111118 100%) !important;
         color: #ffffff !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif, 'Apple Color Emoji',
+            'Segoe UI Emoji', 'Noto Color Emoji' !important;
     }
 
     .main .block-container {
@@ -69,12 +71,27 @@ def get_css() -> str:
     }
 
     /* Hide Streamlit branding */
-    header[data-testid="stHeader"],
     footer,
     #MainMenu,
     .stDeployButton,
     [data-testid="stToolbar"] {
         display: none !important;
+    }
+
+    /* Keep header for sidebar toggle, but make it subtle */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        border-bottom: none !important;
+        height: 2.5rem !important;
+    }
+
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapsedControl"] > button,
+    [data-testid="collapsedControl"],
+    [data-testid="collapsedControl"] > button {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        color: #ffffff !important;
     }
 
     /* ============================================
@@ -147,6 +164,11 @@ def get_css() -> str:
         color: #94a3b8 !important;
     }
 
+    /* Hide default Streamlit pages navigation (use custom nav) */
+    [data-testid="stSidebarNav"] {
+        display: none !important;
+    }
+
     /* ============================================
        BUTTONS - iOS Style with Depth
        ============================================ */
@@ -183,6 +205,7 @@ def get_css() -> str:
     .stButton > button[data-testid="baseButton-primary"] {
         background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
         color: #ffffff !important;
+        font-weight: 600 !important;
         box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
     }
 
@@ -191,6 +214,11 @@ def get_css() -> str:
         background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%) !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .stButton > button:disabled {
+        color: #cbd5f5 !important;
+        opacity: 0.6 !important;
     }
 
     .stButton > button:active {
@@ -202,12 +230,16 @@ def get_css() -> str:
        ============================================ */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea,
-    .stNumberInput > div > div > input {
-        background: rgba(255, 255, 255, 0.05) !important;
+    .stNumberInput > div > div > input,
+    div[data-baseweb="input"] input,
+    div[data-baseweb="textarea"] textarea,
+    input[type="text"],
+    textarea {
+        background: rgba(15, 17, 23, 0.9) !important;
         backdrop-filter: blur(10px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(148, 163, 184, 0.25) !important;
         border-radius: 12px !important;
-        color: #ffffff !important;
+        color: #e2e8f0 !important;
         font-family: 'Inter', sans-serif !important;
         font-size: 1rem !important;
         padding: 0.875rem 1rem !important;
@@ -222,8 +254,47 @@ def get_css() -> str:
     }
 
     .stTextInput > div > div > input::placeholder,
-    .stTextArea > div > div > textarea::placeholder {
-        color: #475569 !important;
+    .stTextArea > div > div > textarea::placeholder,
+    div[data-baseweb="input"] input::placeholder,
+    div[data-baseweb="textarea"] textarea::placeholder,
+    input[type="text"]::placeholder,
+    textarea::placeholder {
+        color: #64748b !important;
+    }
+
+    /* Radio & checkbox options */
+    div[role="radiogroup"] label,
+    div[role="group"] label {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px !important;
+        padding: 0.4rem 0.75rem !important;
+        margin: 0.15rem 0.25rem !important;
+        transition: all 0.2s ease !important;
+    }
+
+    div[role="radiogroup"] label:hover,
+    div[role="group"] label:hover {
+        border-color: rgba(129, 140, 248, 0.5) !important;
+        background: rgba(129, 140, 248, 0.12) !important;
+    }
+
+    label[data-baseweb="radio"] input:checked + div,
+    label[data-baseweb="checkbox"] input:checked + div {
+        background: rgba(99, 102, 241, 0.18) !important;
+        border-radius: 10px !important;
+    }
+
+    div[role="radiogroup"] label input:checked + div,
+    div[role="group"] label input:checked + div {
+        color: #ffffff !important;
+    }
+
+    div[role="radiogroup"] label:has(input:checked),
+    div[role="group"] label:has(input:checked) {
+        border-color: rgba(99, 102, 241, 0.7) !important;
+        background: rgba(99, 102, 241, 0.2) !important;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
     }
 
     /* ============================================
@@ -423,6 +494,14 @@ def get_css() -> str:
         text-align: center !important;
     }
 
+    .metric-card {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 16px !important;
+        padding: 1.25rem !important;
+        text-align: center !important;
+    }
+
     .stat-value {
         font-size: 2rem !important;
         font-weight: 700 !important;
@@ -431,7 +510,22 @@ def get_css() -> str:
         margin-bottom: 0.25rem !important;
     }
 
+    .metric-value {
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        line-height: 1 !important;
+        margin-bottom: 0.25rem !important;
+    }
+
     .stat-label {
+        font-size: 0.8rem !important;
+        color: #64748b !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+    }
+
+    .metric-label {
         font-size: 0.8rem !important;
         color: #64748b !important;
         text-transform: uppercase !important;
@@ -597,6 +691,16 @@ def apply_theme():
     st.markdown(get_css(), unsafe_allow_html=True)
 
 
+def _clean_html(markup: str) -> str:
+    """Normalize HTML markup to avoid markdown code blocks."""
+    return dedent(markup).strip()
+
+
+def render_html(markup: str) -> None:
+    """Render HTML with consistent formatting."""
+    st.markdown(_clean_html(markup), unsafe_allow_html=True)
+
+
 # ============================================
 # COMPONENT FUNCTIONS
 # ============================================
@@ -609,13 +713,13 @@ def render_hero(title: str, subtitle: str = "", pills: list = None) -> None:
             f'<span class="pill pill-accent">{p}</span>' for p in pills
         ) + '</div>'
 
-    st.markdown(f"""
-    <div class="hero">
-        {pills_html}
-        <div class="hero-title">{title}</div>
-        <div class="hero-subtitle">{subtitle}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div class="hero">
+            {pills_html}
+            <div class="hero-title">{title}</div>
+            <div class="hero-subtitle">{subtitle}</div>
+        </div>
+    """)
 
 
 def render_section_header(title: str, action_label: str = None, action_key: str = None) -> bool:
@@ -635,13 +739,13 @@ def render_section_header(title: str, action_label: str = None, action_key: str 
 def render_metric_card(value: str, label: str, icon: str = "") -> str:
     """Return HTML for a metric card."""
     icon_html = f'<div style="font-size: 24px; margin-bottom: 8px;">{icon}</div>' if icon else ''
-    return f"""
-    <div class="stat-card">
-        {icon_html}
-        <div class="stat-value">{value}</div>
-        <div class="stat-label">{label}</div>
-    </div>
-    """
+    return _clean_html(f"""
+        <div class="stat-card">
+            {icon_html}
+            <div class="stat-value">{value}</div>
+            <div class="stat-label">{label}</div>
+        </div>
+    """)
 
 
 def render_metric_grid(metrics: list) -> None:
@@ -682,23 +786,23 @@ def render_pill(text: str, variant: str = "accent") -> str:
 def render_feedback(feedback_type: str, message: str, details: str = "") -> None:
     """Render a feedback box."""
     details_html = f'<div style="margin-top: 8px; opacity: 0.9;">{details}</div>' if details else ''
-    st.markdown(f"""
-    <div class="feedback-box feedback-{feedback_type}">
-        <strong>{message}</strong>
-        {details_html}
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div class="feedback-box feedback-{feedback_type}">
+            <strong>{message}</strong>
+            {details_html}
+        </div>
+    """)
 
 
 def render_card(content: str, title: str = "") -> None:
     """Render a glass card."""
     title_html = f'<h4 style="margin-bottom: 12px; color: #ffffff;">{title}</h4>' if title else ''
-    st.markdown(f"""
-    <div class="glass-card">
-        {title_html}
-        <div style="color: #94a3b8;">{content}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div class="glass-card">
+            {title_html}
+            <div style="color: #94a3b8;">{content}</div>
+        </div>
+    """)
 
 
 def render_quick_actions(actions: list) -> None:
@@ -727,66 +831,66 @@ def render_action_card(title: str, subtitle: str, meta: str = "", primary: bool 
     icon_html = f'<span style="font-size: 28px; margin-right: 16px;">{icon}</span>' if icon else ''
     meta_html = f'<div style="font-size: 0.75rem; color: #64748b; margin-top: 8px;">{meta}</div>' if meta else ''
 
-    st.markdown(f"""
-    <div class="action-card {primary_class}">
-        <div style="display: flex; align-items: flex-start;">
-            {icon_html}
-            <div>
-                <div class="action-card-title">{title}</div>
-                <div class="action-card-subtitle">{subtitle}</div>
-                {meta_html}
+    render_html(f"""
+        <div class="action-card {primary_class}">
+            <div style="display: flex; align-items: flex-start;">
+                {icon_html}
+                <div>
+                    <div class="action-card-title">{title}</div>
+                    <div class="action-card-subtitle">{subtitle}</div>
+                    {meta_html}
+                </div>
             </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+    """)
 
 
 def render_streak_badge(streak: int) -> None:
     """Render a streak badge."""
     if streak > 0:
-        st.markdown(f"""
-        <div style="display: inline-flex; align-items: center; gap: 10px;
-                    background: rgba(245, 158, 11, 0.15); padding: 10px 18px;
-                    border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.3);">
-            <span style="font-size: 1.5rem;">🔥</span>
-            <span style="font-size: 1.25rem; font-weight: 700; color: #fbbf24;">{streak}</span>
-            <span style="color: #94a3b8; font-size: 0.9rem;">day{'s' if streak != 1 else ''}</span>
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(f"""
+            <div style="display: inline-flex; align-items: center; gap: 10px;
+                        background: rgba(245, 158, 11, 0.15); padding: 10px 18px;
+                        border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.3);">
+                <span style="font-size: 1.5rem;">🔥</span>
+                <span style="font-size: 1.25rem; font-weight: 700; color: #fbbf24;">{streak}</span>
+                <span style="color: #94a3b8; font-size: 0.9rem;">day{'s' if streak != 1 else ''}</span>
+            </div>
+        """)
 
 
 def render_empty_state(message: str, icon: str = "📭") -> None:
     """Render an empty state."""
-    st.markdown(f"""
-    <div style="text-align: center; padding: 3rem 1rem; color: #64748b;">
-        <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">{icon}</div>
-        <p style="color: #64748b;">{message}</p>
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div style="text-align: center; padding: 3rem 1rem; color: #64748b;">
+            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">{icon}</div>
+            <p style="color: #64748b;">{message}</p>
+        </div>
+    """)
 
 
 def render_loading_skeleton(height: str = "100px") -> None:
     """Render a loading skeleton."""
-    st.markdown(f"""
-    <div style="background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
-                background-size: 200% 100%; height: {height}; border-radius: 12px;
-                animation: shimmer 1.5s infinite;">
-    </div>
-    <style>
-    @keyframes shimmer {{ 0% {{ background-position: 200% 0; }} 100% {{ background-position: -200% 0; }} }}
-    </style>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div style="background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+                    background-size: 200% 100%; height: {height}; border-radius: 12px;
+                    animation: shimmer 1.5s infinite;">
+        </div>
+        <style>
+        @keyframes shimmer {{ 0% {{ background-position: 200% 0; }} 100% {{ background-position: -200% 0; }} }}
+        </style>
+    """)
 
 
 def render_error_state(message: str, retry_label: str = "Try again") -> bool:
     """Render error state. Returns True if retry clicked."""
-    st.markdown(f"""
-    <div style="text-align: center; padding: 2rem; background: rgba(239, 68, 68, 0.1);
-                border-radius: 16px; border: 1px solid rgba(239, 68, 68, 0.3);">
-        <p style="color: #f87171; font-size: 1.1rem;"><strong>Something went wrong</strong></p>
-        <p style="color: #f87171; opacity: 0.9;">{message}</p>
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div style="text-align: center; padding: 2rem; background: rgba(239, 68, 68, 0.1);
+                    border-radius: 16px; border: 1px solid rgba(239, 68, 68, 0.3);">
+            <p style="color: #f87171; font-size: 1.1rem;"><strong>Something went wrong</strong></p>
+            <p style="color: #f87171; opacity: 0.9;">{message}</p>
+        </div>
+    """)
     return st.button(retry_label, type="primary")
 
 
@@ -795,27 +899,27 @@ def render_profile_card(name: str, level: str, vocab_count: int, streak: int, is
     border = 'border-color: rgba(99, 102, 241, 0.5);' if is_active else ''
     badge = '<span class="pill pill-success">Active</span>' if is_active else ''
 
-    return f"""
-    <div class="glass-card" style="{border}">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-            <div>
-                <div style="font-weight: 600; font-size: 1.1rem; color: #ffffff;">{name}</div>
-                <div style="font-size: 0.875rem; color: #64748b;">Level: {level}</div>
+    return _clean_html(f"""
+        <div class="glass-card" style="{border}">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <div>
+                    <div style="font-weight: 600; font-size: 1.1rem; color: #ffffff;">{name}</div>
+                    <div style="font-size: 0.875rem; color: #64748b;">Level: {level}</div>
+                </div>
+                {badge}
             </div>
-            {badge}
+            <div style="display: flex; gap: 24px;">
+                <div>
+                    <div style="font-weight: 700; font-size: 1.25rem; color: #ffffff;">{vocab_count}</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">Words</div>
+                </div>
+                <div>
+                    <div style="font-weight: 700; font-size: 1.25rem; color: #fbbf24;">{streak}🔥</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">Streak</div>
+                </div>
+            </div>
         </div>
-        <div style="display: flex; gap: 24px;">
-            <div>
-                <div style="font-weight: 700; font-size: 1.25rem; color: #ffffff;">{vocab_count}</div>
-                <div style="font-size: 0.75rem; color: #64748b;">Words</div>
-            </div>
-            <div>
-                <div style="font-weight: 700; font-size: 1.25rem; color: #fbbf24;">{streak}🔥</div>
-                <div style="font-size: 0.75rem; color: #64748b;">Streak</div>
-            </div>
-        </div>
-    </div>
-    """
+    """)
 
 
 def render_cloze_sentence(before: str, after: str, answer: str = "", show_answer: bool = False) -> None:
@@ -825,32 +929,32 @@ def render_cloze_sentence(before: str, after: str, answer: str = "", show_answer
     else:
         blank = '<span class="cloze-blank">_____</span>'
 
-    st.markdown(f"""
-    <div class="exercise-prompt">
-        {before}{blank}{after}
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div class="exercise-prompt">
+            {before}{blank}{after}
+        </div>
+    """)
 
 
 def render_exercise_feedback(correct: bool, correct_answer: str, explanation: str = "", common_mistake: str = "") -> None:
     """Render exercise feedback."""
     if correct:
-        st.markdown(f"""
-        <div class="feedback-box feedback-success">
-            <strong>✓ Correct!</strong>
-            {f'<div style="margin-top: 8px;">{explanation}</div>' if explanation else ''}
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(f"""
+            <div class="feedback-box feedback-success">
+                <strong>✓ Correct!</strong>
+                {f'<div style="margin-top: 8px;">{explanation}</div>' if explanation else ''}
+            </div>
+        """)
     else:
         mistake_html = f'<div style="margin-top: 8px; opacity: 0.85;"><em>Tip: {common_mistake}</em></div>' if common_mistake else ''
-        st.markdown(f"""
-        <div class="feedback-box feedback-error">
-            <strong>✗ Not quite</strong>
-            <div style="margin-top: 8px;">Correct answer: <strong>{correct_answer}</strong></div>
-            {f'<div style="margin-top: 8px;">{explanation}</div>' if explanation else ''}
-            {mistake_html}
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(f"""
+            <div class="feedback-box feedback-error">
+                <strong>✗ Not quite</strong>
+                <div style="margin-top: 8px;">Correct answer: <strong>{correct_answer}</strong></div>
+                {f'<div style="margin-top: 8px;">{explanation}</div>' if explanation else ''}
+                {mistake_html}
+            </div>
+        """)
 
 
 def get_design_system():
