@@ -679,6 +679,13 @@ def get_css() -> str:
         color: #94a3b8 !important;
     }
 
+    .emoji-flag {
+        width: 52px;
+        height: 52px;
+        display: inline-block;
+        margin-bottom: 16px;
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
