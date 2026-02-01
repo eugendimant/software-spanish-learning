@@ -2,7 +2,7 @@
 import streamlit as st
 import random
 
-from utils.theme import render_hero, render_section_header, render_feedback
+from utils.theme import render_hero, render_section_header, render_feedback, render_html
 from utils.database import (
     get_vocab_for_review, update_vocab_review,
     get_mistakes_for_review, update_mistake_review,
@@ -47,31 +47,31 @@ def render_review_start():
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div style="font-size: 2rem;">📚</div>
-            <div class="metric-value">{len(vocab_due)}</div>
-            <div class="metric-label">Vocabulary</div>
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(f"""
+            <div class="metric-card">
+                <div style="font-size: 2rem;">📚</div>
+                <div class="metric-value">{len(vocab_due)}</div>
+                <div class="metric-label">Vocabulary</div>
+            </div>
+        """)
 
     with col2:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div style="font-size: 2rem;">📝</div>
-            <div class="metric-value">{len(grammar_items)}</div>
-            <div class="metric-label">Grammar</div>
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(f"""
+            <div class="metric-card">
+                <div style="font-size: 2rem;">📝</div>
+                <div class="metric-value">{len(grammar_items)}</div>
+                <div class="metric-label">Grammar</div>
+            </div>
+        """)
 
     with col3:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div style="font-size: 2rem;">🔧</div>
-            <div class="metric-value">{len(errors_due)}</div>
-            <div class="metric-label">Errors to Fix</div>
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(f"""
+            <div class="metric-card">
+                <div style="font-size: 2rem;">🔧</div>
+                <div class="metric-value">{len(errors_due)}</div>
+                <div class="metric-label">Errors to Fix</div>
+            </div>
+        """)
 
     st.divider()
 
@@ -190,7 +190,7 @@ def render_review_session():
     }
     label, variant = type_config.get(current["type"], ("📋 ITEM", "muted"))
 
-    st.markdown(f'<span class="pill pill-{variant}">{label}</span>', unsafe_allow_html=True)
+    render_html(f'<span class="pill pill-{variant}">{label}</span>')
 
     st.markdown("")  # Spacing
 
@@ -212,13 +212,13 @@ def render_vocab_exercise(card: dict):
         st.session_state[revealed_key] = False
 
     # Show the term
-    st.markdown(f"""
-    <div class="card" style="text-align: center; padding: 2rem;">
-        <div style="font-size: 2rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem;">
-            {card['term']}
+    render_html(f"""
+        <div class="card" style="text-align: center; padding: 2rem;">
+            <div style="font-size: 2rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem;">
+                {card['term']}
+            </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+    """)
 
     if not st.session_state[revealed_key]:
         # Not yet revealed - show reveal button
@@ -227,16 +227,16 @@ def render_vocab_exercise(card: dict):
             st.rerun()
     else:
         # Show the answer
-        st.markdown(f"""
-        <div class="card-muted" style="text-align: center;">
-            <div style="font-size: 1.25rem; font-weight: 500; color: var(--text-primary); margin-bottom: 0.5rem;">
-                {card['meaning']}
+        render_html(f"""
+            <div class="card-muted" style="text-align: center;">
+                <div style="font-size: 1.25rem; font-weight: 500; color: var(--text-primary); margin-bottom: 0.5rem;">
+                    {card['meaning']}
+                </div>
+                <div style="color: var(--text-muted); font-style: italic;">
+                    {card.get('example', '')}
+                </div>
             </div>
-            <div style="color: var(--text-muted); font-style: italic;">
-                {card.get('example', '')}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        """)
 
         # Rating buttons
         st.markdown("### How well did you know it?")
@@ -276,11 +276,11 @@ def render_grammar_exercise(card: dict):
         st.session_state[result_key] = None
 
     # Show the prompt
-    st.markdown(f"""
-    <div class="exercise-prompt">
-        {card['prompt']}
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div class="exercise-prompt">
+            {card['prompt']}
+        </div>
+    """)
 
     # Answer options
     options = card.get("options", [])
@@ -339,12 +339,12 @@ def render_error_exercise(card: dict):
         st.session_state[result_key] = None
 
     # Show the error pattern
-    st.markdown(f"""
-    <div class="exercise-prompt">
-        <strong>Fix this error:</strong><br>
-        {card['pattern']}
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div class="exercise-prompt">
+            <strong>Fix this error:</strong><br>
+            {card['pattern']}
+        </div>
+    """)
 
     correct = card.get("correction", "")
 
@@ -434,17 +434,17 @@ def render_review_complete():
     error_count = sum(1 for q in queue if q["type"] == "error")
 
     # Success message
-    st.markdown(f"""
-    <div class="card" style="text-align: center; padding: 2rem; background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3);">
-        <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
-        <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
-            Session Complete!
+    render_html(f"""
+        <div class="card" style="text-align: center; padding: 2rem; background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3);">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">
+                Session Complete!
+            </div>
+            <div style="color: var(--text-secondary);">
+                You reviewed {total} items
+            </div>
         </div>
-        <div style="color: var(--text-secondary);">
-            You reviewed {total} items
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # Summary
     st.markdown("### Session Summary")
@@ -452,31 +452,31 @@ def render_review_complete():
     cols = st.columns(3)
 
     with cols[0]:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div style="font-size: 1.5rem;">📚</div>
-            <div class="metric-value">{vocab_count}</div>
-            <div class="metric-label">Vocabulary</div>
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(f"""
+            <div class="metric-card">
+                <div style="font-size: 1.5rem;">📚</div>
+                <div class="metric-value">{vocab_count}</div>
+                <div class="metric-label">Vocabulary</div>
+            </div>
+        """)
 
     with cols[1]:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div style="font-size: 1.5rem;">📝</div>
-            <div class="metric-value">{grammar_count}</div>
-            <div class="metric-label">Grammar</div>
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(f"""
+            <div class="metric-card">
+                <div style="font-size: 1.5rem;">📝</div>
+                <div class="metric-value">{grammar_count}</div>
+                <div class="metric-label">Grammar</div>
+            </div>
+        """)
 
     with cols[2]:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div style="font-size: 1.5rem;">🔧</div>
-            <div class="metric-value">{error_count}</div>
-            <div class="metric-label">Errors Fixed</div>
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(f"""
+            <div class="metric-card">
+                <div style="font-size: 1.5rem;">🔧</div>
+                <div class="metric-value">{error_count}</div>
+                <div class="metric-label">Errors Fixed</div>
+            </div>
+        """)
 
     # Action buttons
     st.markdown("")  # Spacing
