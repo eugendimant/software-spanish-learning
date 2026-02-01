@@ -105,7 +105,7 @@ def render_text_checker():
             for lang_issue in language_issues:
                 if "English" in lang_issue.get("explanation", ""):
                     st.markdown(f"""
-                    <div class="feedback-box feedback-error" style="border-left: 4px solid var(--error);">
+                    <div class="feedback-box feedback-error" style="border-left: 4px solid #ef4444;">
                         🌐 <strong>Language Issue:</strong> {lang_issue['explanation']}
                         <br><br>
                         <em>Tip: {lang_issue['examples'][0] if lang_issue.get('examples') else 'Write in Spanish to practice!'}</em>
@@ -113,7 +113,7 @@ def render_text_checker():
                     """, unsafe_allow_html=True)
                 elif "Mixed" in lang_issue.get("explanation", ""):
                     st.markdown(f"""
-                    <div class="feedback-box feedback-warning" style="border-left: 4px solid var(--warning);">
+                    <div class="feedback-box feedback-warning" style="border-left: 4px solid #f59e0b;">
                         🔀 <strong>Mixed Language:</strong> {lang_issue['explanation']}
                     </div>
                     """, unsafe_allow_html=True)
@@ -128,7 +128,7 @@ def render_text_checker():
         if grammar_issues:
             # Summary - encouraging tone
             st.markdown(f"""
-            <div class="card" style="border-left: 4px solid var(--primary);">
+            <div class="card" style="border-left: 4px solid #6366f1;">
                 <strong>Here are {len(grammar_issues)} suggestion{'s' if len(grammar_issues) > 1 else ''} to improve your writing:</strong>
             </div>
             """, unsafe_allow_html=True)
@@ -355,12 +355,12 @@ def render_mistakes_reference():
                 <div class="card" style="margin-bottom: 0.75rem;">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
                         <div>
-                            <span style="color: var(--error); text-decoration: line-through;">{mistake['pattern']}</span>
+                            <span style="color: #ef4444; text-decoration: line-through;">{mistake['pattern']}</span>
                             <span style="margin: 0 0.5rem;">→</span>
-                            <span style="color: var(--success); font-weight: 600;">{mistake['correction']}</span>
+                            <span style="color: #10b981; font-weight: 600;">{mistake['correction']}</span>
                         </div>
                     </div>
-                    <p style="margin-top: 0.5rem; color: var(--text-muted);">{mistake['explanation']}</p>
+                    <p style="margin-top: 0.5rem; color: #64748b;">{mistake['explanation']}</p>
                 </div>
                 """, unsafe_allow_html=True)
 

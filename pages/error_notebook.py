@@ -99,12 +99,12 @@ def render_error_dashboard():
     if rows:
         for row in rows:
             st.markdown(f"""
-            <div class="card" style="margin-bottom: 0.5rem; border-left: 4px solid var(--warning);">
+            <div class="card" style="margin-bottom: 0.5rem; border-left: 4px solid #f59e0b;">
                 <div style="display: flex; justify-content: space-between;">
                     <strong>{row['pattern']}</strong>
                     <span class="pill pill-muted">{row['occurrences']}x</span>
                 </div>
-                <p style="color: var(--text-muted); margin-top: 0.25rem;">{row['explanation'] or row['error_type']}</p>
+                <p style="color: #64748b; margin-top: 0.25rem;">{row['explanation'] or row['error_type']}</p>
             </div>
             """, unsafe_allow_html=True)
     else:
@@ -139,8 +139,8 @@ def render_error_dashboard():
             bar_width = int((c / max_count) * 100)
             st.markdown(f"""
             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                <span style="min-width: 80px; color: var(--text-muted);">{d}</span>
-                <div style="background: var(--primary); height: 20px; width: {bar_width}%; border-radius: 4px;"></div>
+                <span style="min-width: 80px; color: #64748b;">{d}</span>
+                <div style="background: #6366f1; height: 20px; width: {bar_width}%; border-radius: 4px;"></div>
                 <span>{c}</span>
             </div>
             """, unsafe_allow_html=True)

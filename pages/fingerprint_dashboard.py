@@ -95,13 +95,13 @@ def render_overview():
 
             st.markdown(f"""
             <div class="card" style="text-align: center; border-left: 4px solid {color};">
-                <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                <div style="font-size: 0.875rem; color: #475569;">
                     {category_icons.get(category, category.replace('_', ' ').title())}
                 </div>
                 <div style="font-size: 1.5rem; font-weight: 600; color: {color};">
                     {int(confidence * 100)}%
                 </div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                <div style="font-size: 0.75rem; color: #64748b;">
                     {errors} errors / {total} attempts
                 </div>
                 <div style="margin-top: 0.5rem;">
@@ -251,15 +251,15 @@ def render_personal_syllabus():
                         <strong style="margin-left: 0.5rem;">{description}</strong>
                     </div>
                     <div style="text-align: right;">
-                        <span style="color: var(--text-secondary);">{actual}/{target} practices</span>
+                        <span style="color: #475569;">{actual}/{target} practices</span>
                     </div>
                 </div>
                 <div style="margin-top: 0.75rem;">
-                    <div style="background: var(--surface); border-radius: 4px; height: 8px; overflow: hidden;">
+                    <div style="background: #f8fafc; border-radius: 4px; height: 8px; overflow: hidden;">
                         <div style="background: {'#22c55e' if progress >= 1 else '#6366f1'}; width: {progress * 100}%; height: 100%;"></div>
                     </div>
                 </div>
-                <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                <div style="margin-top: 0.5rem; font-size: 0.875rem; color: #475569;">
                     Category: {category.replace('_', ' ').title()} | Current confidence: {int(confidence * 100)}%
                 </div>
             </div>

@@ -102,7 +102,7 @@ def render_scenario_selection():
                     <h4 style="margin: 0;">{scenario['title']}</h4>
                     <span class="pill pill-{formality_color}">{formality_icon} {formality.title()}</span>
                 </div>
-                <p style="color: var(--text-muted); margin-bottom: 0.75rem;">{scenario['brief']}</p>
+                <p style="color: #64748b; margin-bottom: 0.75rem;">{scenario['brief']}</p>
                 <div style="background: rgba(99, 102, 241, 0.1); padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.85rem;">
                     <strong>Speaking with:</strong> {relationship_label}
                 </div>
@@ -340,7 +340,7 @@ def render_conversation_summary():
     st.markdown(f"""
     <div class="card" style="text-align: center;">
         <h3>Mission Report: {scenario['title']}</h3>
-        <div class="metric-value" style="color: {'var(--success)' if achievement_rate >= 70 else 'var(--warning)'};">
+        <div class="metric-value" style="color: {'#10b981' if achievement_rate >= 70 else '#f59e0b'};">
             {achievement_rate:.0f}%
         </div>
         <div class="metric-label">Targets Achieved</div>
@@ -626,7 +626,7 @@ def render_negotiation_summary():
     st.markdown(f"""
     <div class="card" style="text-align: center;">
         <h3>{scenario['title']}</h3>
-        <div class="metric-value" style="color: {'var(--success)' if percentage >= 70 else 'var(--warning)'};">
+        <div class="metric-value" style="color: {'#10b981' if percentage >= 70 else '#f59e0b'};">
             {total}/{max_total} points ({percentage:.0f}%)
         </div>
     </div>

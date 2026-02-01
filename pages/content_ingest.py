@@ -450,7 +450,7 @@ def render_sentence_practice(item: dict, index: int):
     <div class="card">
         <h3>Write a sentence using:</h3>
         <p style="font-size: 1.5rem; margin: 1rem 0;"><strong>{item['phrase']}</strong></p>
-        <p style="color: var(--text-muted);">Domain: {item.get('domain', 'General')}</p>
+        <p style="color: #64748b;">Domain: {item.get('domain', 'General')}</p>
     </div>
     """, unsafe_allow_html=True)
 

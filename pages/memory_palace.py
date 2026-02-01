@@ -248,7 +248,7 @@ def render_walk_through():
 
             if st.session_state[f"reveal_{room['id']}"]:
                 st.markdown(f"""
-                <div class="card" style="border-left: 4px solid var(--primary);">
+                <div class="card" style="border-left: 4px solid #6366f1;">
                     <strong>{placement.get('term', '')}</strong>: {placement.get('meaning', '')}
                     <br><br>
                     <em>Your visualization:</em> {placement.get('visualization', 'None recorded')}
@@ -330,7 +330,7 @@ def render_recall_test():
             st.markdown(f"""
             <div class="card" style="text-align: center;">
                 <h3>Test Complete!</h3>
-                <div class="metric-value" style="color: {'var(--success)' if percentage >= 70 else 'var(--warning)'};">
+                <div class="metric-value" style="color: {'#10b981' if percentage >= 70 else '#f59e0b'};">
                     {score}/{total} ({percentage:.0f}%)
                 </div>
             </div>

@@ -85,8 +85,8 @@ def render_verb_scenario(scenario: dict, random_mode: bool = False):
             is_selected = st.session_state.vs_selected_verb == opt["verb"]
 
             # Card styling based on selection
-            border_color = "var(--primary)" if is_selected else "var(--border)"
-            bg_color = "rgba(37, 99, 235, 0.05)" if is_selected else "var(--surface)"
+            border_color = "#6366f1" if is_selected else "#e2e8f0"
+            bg_color = "rgba(37, 99, 235, 0.05)" if is_selected else "#f8fafc"
 
             render_html(f"""
                 <div class="verb-option {'selected' if is_selected else ''}" style="border-color: {border_color}; background: {bg_color};">

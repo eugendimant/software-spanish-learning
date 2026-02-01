@@ -158,11 +158,11 @@ def render_all_profiles():
 
             score_text = f" - Score: {score:.0f}%" if score else ""
             st.markdown(f"""
-            <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+            <div style="padding: 0.5rem 0; border-bottom: 1px solid #e2e8f0;">
                 <span>{icon}</span>
-                <strong style="color: var(--text-primary);">{activity_name or activity_type}</strong>
-                <span style="color: var(--text-muted); font-size: 0.8rem;">{score_text}</span>
-                <span style="float: right; color: var(--text-muted); font-size: 0.75rem;">{created_at}</span>
+                <strong style="color: #0f172a;">{activity_name or activity_type}</strong>
+                <span style="color: #64748b; font-size: 0.8rem;">{score_text}</span>
+                <span style="float: right; color: #64748b; font-size: 0.75rem;">{created_at}</span>
             </div>
             """, unsafe_allow_html=True)
     else:

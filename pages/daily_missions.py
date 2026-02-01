@@ -96,7 +96,7 @@ def render_mission(mission: dict):
 
     # Mission card
     st.markdown(f"""
-    <div class="card" style="border-left: 4px solid var(--primary);">
+    <div class="card" style="border-left: 4px solid #6366f1;">
         <div class="card-header">
             <div class="card-icon">{'🎤' if mission_type == 'speaking' else '✍️'}</div>
             <h3 class="card-title">{title}</h3>
@@ -343,9 +343,9 @@ def process_mission_response(mission: dict, response: str, duration: int = 0):
     render_section_header("Mission Feedback")
 
     # Score display
-    score_color = "success" if total_score >= 70 else "warning" if total_score >= 50 else "error"
+    score_color = "#10b981" if total_score >= 70 else "#f59e0b" if total_score >= 50 else "#ef4444"
     st.markdown(f"""
-    <div class="card" style="text-align: center; border-top: 4px solid var(--{score_color});">
+    <div class="card" style="text-align: center; border-top: 4px solid {score_color};">
         <div class="metric-value" style="font-size: 3rem;">{total_score:.0f}</div>
         <div class="metric-label">Mission Score</div>
     </div>

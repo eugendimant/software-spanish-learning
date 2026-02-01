@@ -161,7 +161,7 @@ def render_phrase_comparison():
 
             st.markdown(f"""
             <div class="card" style="{'background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3);' if is_neutral else ''}">
-                <div style="font-weight: 600; color: {'var(--primary)' if is_neutral else 'var(--text-primary)'};">
+                <div style="font-weight: 600; color: {'#6366f1' if is_neutral else '#0f172a'};">
                     {dialect}
                 </div>
                 <div style="margin-top: 0.5rem; font-size: 0.95rem;">
@@ -271,7 +271,7 @@ def render_dialect_quiz():
         st.markdown(f"""
         <div class="card" style="text-align: center;">
             <h3>Quiz Results</h3>
-            <div class="metric-value" style="color: {'var(--success)' if percentage >= 60 else 'var(--warning)'};">
+            <div class="metric-value" style="color: {'#10b981' if percentage >= 60 else '#f59e0b'};">
                 {correct_count}/{total} ({percentage:.0f}%)
             </div>
         </div>
@@ -319,12 +319,12 @@ def render_preference_settings():
             is_selected = dialect == current_preference
 
             st.markdown(f"""
-            <div class="card" style="text-align: center; {'border: 2px solid var(--primary); background: rgba(99, 102, 241, 0.05);' if is_selected else ''}">
+            <div class="card" style="text-align: center; {'border: 2px solid #6366f1; background: rgba(99, 102, 241, 0.05);' if is_selected else ''}">
                 <div style="font-size: 2rem;">
                     {'🇪🇸' if dialect == 'Spain' else '🇲🇽' if dialect == 'Mexico' else '🇦🇷' if dialect == 'Argentina' else '🇨🇴' if dialect == 'Colombia' else '🇨🇱'}
                 </div>
                 <div style="font-weight: 600; margin-top: 0.5rem;">{dialect}</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">
                     {data.get('features', [''])[0] if data.get('features') else ''}
                 </div>
             </div>
