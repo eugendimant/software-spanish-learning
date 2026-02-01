@@ -457,7 +457,7 @@ def render_learn_page():
     st.markdown("## Learn")
     st.markdown("Build your vocabulary and grammar skills")
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         st.markdown("""
@@ -483,6 +483,19 @@ def render_learn_page():
         if st.button("Start Verbs", type="primary", use_container_width=True, key="learn_verbs"):
             st.session_state.current_page = "Verb Studio"
             st.session_state.last_session = "Verb Studio"
+            st.rerun()
+
+    with col3:
+        st.markdown("""
+        <div class="card">
+            <div style="font-size: 32px; margin-bottom: 12px;">🧩</div>
+            <h3>Context Units</h3>
+            <p style="color: var(--text-muted);">Practice chunked phrases and contextual grammar patterns</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Start Context Units", type="primary", use_container_width=True, key="learn_context"):
+            st.session_state.current_page = "Context Units"
+            st.session_state.last_session = "Context Units"
             st.rerun()
 
 
