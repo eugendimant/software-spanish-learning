@@ -1196,7 +1196,7 @@ def render_scenario_selection():
 
     # Random scenario option
     st.divider()
-    if st.button("Surprise Me", use_container_width=True):
+    if st.button("Surprise Me", use_container_width=True, key="surprise_me"):
         st.session_state.conv_scenario = random.choice(ALL_CONVERSATION_SCENARIOS)
         st.session_state.conv_messages = [
             {"role": "system", "content": st.session_state.conv_scenario.get("opening", "Buenos dias...")}
@@ -1219,7 +1219,7 @@ def render_conversation():
         st.markdown(f"*{scenario['brief']}*")
 
     with col2:
-        if st.button("Change Scenario"):
+        if st.button("Change Scenario", key="change_scenario"):
             st.session_state.conv_scenario = None
             st.session_state.conv_messages = []
             st.session_state.conv_turn = 0
@@ -1321,14 +1321,14 @@ def render_conversation_input():
     col1, col2 = st.columns([1, 1])
 
     with col1:
-        if st.button("Send", type="primary", use_container_width=True):
+        if st.button("Send", type="primary", use_container_width=True, key="send_conv"):
             if user_input.strip():
                 process_user_message(user_input)
             else:
                 st.warning("Please type a response.")
 
     with col2:
-        if st.button("End Conversation", use_container_width=True):
+        if st.button("End Conversation", use_container_width=True, key="end_conv"):
             st.session_state.conv_completed = True
             st.rerun()
 
@@ -1497,7 +1497,7 @@ def render_conversation_summary():
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("Try Again", use_container_width=True):
+        if st.button("Try Again", use_container_width=True, key="try_again_conv"):
             st.session_state.conv_messages = [
                 {"role": "system", "content": scenario.get("opening", "Buenos dias...")}
             ]
@@ -1507,7 +1507,7 @@ def render_conversation_summary():
             st.rerun()
 
     with col2:
-        if st.button("New Scenario", use_container_width=True):
+        if st.button("New Scenario", use_container_width=True, key="new_scenario"):
             st.session_state.conv_scenario = None
             st.session_state.conv_messages = []
             st.session_state.conv_turn = 0
@@ -1578,7 +1578,7 @@ def render_negotiation_conversation():
     with col1:
         st.markdown(f"### {scenario['title']}")
     with col2:
-        if st.button("Reset Negotiation"):
+        if st.button("Reset Negotiation", key="reset_negotiation"):
             st.session_state.neg_scenario = None
             st.session_state.neg_messages = []
             st.rerun()
@@ -1642,7 +1642,7 @@ def render_negotiation_conversation():
             for pattern in PRAGMATICS_PATTERNS.get("backchanneling", {}).get("understanding", [])[:3]:
                 st.caption(f"- {pattern['phrase']}")
 
-    if st.button("Send", type="primary", use_container_width=True):
+    if st.button("Send", type="primary", use_container_width=True, key="send_negotiation"):
         if user_input.strip():
             # Analyze pragmatics used
             pragmatics_found = []
@@ -1744,7 +1744,7 @@ def render_negotiation_summary():
 
     record_progress({"missions_completed": 1})
 
-    if st.button("New Negotiation", use_container_width=True):
+    if st.button("New Negotiation", use_container_width=True, key="new_negotiation"):
         st.session_state.neg_scenario = None
         st.session_state.neg_messages = []
         st.session_state.conv_objectives_met = []
@@ -1931,7 +1931,7 @@ def render_repair_skills_practice():
 
         with col1:
             if not st.session_state[repair_checked_key]:
-                if st.button("Check Response", type="primary", use_container_width=True):
+                if st.button("Check Response", type="primary", use_container_width=True, key="check_response"):
                     if response.strip():
                         # Check if any repair phrase was used
                         response_lower = response.lower()
@@ -1972,7 +1972,7 @@ def render_repair_skills_practice():
                         st.warning("Please write a response.")
 
         with col2:
-            if st.button("Skip to Next", use_container_width=True):
+            if st.button("Skip to Next", use_container_width=True, key="skip_next"):
                 st.session_state[scenario_index_key] = current_index + 1
                 # Reset check state for new scenario
                 st.session_state[repair_checked_key] = False
@@ -2012,7 +2012,7 @@ def render_repair_skills_practice():
                 </div>
                 """, unsafe_allow_html=True)
 
-            if st.button("Try Next Scenario", type="primary", use_container_width=True):
+            if st.button("Try Next Scenario", type="primary", use_container_width=True, key="try_next_scenario"):
                 st.session_state[scenario_index_key] = current_index + 1
                 st.session_state[repair_checked_key] = False
                 st.session_state[repair_result_key] = None

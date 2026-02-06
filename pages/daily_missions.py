@@ -1119,12 +1119,12 @@ def process_mission_response(mission: dict, response: str, duration: int = 0):
         # Navigation buttons
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("Try Again", type="primary"):
+            if st.button("Try Again", type="primary", key="mission_try_again"):
                 st.session_state[retry_submitted_key] = False
                 st.session_state[retry_result_key] = None
                 st.rerun()
         with col2:
-            if st.button("New Mission"):
+            if st.button("New Mission", key="mission_new"):
                 st.session_state[retry_submitted_key] = False
                 st.session_state[retry_result_key] = None
                 st.session_state.dm_mission = None

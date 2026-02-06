@@ -3,8 +3,8 @@ VivaLingo Design System
 Clean, modern interface for Spanish learning.
 Consistent light theme with vibrant accent colors.
 """
+import re
 import streamlit as st
-from textwrap import dedent
 
 # =============================================================================
 # DESIGN TOKENS
@@ -614,6 +614,264 @@ def get_css() -> str:
         border-radius: 0.75rem;
         padding: 1rem 1.25rem;
     }
+
+    /* ============================================
+       BACKWARD-COMPATIBLE CLASSES
+       Used by page files (non-vl- prefixed)
+       ============================================ */
+
+    /* Card classes */
+    .card {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 1rem !important;
+        padding: 1.25rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    .card-muted {
+        background: var(--surface-alt) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 0.75rem !important;
+        padding: 1rem !important;
+        margin-bottom: 0.5rem !important;
+        color: var(--text-secondary) !important;
+    }
+    .card-header {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    .card-icon {
+        font-size: 1.5rem !important;
+        line-height: 1 !important;
+    }
+    .card-title {
+        font-size: 1rem !important;
+        font-weight: 700 !important;
+        color: var(--text) !important;
+    }
+
+    /* Metric classes */
+    .metric-card {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 1rem !important;
+        padding: 1.25rem !important;
+        text-align: center !important;
+    }
+    .metric-value {
+        font-size: 1.75rem !important;
+        font-weight: 800 !important;
+        color: var(--text) !important;
+        line-height: 1.2 !important;
+    }
+    .metric-label {
+        font-size: 0.7rem !important;
+        color: var(--text-muted) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+        font-weight: 600 !important;
+        margin-top: 0.25rem !important;
+    }
+
+    /* Stat classes (verb_studio) */
+    .stat-card {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 1rem !important;
+        padding: 1.25rem !important;
+        text-align: center !important;
+    }
+    .stat-value {
+        font-size: 1.75rem !important;
+        font-weight: 800 !important;
+        color: var(--text) !important;
+        line-height: 1.2 !important;
+    }
+    .stat-label {
+        font-size: 0.7rem !important;
+        color: var(--text-muted) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+        font-weight: 600 !important;
+        margin-top: 0.25rem !important;
+    }
+
+    /* Feedback classes */
+    .feedback-box {
+        border-radius: 0.75rem !important;
+        padding: 1rem 1.25rem !important;
+        margin-bottom: 0.75rem !important;
+        line-height: 1.5 !important;
+    }
+    .feedback-success {
+        background: #D1FAE5 !important;
+        color: #065F46 !important;
+        border: 1px solid #A7F3D0 !important;
+    }
+    .feedback-error {
+        background: #FEE2E2 !important;
+        color: #991B1B !important;
+        border: 1px solid #FECACA !important;
+    }
+    .feedback-warning {
+        background: #FEF3C7 !important;
+        color: #92400E !important;
+        border: 1px solid #FDE68A !important;
+    }
+    .feedback-info {
+        background: #DBEAFE !important;
+        color: #1E40AF !important;
+        border: 1px solid #BFDBFE !important;
+    }
+
+    /* Pill classes */
+    .pill {
+        display: inline-block !important;
+        padding: 0.2rem 0.625rem !important;
+        border-radius: 9999px !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        line-height: 1.4 !important;
+    }
+    .pill-primary {
+        background: var(--primary-light) !important;
+        color: var(--primary-dark) !important;
+    }
+    .pill-secondary {
+        background: var(--surface-alt) !important;
+        color: var(--text-secondary) !important;
+    }
+    .pill-accent {
+        background: var(--purple-light) !important;
+        color: #6D28D9 !important;
+    }
+    .pill-warning {
+        background: var(--orange-light) !important;
+        color: #B45309 !important;
+    }
+    .pill-error {
+        background: var(--red-light) !important;
+        color: #DC2626 !important;
+    }
+    .pill-muted {
+        background: var(--surface-alt) !important;
+        color: var(--text-muted) !important;
+    }
+
+    /* Exercise classes */
+    .exercise-card {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 1rem !important;
+        padding: 1.5rem !important;
+        margin-bottom: 1rem !important;
+    }
+    .exercise-header {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    .exercise-type {
+        font-size: 0.7rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        color: var(--primary) !important;
+        font-weight: 700 !important;
+    }
+    .exercise-step {
+        font-size: 0.7rem !important;
+        color: var(--text-muted) !important;
+        font-weight: 600 !important;
+    }
+    .exercise-prompt {
+        font-size: 1.125rem !important;
+        line-height: 1.7 !important;
+        color: var(--text) !important;
+        padding: 1rem !important;
+        background: var(--surface-alt) !important;
+        border-radius: 0.75rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Chat classes (conversation) */
+    .chat-message {
+        display: flex !important;
+        gap: 0.75rem !important;
+        margin-bottom: 1rem !important;
+        align-items: flex-start !important;
+    }
+    .chat-message.user {
+        flex-direction: row-reverse !important;
+    }
+    .chat-avatar {
+        width: 2rem !important;
+        height: 2rem !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1rem !important;
+        flex-shrink: 0 !important;
+        background: var(--surface-alt) !important;
+    }
+    .chat-message.user .chat-avatar {
+        background: var(--primary-light) !important;
+    }
+    .chat-bubble {
+        background: var(--surface-alt) !important;
+        border-radius: 1rem !important;
+        padding: 0.75rem 1rem !important;
+        max-width: 80% !important;
+        color: var(--text) !important;
+        line-height: 1.5 !important;
+    }
+    .chat-message.user .chat-bubble {
+        background: var(--primary-light) !important;
+        color: #065F46 !important;
+    }
+
+    /* Verb classes */
+    .verb-option {
+        background: var(--surface) !important;
+        border: 2px solid var(--border) !important;
+        border-radius: 0.75rem !important;
+        padding: 1rem !important;
+        margin-bottom: 0.5rem !important;
+        transition: all 0.15s ease !important;
+        cursor: pointer !important;
+    }
+    .verb-option.selected {
+        border-color: var(--primary) !important;
+        background: var(--primary-light) !important;
+    }
+    .verb-name {
+        font-weight: 700 !important;
+        color: var(--text) !important;
+        font-size: 1rem !important;
+    }
+    .verb-meta {
+        font-size: 0.8rem !important;
+        color: var(--text-secondary) !important;
+    }
+    .verb-note {
+        font-size: 0.8rem !important;
+        color: var(--text-muted) !important;
+        font-style: italic !important;
+        margin-top: 0.25rem !important;
+    }
+
+    /* Hero alias (non-prefixed) */
+    .hero { background: linear-gradient(135deg, #10B981, #059669, #047857) !important; border-radius: 1.25rem !important; padding: 2rem !important; margin-bottom: 1.5rem !important; overflow: hidden !important; }
+    .hero-title { font-size: 1.75rem !important; font-weight: 800 !important; color: #FFFFFF !important; margin: 0 0 0.5rem 0 !important; }
+    .hero-subtitle { color: rgba(255,255,255,0.85) !important; font-size: 1rem !important; margin: 0 !important; }
+
+    /* Section header alias */
+    .section-header { margin-bottom: 1rem !important; }
+    .section-title { font-size: 1.25rem !important; font-weight: 700 !important; color: var(--text) !important; margin: 0 0 0.25rem 0 !important; }
+
     </style>
     """
 
@@ -624,8 +882,10 @@ def apply_theme():
 
 
 def _clean_html(markup: str) -> str:
-    """Normalize HTML markup to avoid markdown code blocks."""
-    return dedent(markup).strip()
+    """Strip leading whitespace from every line so Markdown never sees 4-space indentation as a code block."""
+    lines = markup.strip().splitlines()
+    cleaned = "\n".join(line.strip() for line in lines)
+    return cleaned
 
 
 def render_html(markup: str) -> None:
