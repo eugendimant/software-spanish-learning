@@ -251,7 +251,7 @@ def render_add_phrase_form():
         translation = st.text_input("English meaning", placeholder="e.g., To miss (someone)")
         category = st.selectbox("Category", ["general", "travel", "work", "social", "grammar", "idioms"])
 
-    if st.button("Save Phrase", type="primary", use_container_width=True):
+    if st.button("Save Phrase", type="primary", use_container_width=True, key="key_save_phrase"):
         if phrase.strip():
             success = save_phrase(
                 phrase=phrase.strip(),
@@ -283,11 +283,11 @@ def render_import_from_practice():
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("Import Vocabulary", use_container_width=True):
+        if st.button("Import Vocabulary", use_container_width=True, key="key_import_vocabulary"):
             import_from_vocabulary()
 
     with col2:
-        if st.button("Import from Mistakes", use_container_width=True):
+        if st.button("Import from Mistakes", use_container_width=True, key="key_import_from_mistakes"):
             import_from_mistakes()
 
 

@@ -3,7 +3,7 @@ import streamlit as st
 import random
 from datetime import date
 
-from utils.theme import render_hero, render_section_header
+from utils.theme import render_hero, render_section_header, render_html
 from utils.database import record_progress, log_activity, get_user_profile
 from utils.content import DIALECT_MODULES, DIALECT_CONVERTER
 from utils.helpers import seed_for_day
@@ -116,7 +116,7 @@ def render_dialect_exploration():
 
         col1, col2 = st.columns([1, 3])
         with col1:
-            if st.button("Check Answer", type="primary"):
+            if st.button("Check Answer", type="primary", key="key_check_dialect_answer"):
                 if user_answer == answer:
                     st.success("Correct! You understand this dialect nuance.")
                     record_progress({"vocab_reviewed": 1})
@@ -186,7 +186,7 @@ def render_phrase_comparison():
         placeholder="Escriba su versión..."
     )
 
-    if st.button("Check", type="primary"):
+    if st.button("Check", type="primary", key="key_check_phrase_comparison"):
         if user_attempt.strip():
             correct = phrases.get(target_dialect, "")
 
@@ -256,7 +256,7 @@ def render_dialect_quiz():
 
         st.markdown("---")
 
-    if st.button("Submit Quiz", type="primary", use_container_width=True):
+    if st.button("Submit Quiz", type="primary", use_container_width=True, key="key_submit_dialect_quiz"):
         st.session_state.quiz_submitted = True
 
         # Calculate score
@@ -290,7 +290,7 @@ def render_dialect_quiz():
 
     # Reset button
     if st.session_state.quiz_submitted:
-        if st.button("Try Again Tomorrow"):
+        if st.button("Try Again Tomorrow", key="key_try_quiz_again"):
             st.session_state.quiz_answers = {}
             st.session_state.quiz_submitted = False
             st.rerun()
@@ -318,17 +318,17 @@ def render_preference_settings():
             data = DIALECT_MODULES.get(dialect, {})
             is_selected = dialect == current_preference
 
-            st.markdown(f"""
-            <div class="card" style="text-align: center; {'border: 2px solid #007AFF; background: rgba(99, 102, 241, 0.05);' if is_selected else ''}">
-                <div style="font-size: 2rem;">
-                    {'🇪🇸' if dialect == 'Spain' else '🇲🇽' if dialect == 'Mexico' else '🇦🇷' if dialect == 'Argentina' else '🇨🇴' if dialect == 'Colombia' else '🇨🇱'}
+            flag_map = {'Spain': '&#x1F1EA;&#x1F1F8;', 'Mexico': '&#x1F1F2;&#x1F1FD;', 'Argentina': '&#x1F1E6;&#x1F1F7;', 'Colombia': '&#x1F1E8;&#x1F1F4;', 'Chile': '&#x1F1E8;&#x1F1F1;'}
+            flag = flag_map.get(dialect, '')
+            feature = data.get('features', [''])[0] if data.get('features') else ''
+            border_style = 'border: 2px solid #007AFF; background: rgba(99, 102, 241, 0.05);' if is_selected else ''
+            render_html(f"""
+                <div class="card" style="text-align: center; {border_style}">
+                    <div style="font-size: 2rem;">{flag}</div>
+                    <div style="font-weight: 600; margin-top: 0.5rem;">{dialect}</div>
+                    <div style="font-size: 0.8rem; color: #8E8E93; margin-top: 0.25rem;">{feature}</div>
                 </div>
-                <div style="font-weight: 600; margin-top: 0.5rem;">{dialect}</div>
-                <div style="font-size: 0.8rem; color: #8E8E93; margin-top: 0.25rem;">
-                    {data.get('features', [''])[0] if data.get('features') else ''}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            """)
 
             if st.button(
                 "Selected" if is_selected else "Select",

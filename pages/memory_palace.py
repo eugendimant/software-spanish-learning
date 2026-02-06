@@ -309,7 +309,7 @@ def render_recall_test():
 
     if st.session_state.test_questions is None:
         # Start new test
-        if st.button("Start Recall Test", type="primary", use_container_width=True):
+        if st.button("Start Recall Test", type="primary", use_container_width=True, key="key_start_recall_test"):
             # Shuffle placements for test
             random.shuffle(placements)
             st.session_state.test_questions = placements[:min(10, len(placements))]
@@ -347,7 +347,7 @@ def render_recall_test():
             record_progress({"vocab_reviewed": score})
             log_activity("memory_palace", "recall_test", f"Score: {score}/{total}")
 
-            if st.button("New Test", use_container_width=True):
+            if st.button("New Test", use_container_width=True, key="key_new_recall_test"):
                 st.session_state.test_questions = None
                 st.rerun()
         else:
@@ -370,7 +370,7 @@ def render_recall_test():
                 key=f"test_answer_{current_idx}"
             )
 
-            if st.button("Submit Answer", type="primary"):
+            if st.button("Submit Answer", type="primary", key="key_submit_recall_answer"):
                 st.session_state.test_answers[current_idx] = answer
 
                 if answer.lower().strip() == q.get("term", "").lower():

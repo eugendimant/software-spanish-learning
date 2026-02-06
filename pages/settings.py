@@ -115,7 +115,7 @@ def render_all_profiles():
 
     with col3:
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("Create Profile", type="primary", use_container_width=True):
+        if st.button("Create Profile", type="primary", use_container_width=True, key="key_create_profile"):
             cleaned_name = new_name.strip()
             # Input validation
             if not cleaned_name:
@@ -235,7 +235,7 @@ def render_profile_section():
             st.warning("⚠️ Placement Pending")
 
     # Save button
-    if st.button("Save Profile", type="primary", use_container_width=True):
+    if st.button("Save Profile", type="primary", use_container_width=True, key="key_save_profile"):
         cleaned_name = name.strip()
         # Input validation
         if not cleaned_name:
@@ -267,7 +267,7 @@ def render_placement_test():
     if profile.get("placement_completed"):
         st.success(f"🎉 You've completed the placement test! Score: {profile.get('placement_score', 0):.0f}%")
 
-        if st.button("Retake Placement Test"):
+        if st.button("Retake Placement Test", key="key_retake_placement_test"):
             update_user_profile({**profile, "placement_completed": 0, "placement_score": None})
             st.session_state.placement_answers = {}
             st.session_state.placement_index = 0
@@ -313,7 +313,7 @@ def render_placement_test():
         """, unsafe_allow_html=True)
 
         # Save results
-        if st.button("Save Results & Continue", type="primary"):
+        if st.button("Save Results & Continue", type="primary", key="key_save_placement_results"):
             update_user_profile({
                 **profile,
                 "placement_completed": 1,
@@ -359,12 +359,12 @@ def render_placement_test():
 
     with col1:
         if index > 0:
-            if st.button("← Previous"):
+            if st.button("← Previous", key="key_placement_previous"):
                 st.session_state.placement_index -= 1
                 st.rerun()
 
     with col2:
-        if st.button("Next →" if index < len(questions) - 1 else "Finish", type="primary"):
+        if st.button("Next →" if index < len(questions) - 1 else "Finish", type="primary", key="key_placement_next"):
             st.session_state.placement_answers[index] = selected
             st.session_state.placement_index += 1
             st.rerun()
@@ -455,7 +455,7 @@ def render_preferences():
     st.info(grading_descriptions[grading_mode])
 
     # Save preferences
-    if st.button("Save Preferences", type="primary"):
+    if st.button("Save Preferences", type="primary", key="key_save_preferences"):
         update_user_profile({
             **profile,
             "dialect_preference": dialect,
@@ -559,7 +559,7 @@ def render_data_export():
     st.divider()
     st.markdown("### Full Backup")
 
-    if st.button("🗃️ Create Full Backup", use_container_width=True):
+    if st.button("🗃️ Create Full Backup", use_container_width=True, key="key_create_full_backup"):
         backup = {
             "vocabulary": json.loads(export_vocab_json()),
             "mistakes": json.loads(export_mistakes_json()),
@@ -590,7 +590,7 @@ def render_data_export():
             data = json.loads(uploaded.read().decode("utf-8"))
             st.json({"keys": list(data.keys()), "export_date": data.get("export_date", "Unknown")})
 
-            if st.button("⚠️ Restore from Backup", type="primary"):
+            if st.button("⚠️ Restore from Backup", type="primary", key="key_restore_from_backup"):
                 # This would need implementation to restore data
                 st.warning("Import functionality coming soon!")
         except json.JSONDecodeError:

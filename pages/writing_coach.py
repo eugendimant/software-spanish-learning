@@ -85,7 +85,7 @@ def render_free_writing():
     col1, col2 = st.columns([1, 1])
 
     with col1:
-        if st.button("Analyze My Writing", type="primary", use_container_width=True):
+        if st.button("Analyze My Writing", type="primary", use_container_width=True, key="analyze_writing"):
             if text.strip():
                 # Validate Spanish
                 lang_info = detect_language(text)
@@ -102,7 +102,7 @@ def render_free_writing():
                 st.warning("Please write something first.")
 
     with col2:
-        if st.button("Clear", use_container_width=True):
+        if st.button("Clear", use_container_width=True, key="clear_writing"):
             st.session_state.wc_text = ""
             st.session_state.wc_feedback = None
             st.session_state.wc_rewrite_required = False
@@ -130,7 +130,7 @@ def render_free_writing():
                 key="rewrite_input"
             )
 
-            if st.button("Check Rewrite", type="primary"):
+            if st.button("Check Rewrite", type="primary", key="check_rewrite"):
                 if rewrite.strip():
                     # Check if original errors are fixed
                     new_feedback = analyze_writing(rewrite)
@@ -857,25 +857,18 @@ def render_writing_feedback(feedback: dict):
         for pragma in feedback["pragmatics"]:
             issue_title = pragma['issue'].replace('_', ' ').title()
 
-            st.markdown(
-                f"""
-                <div style="background-color: #fff3cd; padding: 15px; border-radius: 10px;
-                            border-left: 5px solid #ffc107; margin-bottom: 15px;">
-                    <h5 style="color: #856404; margin: 0 0 10px 0;">{issue_title}</h5>
-                    <p style="color: #856404; margin: 0 0 10px 0;">
-                        <strong>Pattern found:</strong> <code>{pragma['pattern']}</code>
-                    </p>
-                    <p style="color: #856404; margin: 0 0 10px 0;">
-                        {pragma['explanation']}
-                    </p>
-                    <p style="color: #856404; margin: 0;">
-                        <strong>Native-like alternatives:</strong><br>
-                        {' / '.join(pragma['alternatives'][:4])}
-                    </p>
-                </div>
-                """,
-                unsafe_allow_html=True
+            pragma_html = (
+                f"<div style='background-color: #fff3cd; padding: 15px; border-radius: 10px;"
+                f" border-left: 5px solid #ffc107; margin-bottom: 15px;'>"
+                f"<h5 style='color: #856404; margin: 0 0 10px 0;'>{issue_title}</h5>"
+                f"<p style='color: #856404; margin: 0 0 10px 0;'>"
+                f"<strong>Pattern found:</strong> <code>{pragma['pattern']}</code></p>"
+                f"<p style='color: #856404; margin: 0 0 10px 0;'>{pragma['explanation']}</p>"
+                f"<p style='color: #856404; margin: 0;'>"
+                f"<strong>Native-like alternatives:</strong><br>"
+                f"{' / '.join(pragma['alternatives'][:4])}</p></div>"
             )
+            st.markdown(pragma_html, unsafe_allow_html=True)
 
     # Strengths section with encouragement
     if feedback.get("strengths"):
@@ -1035,7 +1028,7 @@ def render_tone_transformation():
         col1, col2 = st.columns([1, 1])
 
         with col1:
-            if st.button("Check My Version", type="primary", use_container_width=True):
+            if st.button("Check My Version", type="primary", use_container_width=True, key="check_version"):
                 if user_attempt.strip():
                     # Validate Spanish
                     lang_info = detect_language(user_attempt)
@@ -1061,7 +1054,7 @@ def render_tone_transformation():
                     st.warning("Please write your transformation first.")
 
         with col2:
-            if st.button("Show Model Answer", use_container_width=True):
+            if st.button("Show Model Answer", use_container_width=True, key="show_model_answer"):
                 st.markdown(f"**{target_label}:**")
                 st.markdown(
                     f"<div style='background-color: #d4edda; padding: 15px; border-radius: 8px; "
@@ -1162,7 +1155,7 @@ def render_constraint_rewrites():
         )
 
     with col_select2:
-        if st.button("Get New Exercise", use_container_width=True):
+        if st.button("Get New Exercise", use_container_width=True, key="new_exercise"):
             st.session_state.constraint_seed = random.randint(1, 10000)
             st.rerun()
 
@@ -1224,7 +1217,7 @@ def render_constraint_rewrites():
     col1, col2 = st.columns([1, 1])
 
     with col1:
-        if st.button("Check My Answer", type="primary", use_container_width=True):
+        if st.button("Check My Answer", type="primary", use_container_width=True, key="check_my_answer"):
             if user_attempt.strip():
                 lang_info = detect_language(user_attempt)
                 if lang_info["language"] == "english":
@@ -1249,7 +1242,7 @@ def render_constraint_rewrites():
                 st.warning("Please write your rewrite first.")
 
     with col2:
-        if st.button("Show Model Answer", use_container_width=True):
+        if st.button("Show Model Answer", use_container_width=True, key="show_model_cloze"):
             st.markdown(
                 f"<div style='background-color: #d4edda; padding: 15px; border-radius: 8px; "
                 f"font-size: 1.1em;'>{exercise.get('example', '')}</div>",
@@ -1394,7 +1387,7 @@ def render_error_pattern_drills():
             st.session_state[drill_submitted_key] = False
 
         if not st.session_state[drill_submitted_key]:
-            if st.button("Submit All", type="primary"):
+            if st.button("Submit All", type="primary", key="submit_all_drill"):
                 record_progress({"grammar_reviewed": 1})
                 log_activity("writing_coach", "error_drill", selected)
                 st.session_state[drill_submitted_key] = True
@@ -1408,11 +1401,11 @@ def render_error_pattern_drills():
 
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("Try Another Drill →", type="primary"):
+                if st.button("Try Another Drill →", type="primary", key="try_another_drill"):
                     st.session_state[drill_submitted_key] = False
                     st.rerun()
             with col2:
-                if st.button("Back to Writing Coach"):
+                if st.button("Back to Writing Coach", key="back_to_coach"):
                     st.session_state[drill_submitted_key] = False
                     st.session_state.writing_mode = None
                     st.rerun()

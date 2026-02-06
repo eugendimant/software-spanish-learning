@@ -872,6 +872,22 @@ def get_css() -> str:
     .section-header { margin-bottom: 1rem !important; }
     .section-title { font-size: 1.25rem !important; font-weight: 700 !important; color: var(--text) !important; margin: 0 0 0.25rem 0 !important; }
 
+    /* Diff highlighting */
+    .diff-added {
+        background: #D1FAE5 !important;
+        color: #065F46 !important;
+        padding: 0.1rem 0.3rem !important;
+        border-radius: 0.2rem !important;
+        text-decoration: none !important;
+    }
+    .diff-removed {
+        background: #FEE2E2 !important;
+        color: #991B1B !important;
+        padding: 0.1rem 0.3rem !important;
+        border-radius: 0.2rem !important;
+        text-decoration: line-through !important;
+    }
+
     </style>
     """
 
@@ -879,6 +895,21 @@ def get_css() -> str:
 def apply_theme():
     """Apply the theme CSS to the page."""
     st.markdown(get_css(), unsafe_allow_html=True)
+
+    # Monkey-patch st.markdown so that ANY call with unsafe_allow_html=True
+    # auto-strips leading whitespace from every line. This prevents indented
+    # f-string HTML (common in Streamlit apps) from being misinterpreted as
+    # Markdown code blocks (4+ leading spaces = code block).
+    if not getattr(st.markdown, '_vl_patched', False):
+        _original_markdown = st.markdown
+
+        def _patched_markdown(body, *args, unsafe_allow_html=False, **kwargs):
+            if unsafe_allow_html and isinstance(body, str):
+                body = _clean_html(body)
+            return _original_markdown(body, *args, unsafe_allow_html=unsafe_allow_html, **kwargs)
+
+        _patched_markdown._vl_patched = True
+        st.markdown = _patched_markdown
 
 
 def _clean_html(markup: str) -> str:
@@ -1030,9 +1061,14 @@ def render_pill(text: str, variant: str = "green") -> str:
     return f'<span class="vl-pill" style="background: {bg}; color: {fg};">{text}</span>'
 
 
-def render_progress_bar(value: int, max_value: int = 100, label: str = "",
+def render_progress_bar(value=0, max_value=100, label: str = "",
                         color: str = "var(--primary)") -> None:
     """Render a progress bar."""
+    try:
+        value = float(value)
+        max_value = float(max_value) if max_value else 100
+    except (TypeError, ValueError):
+        value, max_value = 0, 100
     pct = min(100, (value / max_value * 100)) if max_value > 0 else 0
     label_html = ""
     if label:

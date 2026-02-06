@@ -20,7 +20,7 @@ from utils.database import (
 
 # Theme imports
 from utils.theme import (
-    get_css, render_hero, render_section_header, render_stat_card,
+    apply_theme, get_css, render_hero, render_section_header, render_stat_card,
     render_action_card, render_feedback, render_streak_badge,
     render_empty_state, render_loading_skeleton, render_html,
     render_metric_grid, render_progress_bar
@@ -35,8 +35,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Apply theme
-st.markdown(get_css(), unsafe_allow_html=True)
+# Apply theme (CSS + auto-clean HTML monkey-patch)
+apply_theme()
 
 # Initialize database
 try:
@@ -340,10 +340,10 @@ def render_onboarding():
 
             dialects = [
                 ("&#x1F1EA;&#x1F1F8;", "Spain", "Castilian with vosotros"),
-                ("🇲🇽", "Mexico", "Widely understood"),
-                ("🇦🇷", "Argentina", "Rioplatense with vos"),
-                ("🇨🇴", "Colombia", "Clear Latin American"),
-                ("🇨🇱", "Chile", "Unique expressions"),
+                ("&#x1F1F2;&#x1F1FD;", "Mexico", "Widely understood"),
+                ("&#x1F1E6;&#x1F1F7;", "Argentina", "Rioplatense with vos"),
+                ("&#x1F1E8;&#x1F1F4;", "Colombia", "Clear Latin American"),
+                ("&#x1F1E8;&#x1F1F1;", "Chile", "Unique expressions"),
             ]
 
             if "onboarding_dialect" not in st.session_state:

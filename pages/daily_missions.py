@@ -614,7 +614,7 @@ def render_daily_missions_page():
             </div>
             """, unsafe_allow_html=True)
 
-            if st.button("Practice Another Mission", type="primary"):
+            if st.button("Practice Another Mission", type="primary", key="key_practice_another_mission"):
                 st.session_state.dm_mission = None
                 st.session_state.dm_submitted = False
                 st.session_state.dm_feedback = None
@@ -783,7 +783,7 @@ def render_speaking_input(mission: dict):
         st.info(f"**Hint:** Record yourself speaking in Spanish. Make sure to include: {', '.join(constraints[:3])}")
 
     # Submit
-    if st.button("Submit Speaking Mission", type="primary", use_container_width=True):
+    if st.button("Submit Speaking Mission", type="primary", use_container_width=True, key="key_submit_speaking_mission"):
         if transcript.strip():
             # Validate Spanish language first
             lang_info = detect_language(transcript)
@@ -831,7 +831,7 @@ def render_writing_input(mission: dict):
         st.info(f"**Hint:** Write 4-6 sentences in Spanish. Make sure to include: {', '.join(constraints[:3])}")
 
     # Submit
-    if st.button("Submit Writing Mission", type="primary", use_container_width=True):
+    if st.button("Submit Writing Mission", type="primary", use_container_width=True, key="key_submit_writing_mission"):
         if response.strip():
             # Validate Spanish language first
             lang_info = detect_language(response)
@@ -1048,7 +1048,7 @@ def process_mission_response(mission: dict, response: str, duration: int = 0):
         st.session_state[retry_result_key] = None
 
     if not st.session_state[retry_submitted_key]:
-        if st.button("Submit Retry", type="primary"):
+        if st.button("Submit Retry", type="primary", key="key_submit_retry"):
             if retry.strip():
                 # Validate Spanish language first
                 lang_info = detect_language(retry)

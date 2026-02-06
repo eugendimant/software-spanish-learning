@@ -208,7 +208,7 @@ def render_personal_syllabus():
     col1, col2 = st.columns([3, 1])
 
     with col2:
-        if st.button("Regenerate Syllabus", type="primary"):
+        if st.button("Regenerate Syllabus", type="primary", key="key_regenerate_syllabus"):
             generate_personal_syllabus()
             st.rerun()
 
@@ -222,7 +222,7 @@ def render_personal_syllabus():
         if not fingerprints:
             st.warning("You need to practice more to generate a personalized syllabus. Try the Mistake Catcher or Grammar Drills first.")
         else:
-            if st.button("Generate My First Syllabus"):
+            if st.button("Generate My First Syllabus", key="key_generate_first_syllabus"):
                 generate_personal_syllabus()
                 st.rerun()
         return

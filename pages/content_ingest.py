@@ -119,7 +119,7 @@ def render_upload_section():
     col1, col2 = st.columns([1, 3])
 
     with col1:
-        if st.button("🔍 Extract Phrases", type="primary", use_container_width=True):
+        if st.button("🔍 Extract Phrases", type="primary", use_container_width=True, key="extract_phrases"):
             if st.session_state.ci_text.strip():
                 with st.spinner("Extracting phrases from your content..."):
                     extract_phrases(st.session_state.ci_text, inject_domains)
@@ -128,7 +128,7 @@ def render_upload_section():
                 st.warning("Please paste or upload some text first.")
 
     with col2:
-        if st.button("🗑️ Clear", use_container_width=True):
+        if st.button("🗑️ Clear", use_container_width=True, key="clear_content"):
             st.session_state.ci_text = ""
             st.session_state.ci_extracted = []
             st.session_state.ci_domains = []
@@ -265,17 +265,17 @@ def render_extracted_phrases():
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        if st.button("✅ Select All", use_container_width=True):
+        if st.button("✅ Select All", use_container_width=True, key="select_all"):
             st.session_state.ci_selected = {i: True for i in range(len(extracted))}
             st.rerun()
 
     with col2:
-        if st.button("❌ Deselect All", use_container_width=True):
+        if st.button("❌ Deselect All", use_container_width=True, key="deselect_all"):
             st.session_state.ci_selected = {i: False for i in range(len(extracted))}
             st.rerun()
 
     with col3:
-        if st.button("💾 Save Selected", type="primary", use_container_width=True):
+        if st.button("💾 Save Selected", type="primary", use_container_width=True, key="save_selected"):
             with st.spinner("Saving selected phrases..."):
                 save_selected_phrases()
 
@@ -365,7 +365,7 @@ def render_flashcard_practice(item: dict, index: int):
     """, unsafe_allow_html=True)
 
     if not st.session_state.ci_revealed:
-        if st.button("Show Meaning", type="primary", use_container_width=True):
+        if st.button("Show Meaning", type="primary", use_container_width=True, key="show_meaning"):
             st.session_state.ci_revealed = True
             st.rerun()
     else:
@@ -378,13 +378,13 @@ def render_flashcard_practice(item: dict, index: int):
         col1, col2 = st.columns(2)
 
         with col1:
-            if st.button("← Previous"):
+            if st.button("← Previous", key="prev_flashcard"):
                 st.session_state.ci_practice_index = max(0, index - 1)
                 st.session_state.ci_revealed = False
                 st.rerun()
 
         with col2:
-            if st.button("Next →"):
+            if st.button("Next →", key="next_flashcard"):
                 st.session_state.ci_practice_index = index + 1
                 st.session_state.ci_revealed = False
                 st.rerun()
@@ -418,7 +418,7 @@ def render_cloze_practice(item: dict, index: int):
     if st.button("💡 Hint in English", key=f"cloze_hint_{index}"):
         st.info(f"**Hint:** The missing word is a Spanish word from the phrase you're learning.")
 
-    if st.button("Check", type="primary"):
+    if st.button("Check", type="primary", key="check_cloze"):
         if not user_answer.strip():
             st.warning("Please enter your answer.")
         else:
@@ -439,7 +439,7 @@ def render_cloze_practice(item: dict, index: int):
             else:
                 st.error(f"The answer was: {hidden_word}")
 
-    if st.button("Next →"):
+    if st.button("Next →", key="next_cloze"):
         st.session_state.ci_practice_index = index + 1
         st.rerun()
 
@@ -460,7 +460,7 @@ def render_sentence_practice(item: dict, index: int):
     if st.button("💡 Hint in English", key=f"sentence_hint_{index}"):
         st.info(f"**Hint:** Write a sentence in Spanish using '{item['phrase']}'. Domain: {item.get('domain', 'General')}")
 
-    if st.button("Submit", type="primary"):
+    if st.button("Submit", type="primary", key="submit_sentence_ci"):
         if user_sentence.strip():
             # Validate Spanish language first
             lang_info = detect_language(user_sentence)
@@ -486,6 +486,6 @@ def render_sentence_practice(item: dict, index: int):
         else:
             st.warning("Please write a sentence.")
 
-    if st.button("Next →"):
+    if st.button("Next →", key="next_sentence_ci"):
         st.session_state.ci_practice_index = index + 1
         st.rerun()

@@ -283,7 +283,7 @@ def render_context_units_page():
 
     with col1:
         if st.session_state.cu_current_unit > 0:
-            if st.button("← Previous Unit"):
+            if st.button("← Previous Unit", key="key_previous_unit"):
                 st.session_state.cu_current_unit -= 1
                 st.rerun()
 
@@ -293,6 +293,6 @@ def render_context_units_page():
 
     with col3:
         if st.session_state.cu_current_unit < len(VOCAB_CONTEXT_UNITS) - 1:
-            if st.button("Next Unit →"):
+            if st.button("Next Unit →", key="key_next_unit"):
                 st.session_state.cu_current_unit += 1
                 st.rerun()

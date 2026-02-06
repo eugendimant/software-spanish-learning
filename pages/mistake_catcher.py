@@ -63,10 +63,10 @@ def render_text_checker():
     col1, col2 = st.columns([1, 4])
 
     with col1:
-        check_btn = st.button("🔍 Check", type="primary", use_container_width=True)
+        check_btn = st.button("🔍 Check", type="primary", use_container_width=True, key="key_check_text")
 
     with col2:
-        if st.button("🗑️ Clear", use_container_width=True):
+        if st.button("🗑️ Clear", use_container_width=True, key="key_clear_text"):
             st.session_state.mc_text = ""
             st.session_state.mc_mistakes = []
             st.session_state.mc_corrected = ""
@@ -280,7 +280,7 @@ def render_grammar_drills():
     col1, col2, col3 = st.columns([1, 1, 1])
 
     with col1:
-        if st.button("Check Answer", type="primary"):
+        if st.button("Check Answer", type="primary", key="key_check_drill_answer"):
             correct = drill.get("answer", "")
             is_correct = selected == correct
 
@@ -311,12 +311,12 @@ def render_grammar_drills():
                     st.markdown(f"- _{ex}_")
 
     with col2:
-        if st.button("← Previous"):
+        if st.button("← Previous", key="key_previous_drill"):
             st.session_state.gd_current = max(0, st.session_state.gd_current - 1)
             st.rerun()
 
     with col3:
-        if st.button("Next →"):
+        if st.button("Next →", key="key_next_drill"):
             st.session_state.gd_current += 1
             st.rerun()
 

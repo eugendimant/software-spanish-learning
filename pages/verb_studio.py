@@ -1141,19 +1141,14 @@ def render_conjugation_reference():
 
                 tense_data = verb_data[tense]
 
-                table_html = """
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
-                """
-
+                table_html = "<table style='width: 100%; border-collapse: collapse; font-size: 0.875rem;'>"
                 for person in ALL_PERSONS:
                     if person in tense_data:
-                        table_html += f"""
-                        <tr>
-                            <td style="padding: 4px 8px; border-bottom: 1px solid #E5E5EA; color: #8E8E93;">{PERSON_LABELS.get(person, person)}</td>
-                            <td style="padding: 4px 8px; border-bottom: 1px solid #E5E5EA; font-weight: 500;">{tense_data[person]}</td>
-                        </tr>
-                        """
-
+                        plabel = PERSON_LABELS.get(person, person)
+                        table_html += (
+                            f"<tr><td style='padding: 4px 8px; border-bottom: 1px solid #E5E5EA; color: #8E8E93;'>{plabel}</td>"
+                            f"<td style='padding: 4px 8px; border-bottom: 1px solid #E5E5EA; font-weight: 500;'>{tense_data[person]}</td></tr>"
+                        )
                 table_html += "</table>"
                 st.markdown(table_html, unsafe_allow_html=True)
 
@@ -1308,7 +1303,7 @@ def render_verb_scenario(scenario: dict, random_mode: bool = False):
     col1, col2 = st.columns([1, 1])
 
     with col1:
-        if st.button("Check Answer", type="primary", use_container_width=True):
+        if st.button("Check Answer", type="primary", use_container_width=True, key="vs_check_answer"):
             # Validate Spanish if explanation provided
             if explanation.strip():
                 lang_info = detect_language(explanation)
@@ -1324,7 +1319,7 @@ def render_verb_scenario(scenario: dict, random_mode: bool = False):
     with col2:
         # Always show Next button - works for both modes
         next_label = "Next Scenario" if not random_mode else "New Scenario"
-        if st.button(next_label, use_container_width=True):
+        if st.button(next_label, use_container_width=True, key="vs_next_scenario"):
             if random_mode:
                 # Get a new random scenario
                 st.session_state.vs_current_scenario = random.randint(0, 100)  # Random seed

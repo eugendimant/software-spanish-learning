@@ -242,7 +242,7 @@ def render_error_practice():
     if not errors:
         st.success("🎉 No errors due for review! Great job staying on top of your mistakes.")
 
-        if st.button("Practice All Errors Anyway"):
+        if st.button("Practice All Errors Anyway", key="practice_all_errors"):
             profile_id = get_active_profile_id()
             try:
                 with get_connection() as conn:
@@ -274,7 +274,7 @@ def render_error_practice():
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("Start Over"):
+        if st.button("Start Over", key="start_over"):
             st.session_state.error_practice_index = 0
             st.rerun()
         return
@@ -309,7 +309,7 @@ def render_error_practice():
     if st.button("💡 Hint in English", key=f"error_hint_{index}"):
         st.info(f"**Hint:** Fix the error in: '{error.get('user_text', error.get('pattern', ''))}'. The error type is: {error.get('error_type', 'grammar').replace('_', ' ')}")
 
-    if st.button("Check", type="primary"):
+    if st.button("Check", type="primary", key="check_error_nb"):
         if not user_correction.strip():
             st.warning("Please write your correction.")
         else:
@@ -370,6 +370,6 @@ def render_error_practice():
                     except (json.JSONDecodeError, TypeError):
                         pass
 
-    if st.button("Next Error →"):
+    if st.button("Next Error →", key="next_error_nb"):
         st.session_state.error_practice_index += 1
         st.rerun()
