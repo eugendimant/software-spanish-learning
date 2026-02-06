@@ -6,7 +6,6 @@ import streamlit as st
 import random
 from datetime import date, datetime, timedelta
 from collections import defaultdict
-from textwrap import dedent
 
 # Database imports
 from utils.database import (
@@ -31,25 +30,13 @@ from utils.helpers import get_streak_days
 # Page configuration - must be first Streamlit command
 st.set_page_config(
     page_title="VivaLingo",
-    page_icon="🇪🇸",
+    page_icon="https://em-content.zobj.net/source/twitter/408/flag-spain_1f1ea-1f1f8.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # Apply theme
 st.markdown(get_css(), unsafe_allow_html=True)
-
-# Normalize HTML markdown to avoid code blocks from indentation
-_original_markdown = st.markdown
-
-
-def _markdown_with_html(*args, **kwargs):
-    if kwargs.get("unsafe_allow_html") and args and isinstance(args[0], str):
-        args = (dedent(args[0]).strip(),) + args[1:]
-    return _original_markdown(*args, **kwargs)
-
-
-st.markdown = _markdown_with_html
 
 # Initialize database
 try:
@@ -72,6 +59,7 @@ def init_session_state():
         "show_onboarding": False,
         "onboarding_step": 0,
         "last_session": None,
+        "quick_session_mode": False,
     }
 
     for key, value in defaults.items():
@@ -118,7 +106,7 @@ def render_sidebar():
                         border-bottom: 1px solid var(--border);">
                 <div style="font-size: 1.5rem; font-weight: 800; color: var(--text);
                             display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 1.5rem;">🇪🇸</span> VivaLingo
+                    <span style="font-size: 1.5rem;">&#x1F1EA;&#x1F1F8;</span> VivaLingo
                 </div>
                 <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.125rem;">
                     Spanish Mastery Platform
@@ -211,7 +199,7 @@ def render_onboarding():
     with col2:
         render_html("""
             <div style="text-align: center; padding: 2rem 0 1rem 0;">
-                <div style="font-size: 3rem; margin-bottom: 0.75rem;">🇪🇸</div>
+                <div style="font-size: 3rem; margin-bottom: 0.75rem;">&#x1F1EA;&#x1F1F8;</div>
                 <h1 style="margin-bottom: 0.25rem; font-size: 2rem;">Welcome to VivaLingo</h1>
                 <p style="color: var(--text-secondary); font-size: 1rem;">Let's set up your learning profile</p>
             </div>
@@ -351,7 +339,7 @@ def render_onboarding():
             """)
 
             dialects = [
-                ("🇪🇸", "Spain", "Castilian with vosotros"),
+                ("&#x1F1EA;&#x1F1F8;", "Spain", "Castilian with vosotros"),
                 ("🇲🇽", "Mexico", "Widely understood"),
                 ("🇦🇷", "Argentina", "Rioplatense with vos"),
                 ("🇨🇴", "Colombia", "Clear Latin American"),
@@ -616,13 +604,13 @@ def render_home_page():
                 icon="🔄",
                 badge=f"{vocab_due} vocab" + (f" + {errors_due} errors" if errors_due > 0 else "")
             )
-            if st.button("START REVIEW", use_container_width=True, key="btn_review"):
+            if st.button("START REVIEW", type="primary", use_container_width=True, key="btn_review"):
                 st.session_state.current_page = "Review"
                 st.rerun()
 
         # Quick Session
         render_action_card("Quick 5-min session", "Mixed practice: vocab + grammar", icon="⚡")
-        if st.button("QUICK START", use_container_width=True, key="btn_quick"):
+        if st.button("QUICK START", type="primary", use_container_width=True, key="btn_quick"):
             st.session_state.quick_session_mode = True
             st.session_state.current_page = "Review"
             st.rerun()

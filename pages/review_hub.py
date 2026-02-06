@@ -107,7 +107,7 @@ def render_review_start():
     # Start button
     st.markdown("")  # Spacing
 
-    if st.button("Start Review →", type="primary", use_container_width=True):
+    if st.button("Start Review →", type="primary", use_container_width=True, key="start_review"):
         build_review_queue(session_length)
         st.rerun()
 
@@ -175,7 +175,7 @@ def render_review_session():
         st.markdown(f"### Card {index + 1} of {len(queue)}")
 
     with col2:
-        if st.button("✕ End Session", use_container_width=True):
+        if st.button("✕ End Session", use_container_width=True, key="end_session"):
             end_review_session()
             st.rerun()
 
@@ -222,7 +222,7 @@ def render_vocab_exercise(card: dict):
 
     if not st.session_state[revealed_key]:
         # Not yet revealed - show reveal button
-        if st.button("Show Answer", type="primary", use_container_width=True):
+        if st.button("Show Answer", type="primary", use_container_width=True, key="show_answer"):
             st.session_state[revealed_key] = True
             st.rerun()
     else:
@@ -295,7 +295,7 @@ def render_grammar_exercise(card: dict):
             label_visibility="collapsed"
         )
 
-        if st.button("Check Answer", type="primary", use_container_width=True):
+        if st.button("Check Answer", type="primary", use_container_width=True, key="check_grammar"):
             is_correct = selected == correct
             st.session_state[checked_key] = True
             st.session_state[result_key] = {
@@ -319,7 +319,7 @@ def render_grammar_exercise(card: dict):
             st.info(f"**Explanation:** {card['explanation']}")
 
         # Next button
-        if st.button("Next →", type="primary", use_container_width=True):
+        if st.button("Next →", type="primary", use_container_width=True, key="next_grammar"):
             # Clean up state
             del st.session_state[checked_key]
             del st.session_state[result_key]
@@ -359,7 +359,7 @@ def render_error_exercise(card: dict):
         col1, col2 = st.columns([2, 1])
 
         with col1:
-            if st.button("Check", type="primary", use_container_width=True):
+            if st.button("Check", type="primary", use_container_width=True, key="check_error"):
                 if not user_input.strip():
                     st.warning("Please enter your correction.")
                 else:
@@ -380,7 +380,7 @@ def render_error_exercise(card: dict):
                     st.rerun()
 
         with col2:
-            if st.button("Skip →", use_container_width=True):
+            if st.button("Skip →", use_container_width=True, key="skip_error"):
                 advance_to_next()
     else:
         # Show result
@@ -405,7 +405,7 @@ def render_error_exercise(card: dict):
             st.info(f"**Why:** {card['explanation']}")
 
         # Next button
-        if st.button("Next →", type="primary", use_container_width=True):
+        if st.button("Next →", type="primary", use_container_width=True, key="next_error"):
             del st.session_state[checked_key]
             del st.session_state[result_key]
             advance_to_next()
@@ -484,12 +484,12 @@ def render_review_complete():
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("Review Again", type="primary", use_container_width=True):
+        if st.button("Review Again", type="primary", use_container_width=True, key="review_again"):
             end_review_session()
             st.rerun()
 
     with col2:
-        if st.button("Back to Home", use_container_width=True):
+        if st.button("Back to Home", use_container_width=True, key="back_home"):
             end_review_session()
             st.session_state.current_page = "Home"
             st.rerun()
