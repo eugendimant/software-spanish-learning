@@ -113,11 +113,11 @@ def render_sidebar():
     with st.sidebar:
         # App header
         st.markdown("""
-        <div style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 16px;">
-            <div style="font-size: 24px; font-weight: 700; color: #0f172a;">
+        <div style="padding: 16px 0; border-bottom: 1px solid #E5E5EA; margin-bottom: 16px;">
+            <div style="font-size: 24px; font-weight: 700; color: #000000;">
                 🇪🇸 VivaLingo
             </div>
-            <div style="font-size: 12px; color: #64748b;">Spanish Mastery</div>
+            <div style="font-size: 12px; color: #8E8E93;">Spanish Mastery</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -127,15 +127,15 @@ def render_sidebar():
             streak = get_streak_days(get_progress_history())
             st.markdown(f"""
             <div style="display: flex; align-items: center; gap: 12px; padding: 12px;
-                        background: #f8fafc; border-radius: 8px; margin-bottom: 16px;">
+                        background: #F2F2F7; border-radius: 8px; margin-bottom: 16px;">
                 <div style="width: 36px; height: 36px; border-radius: 50%;
-                            background: #6366f1; display: flex; align-items: center;
+                            background: #007AFF; display: flex; align-items: center;
                             justify-content: center; color: white; font-weight: 600;">
                     {profile['name'][0].upper()}
                 </div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 500; color: #0f172a;">{profile['name']}</div>
-                    <div style="font-size: 12px; color: #64748b;">Level {profile.get('level', 'C1')}</div>
+                    <div style="font-weight: 500; color: #000000;">{profile['name']}</div>
+                    <div style="font-size: 12px; color: #8E8E93;">Level {profile.get('level', 'C1')}</div>
                 </div>
                 {f'<div style="font-size: 14px;">🔥 {streak}</div>' if streak > 0 else ''}
             </div>
@@ -150,7 +150,7 @@ def render_sidebar():
             st.markdown(f"""
             <div style="background: #eef2ff; border: 1px solid rgba(99, 102, 241, 0.3);
                         border-radius: 8px; padding: 10px 12px; margin-bottom: 16px;">
-                <div style="font-size: 13px; color: #6366f1;">
+                <div style="font-size: 13px; color: #007AFF;">
                     <strong>{total_due}</strong> items due for review
                 </div>
             </div>
@@ -204,7 +204,7 @@ def render_onboarding():
         <div style="text-align: center; padding: 24px 0 16px 0;">
             <div style="font-size: 48px; margin-bottom: 12px;">🇪🇸</div>
             <h1 style="margin-bottom: 8px; font-size: 28px;">Welcome to VivaLingo</h1>
-            <p style="color: #64748b; font-size: 15px;">Let's personalize your learning experience</p>
+            <p style="color: #8E8E93; font-size: 15px;">Let's personalize your learning experience</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -213,11 +213,11 @@ def render_onboarding():
         st.markdown(f"""
         <div style="margin-bottom: 24px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="font-size: 13px; color: #64748b;">Step {step + 1} of {total_steps}</span>
-                <span style="font-size: 13px; color: #6366f1; font-weight: 500;">{int(progress_pct * 100)}%</span>
+                <span style="font-size: 13px; color: #8E8E93;">Step {step + 1} of {total_steps}</span>
+                <span style="font-size: 13px; color: #007AFF; font-weight: 500;">{int(progress_pct * 100)}%</span>
             </div>
-            <div style="background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden;">
-                <div style="background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            <div style="background: #E5E5EA; height: 6px; border-radius: 3px; overflow: hidden;">
+                <div style="background: linear-gradient(90deg, #007AFF, #8b5cf6);
                             height: 100%; width: {progress_pct * 100}%;
                             border-radius: 3px; transition: width 0.3s ease;"></div>
             </div>
@@ -232,7 +232,7 @@ def render_onboarding():
             <div style="text-align: center; margin-bottom: 20px;">
                 <div style="font-size: 32px; margin-bottom: 8px;">👋</div>
                 <h3 style="margin-bottom: 4px;">What's your name?</h3>
-                <p style="color: #64748b; font-size: 14px;">We'll use this to personalize your experience</p>
+                <p style="color: #8E8E93; font-size: 14px;">We'll use this to personalize your experience</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -251,7 +251,7 @@ def render_onboarding():
             <div style="text-align: center; margin-bottom: 20px;">
                 <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
                 <h3 style="margin-bottom: 4px;">What's your current Spanish level?</h3>
-                <p style="color: #64748b; font-size: 14px;">This helps us tailor content to your abilities</p>
+                <p style="color: #8E8E93; font-size: 14px;">This helps us tailor content to your abilities</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -283,7 +283,7 @@ def render_onboarding():
 
             for lvl in levels:
                 is_selected = st.session_state.get("onboarding_level") == lvl["code"]
-                border_color = "#6366f1" if is_selected else "#e2e8f0"
+                border_color = "#007AFF" if is_selected else "#E5E5EA"
                 bg_color = "#eef2ff" if is_selected else "#ffffff"
 
                 st.markdown(f"""
@@ -293,14 +293,14 @@ def render_onboarding():
                     <div style="display: flex; align-items: flex-start; gap: 12px;">
                         <div style="font-size: 24px;">{lvl['icon']}</div>
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #0f172a; margin-bottom: 2px;">
+                            <div style="font-weight: 600; color: #000000; margin-bottom: 2px;">
                                 {lvl['code']} - {lvl['name']}
                             </div>
-                            <div style="font-size: 13px; color: #64748b; line-height: 1.4;">
+                            <div style="font-size: 13px; color: #8E8E93; line-height: 1.4;">
                                 {lvl['desc']}
                             </div>
                         </div>
-                        {'<div style="color: #6366f1; font-size: 20px;">✓</div>' if is_selected else ''}
+                        {'<div style="color: #007AFF; font-size: 20px;">✓</div>' if is_selected else ''}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -330,7 +330,7 @@ def render_onboarding():
             <div style="text-align: center; margin-bottom: 20px;">
                 <div style="font-size: 32px; margin-bottom: 8px;">🎯</div>
                 <h3 style="margin-bottom: 4px;">What's your main goal?</h3>
-                <p style="color: #64748b; font-size: 14px;">We'll prioritize content that matches your objectives</p>
+                <p style="color: #8E8E93; font-size: 14px;">We'll prioritize content that matches your objectives</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -346,7 +346,7 @@ def render_onboarding():
 
             for goal in goals:
                 is_selected = st.session_state.get("onboarding_goal") == goal["label"]
-                border_color = "#6366f1" if is_selected else "#e2e8f0"
+                border_color = "#007AFF" if is_selected else "#E5E5EA"
                 bg_color = "#eef2ff" if is_selected else "#ffffff"
 
                 st.markdown(f"""
@@ -355,10 +355,10 @@ def render_onboarding():
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div style="font-size: 24px;">{goal['icon']}</div>
                         <div style="flex: 1;">
-                            <div style="font-weight: 500; color: #0f172a;">{goal['label']}</div>
-                            <div style="font-size: 12px; color: #64748b;">{goal['desc']}</div>
+                            <div style="font-weight: 500; color: #000000;">{goal['label']}</div>
+                            <div style="font-size: 12px; color: #8E8E93;">{goal['desc']}</div>
                         </div>
-                        {'<div style="color: #6366f1; font-size: 18px;">✓</div>' if is_selected else ''}
+                        {'<div style="color: #007AFF; font-size: 18px;">✓</div>' if is_selected else ''}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -388,7 +388,7 @@ def render_onboarding():
             <div style="text-align: center; margin-bottom: 20px;">
                 <div style="font-size: 32px; margin-bottom: 8px;">🌎</div>
                 <h3 style="margin-bottom: 4px;">Which Spanish dialect do you prefer?</h3>
-                <p style="color: #64748b; font-size: 14px;">We'll adapt vocabulary and expressions to your preference</p>
+                <p style="color: #8E8E93; font-size: 14px;">We'll adapt vocabulary and expressions to your preference</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -407,7 +407,7 @@ def render_onboarding():
             cols = st.columns(2)
             for i, dialect in enumerate(dialects):
                 is_selected = st.session_state.get("onboarding_dialect") == dialect["code"]
-                border_color = "#6366f1" if is_selected else "#e2e8f0"
+                border_color = "#007AFF" if is_selected else "#E5E5EA"
                 bg_color = "#eef2ff" if is_selected else "#ffffff"
 
                 with cols[i % 2]:
@@ -415,8 +415,8 @@ def render_onboarding():
                     <div style="border: 2px solid {border_color}; border-radius: 12px; padding: 12px;
                                 margin-bottom: 10px; background: {bg_color}; text-align: center;">
                         <div style="font-size: 28px; margin-bottom: 4px;">{dialect['icon']}</div>
-                        <div style="font-weight: 600; color: #0f172a;">{dialect['name']}</div>
-                        <div style="font-size: 11px; color: #64748b;">{dialect['desc']}</div>
+                        <div style="font-weight: 600; color: #000000;">{dialect['name']}</div>
+                        <div style="font-size: 11px; color: #8E8E93;">{dialect['desc']}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
@@ -445,7 +445,7 @@ def render_onboarding():
             <div style="text-align: center; margin-bottom: 20px;">
                 <div style="font-size: 32px; margin-bottom: 8px;">📅</div>
                 <h3 style="margin-bottom: 4px;">How often do you want to practice?</h3>
-                <p style="color: #64748b; font-size: 14px;">Set a realistic weekly goal to build consistency</p>
+                <p style="color: #8E8E93; font-size: 14px;">Set a realistic weekly goal to build consistency</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -462,7 +462,7 @@ def render_onboarding():
 
             for opt in weekly_options:
                 is_selected = st.session_state.get("onboarding_weekly_goal") == opt["days"]
-                border_color = "#6366f1" if is_selected else "#e2e8f0"
+                border_color = "#007AFF" if is_selected else "#E5E5EA"
                 bg_color = "#eef2ff" if is_selected else "#ffffff"
 
                 st.markdown(f"""
@@ -471,12 +471,12 @@ def render_onboarding():
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div style="font-size: 24px;">{opt['icon']}</div>
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #0f172a;">
-                                {opt['label']} <span style="color: #6366f1;">({opt['days']} days)</span>
+                            <div style="font-weight: 600; color: #000000;">
+                                {opt['label']} <span style="color: #007AFF;">({opt['days']} days)</span>
                             </div>
-                            <div style="font-size: 12px; color: #64748b;">{opt['desc']}</div>
+                            <div style="font-size: 12px; color: #8E8E93;">{opt['desc']}</div>
                         </div>
-                        {'<div style="color: #6366f1; font-size: 18px;">✓</div>' if is_selected else ''}
+                        {'<div style="color: #007AFF; font-size: 18px;">✓</div>' if is_selected else ''}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -506,7 +506,7 @@ def render_onboarding():
             <div style="text-align: center; margin-bottom: 20px;">
                 <div style="font-size: 32px; margin-bottom: 8px;">🎨</div>
                 <h3 style="margin-bottom: 4px;">What do you want to focus on?</h3>
-                <p style="color: #64748b; font-size: 14px;">Select all areas you'd like to improve (at least one)</p>
+                <p style="color: #8E8E93; font-size: 14px;">Select all areas you'd like to improve (at least one)</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -525,7 +525,7 @@ def render_onboarding():
             cols = st.columns(2)
             for i, focus in enumerate(focus_options):
                 is_selected = focus["id"] in selected_areas
-                border_color = "#6366f1" if is_selected else "#e2e8f0"
+                border_color = "#007AFF" if is_selected else "#E5E5EA"
                 bg_color = "#eef2ff" if is_selected else "#ffffff"
 
                 with cols[i % 2]:
@@ -533,8 +533,8 @@ def render_onboarding():
                     <div style="border: 2px solid {border_color}; border-radius: 12px; padding: 16px;
                                 margin-bottom: 12px; background: {bg_color}; text-align: center;">
                         <div style="font-size: 32px; margin-bottom: 8px;">{focus['icon']}</div>
-                        <div style="font-weight: 600; color: #0f172a; margin-bottom: 4px;">{focus['label']}</div>
-                        <div style="font-size: 11px; color: #64748b; line-height: 1.3;">{focus['desc']}</div>
+                        <div style="font-weight: 600; color: #000000; margin-bottom: 4px;">{focus['label']}</div>
+                        <div style="font-size: 11px; color: #8E8E93; line-height: 1.3;">{focus['desc']}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
@@ -551,7 +551,7 @@ def render_onboarding():
 
             # Show selected count
             st.markdown(f"""
-            <div style="text-align: center; margin: 16px 0; color: #64748b; font-size: 13px;">
+            <div style="text-align: center; margin: 16px 0; color: #8E8E93; font-size: 13px;">
                 {len(selected_areas)} area{'s' if len(selected_areas) != 1 else ''} selected
             </div>
             """, unsafe_allow_html=True)
@@ -725,7 +725,7 @@ def render_home_page():
                 <div class="card" style="text-align: center; padding: 20px;">
                     <div style="font-size: 28px; margin-bottom: 8px;">{rec['icon']}</div>
                     <div style="font-weight: 600; margin-bottom: 4px;">{rec['title']}</div>
-                    <div style="font-size: 13px; color: #64748b;">{rec['desc']}</div>
+                    <div style="font-size: 13px; color: #8E8E93;">{rec['desc']}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 if st.button("Start", key=f"rec_{i}", use_container_width=True):
@@ -755,10 +755,10 @@ def render_home_page():
         <div class="stat-card" style="margin-bottom: 12px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                 <span style="font-weight: 500;">Weekly Goal</span>
-                <span style="color: #64748b;">{sessions_this_week}/{weekly_goal}</span>
+                <span style="color: #8E8E93;">{sessions_this_week}/{weekly_goal}</span>
             </div>
-            <div style="background: #f1f5f9; height: 8px; border-radius: 4px; overflow: hidden;">
-                <div style="background: #6366f1; height: 100%; width: {progress_pct * 100}%; border-radius: 4px;"></div>
+            <div style="background: #F2F2F7; height: 8px; border-radius: 4px; overflow: hidden;">
+                <div style="background: #007AFF; height: 100%; width: {progress_pct * 100}%; border-radius: 4px;"></div>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -786,7 +786,7 @@ def render_home_page():
             weak_areas = ["Start practicing to see your focus areas"]
         for area in weak_areas[:3]:
             st.markdown(f"""
-            <div style="padding: 8px 12px; background: #f8fafc; border-radius: 6px;
+            <div style="padding: 8px 12px; background: #F2F2F7; border-radius: 6px;
                         margin-bottom: 8px; font-size: 13px; border-left: 3px solid #f59e0b;">
                 {area}
             </div>
@@ -809,7 +809,7 @@ def render_learn_page():
         <div class="card">
             <div style="font-size: 32px; margin-bottom: 12px;">📚</div>
             <h3>Vocabulary</h3>
-            <p style="color: #64748b;">Learn new words in context with the Topic Diversity Engine</p>
+            <p style="color: #8E8E93;">Learn new words in context with the Topic Diversity Engine</p>
         </div>
         """, unsafe_allow_html=True)
         if st.button("Start Vocabulary", type="primary", use_container_width=True, key="learn_vocab"):
@@ -822,7 +822,7 @@ def render_learn_page():
         <div class="card">
             <div style="font-size: 32px; margin-bottom: 12px;">🔤</div>
             <h3>Verb Mastery</h3>
-            <p style="color: #64748b;">Master verb nuances, tenses, and near-synonyms</p>
+            <p style="color: #8E8E93;">Master verb nuances, tenses, and near-synonyms</p>
         </div>
         """, unsafe_allow_html=True)
         if st.button("Start Verbs", type="primary", use_container_width=True, key="learn_verbs"):
@@ -835,7 +835,7 @@ def render_learn_page():
         <div class="card">
             <div style="font-size: 32px; margin-bottom: 12px;">🧩</div>
             <h3>Context Units</h3>
-            <p style="color: #64748b;">Practice chunked phrases and contextual grammar patterns</p>
+            <p style="color: #8E8E93;">Practice chunked phrases and contextual grammar patterns</p>
         </div>
         """, unsafe_allow_html=True)
         if st.button("Start Context Units", type="primary", use_container_width=True, key="learn_context_units"):
@@ -868,7 +868,7 @@ def render_practice_page():
             <div class="card">
                 <div style="font-size: 28px; margin-bottom: 8px;">{mode['icon']}</div>
                 <h4>{mode['title']}</h4>
-                <p style="color: #64748b; font-size: 14px;">{mode['desc']}</p>
+                <p style="color: #8E8E93; font-size: 14px;">{mode['desc']}</p>
             </div>
             """, unsafe_allow_html=True)
             if st.button(f"Start {mode['title']}", key=f"practice_{i}", use_container_width=True):
@@ -1000,18 +1000,18 @@ def render_progress_page():
     with report_col1:
         st.markdown("""
         <div class="card" style="padding: 20px;">
-            <h4 style="margin-bottom: 16px; color: #0f172a;">This Week's Activity</h4>
+            <h4 style="margin-bottom: 16px; color: #000000;">This Week's Activity</h4>
         """, unsafe_allow_html=True)
 
         # Weekly goal progress bar
         st.markdown(f"""
             <div style="margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                    <span style="font-weight: 500; color: #334155;">Weekly Goal</span>
-                    <span style="color: #64748b;">{sessions_this_week}/{weekly_goal} days</span>
+                    <span style="font-weight: 500; color: #3C3C43;">Weekly Goal</span>
+                    <span style="color: #8E8E93;">{sessions_this_week}/{weekly_goal} days</span>
                 </div>
-                <div style="background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden;">
-                    <div style="background: linear-gradient(90deg, #6366f1, #8b5cf6); height: 100%;
+                <div style="background: #E5E5EA; height: 10px; border-radius: 5px; overflow: hidden;">
+                    <div style="background: linear-gradient(90deg, #007AFF, #8b5cf6); height: 100%;
                                 width: {goal_progress}%; border-radius: 5px; transition: width 0.3s;"></div>
                 </div>
             </div>
@@ -1020,21 +1020,21 @@ def render_progress_page():
         # Weekly stats grid
         st.markdown(f"""
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: 700; color: #6366f1;">{weekly_vocab_reviewed}</div>
-                    <div style="font-size: 12px; color: #64748b; text-transform: uppercase;">Items Reviewed</div>
+                <div style="background: #F2F2F7; padding: 12px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: #007AFF;">{weekly_vocab_reviewed}</div>
+                    <div style="font-size: 12px; color: #8E8E93; text-transform: uppercase;">Items Reviewed</div>
                 </div>
-                <div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="background: #F2F2F7; padding: 12px; border-radius: 8px; text-align: center;">
                     <div style="font-size: 24px; font-weight: 700; color: #10b981;">{new_words_this_week}</div>
-                    <div style="font-size: 12px; color: #64748b; text-transform: uppercase;">New Words</div>
+                    <div style="font-size: 12px; color: #8E8E93; text-transform: uppercase;">New Words</div>
                 </div>
-                <div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="background: #F2F2F7; padding: 12px; border-radius: 8px; text-align: center;">
                     <div style="font-size: 24px; font-weight: 700; color: #f59e0b;">{weekly_errors_fixed}</div>
-                    <div style="font-size: 12px; color: #64748b; text-transform: uppercase;">Errors Fixed</div>
+                    <div style="font-size: 12px; color: #8E8E93; text-transform: uppercase;">Errors Fixed</div>
                 </div>
-                <div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="background: #F2F2F7; padding: 12px; border-radius: 8px; text-align: center;">
                     <div style="font-size: 24px; font-weight: 700; color: #3b82f6;">{weekly_speaking:.0f}</div>
-                    <div style="font-size: 12px; color: #64748b; text-transform: uppercase;">Min Speaking</div>
+                    <div style="font-size: 12px; color: #8E8E93; text-transform: uppercase;">Min Speaking</div>
                 </div>
             </div>
         </div>
@@ -1044,7 +1044,7 @@ def render_progress_page():
         # Streak and motivation
         st.markdown(f"""
         <div class="card" style="padding: 20px;">
-            <h4 style="margin-bottom: 16px; color: #0f172a;">Streak & Motivation</h4>
+            <h4 style="margin-bottom: 16px; color: #000000;">Streak & Motivation</h4>
             <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, #fef3c7, #fde68a);
                         border-radius: 12px; margin-bottom: 16px;">
                 <div style="font-size: 48px;">🔥</div>
@@ -1111,9 +1111,9 @@ def render_progress_page():
     for i, (day_name, data) in enumerate(activity_by_day.items()):
         with day_cols[i]:
             is_today = i == 6
-            bg_color = "#10b981" if data['active'] else ("#e2e8f0" if not is_today else "#fef3c7")
-            text_color = "#ffffff" if data['active'] else ("#64748b" if not is_today else "#b45309")
-            border = "2px solid #6366f1" if is_today else "none"
+            bg_color = "#10b981" if data['active'] else ("#E5E5EA" if not is_today else "#fef3c7")
+            text_color = "#ffffff" if data['active'] else ("#8E8E93" if not is_today else "#b45309")
+            border = "2px solid #007AFF" if is_today else "none"
 
             st.markdown(f"""
             <div style="text-align: center;">
@@ -1124,7 +1124,7 @@ def render_progress_page():
                         {"✓" if data['active'] else (day_name[0] if not is_today else "?")}
                     </span>
                 </div>
-                <div style="font-size: 12px; color: #64748b;">{day_name}</div>
+                <div style="font-size: 12px; color: #8E8E93;">{day_name}</div>
                 {f'<div style="font-size: 11px; color: #10b981;">{data["items"]} items</div>' if data['active'] else ''}
             </div>
             """, unsafe_allow_html=True)
@@ -1165,20 +1165,20 @@ def render_progress_page():
                 st.markdown(f"""
                 <div style="margin-bottom: 12px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span style="font-size: 13px; color: #64748b;">{week_display}</span>
-                        <span style="font-size: 13px; font-weight: 500; color: #0f172a;">+{vocab_by_week[week]} words</span>
+                        <span style="font-size: 13px; color: #8E8E93;">{week_display}</span>
+                        <span style="font-size: 13px; font-weight: 500; color: #000000;">+{vocab_by_week[week]} words</span>
                     </div>
-                    <div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
-                        <div style="background: linear-gradient(90deg, #6366f1, #8b5cf6); height: 100%;
+                    <div style="background: #E5E5EA; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div style="background: linear-gradient(90deg, #007AFF, #8b5cf6); height: 100%;
                                     width: {bar_width}%; border-radius: 4px;"></div>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
 
             st.markdown(f"""
-                <div style="text-align: center; padding-top: 12px; border-top: 1px solid #e2e8f0;">
-                    <span style="font-size: 24px; font-weight: 700; color: #6366f1;">{total_vocab_count}</span>
-                    <span style="color: #64748b;"> total words</span>
+                <div style="text-align: center; padding-top: 12px; border-top: 1px solid #E5E5EA;">
+                    <span style="font-size: 24px; font-weight: 700; color: #007AFF;">{total_vocab_count}</span>
+                    <span style="color: #8E8E93;"> total words</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -1214,13 +1214,13 @@ def render_progress_page():
                 st.markdown(f"""
                 <div style="margin-bottom: 14px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span style="font-size: 13px; color: #0f172a;">{error_type.replace('_', ' ').title()}</span>
+                        <span style="font-size: 13px; color: #000000;">{error_type.replace('_', ' ').title()}</span>
                         <span style="font-size: 11px; color: {bar_color}; font-weight: 500;">{status}</span>
                     </div>
-                    <div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
+                    <div style="background: #E5E5EA; height: 8px; border-radius: 4px; overflow: hidden;">
                         <div style="background: {bar_color}; height: 100%; width: {bar_width}%; border-radius: 4px;"></div>
                     </div>
-                    <div style="font-size: 11px; color: #64748b; margin-top: 2px;">{count} occurrences</div>
+                    <div style="font-size: 11px; color: #8E8E93; margin-top: 2px;">{count} occurrences</div>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -1281,10 +1281,10 @@ def render_progress_page():
                     st.markdown(f"""
                     <div class="stat-card" style="text-align: center; padding: 16px;">
                         <div style="font-size: 24px; margin-bottom: 8px;">{icon}</div>
-                        <div style="font-size: 20px; font-weight: 700; color: #0f172a;">{minutes:.0f}</div>
-                        <div style="font-size: 12px; color: #64748b;">minutes</div>
-                        <div style="font-size: 11px; color: #6366f1; margin-top: 4px;">{pct:.0f}%</div>
-                        <div style="font-size: 12px; color: #334155; margin-top: 4px;">{name}</div>
+                        <div style="font-size: 20px; font-weight: 700; color: #000000;">{minutes:.0f}</div>
+                        <div style="font-size: 12px; color: #8E8E93;">minutes</div>
+                        <div style="font-size: 11px; color: #007AFF; margin-top: 4px;">{pct:.0f}%</div>
+                        <div style="font-size: 12px; color: #3C3C43; margin-top: 4px;">{name}</div>
                     </div>
                     """, unsafe_allow_html=True)
     else:
@@ -1328,7 +1328,7 @@ def render_progress_page():
     with milestone_col1:
         st.markdown("""
         <div class="card" style="padding: 16px;">
-            <h4 style="margin-bottom: 12px; color: #0f172a;">📚 Vocabulary</h4>
+            <h4 style="margin-bottom: 12px; color: #000000;">📚 Vocabulary</h4>
         """, unsafe_allow_html=True)
 
         for threshold, name, emoji in vocab_milestones:
@@ -1338,11 +1338,11 @@ def render_progress_page():
 
             st.markdown(f"""
             <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;
-                        opacity: {opacity}; border-bottom: 1px solid #f1f5f9;">
+                        opacity: {opacity}; border-bottom: 1px solid #F2F2F7;">
                 <span style="font-size: 20px;">{emoji}</span>
                 <div style="flex: 1;">
-                    <div style="font-weight: 500; color: #0f172a;">{threshold} words</div>
-                    <div style="font-size: 12px; color: #64748b;">{name}</div>
+                    <div style="font-weight: 500; color: #000000;">{threshold} words</div>
+                    <div style="font-size: 12px; color: #8E8E93;">{name}</div>
                 </div>
                 <span style="color: #10b981; font-weight: 600;">{check}</span>
             </div>
@@ -1353,7 +1353,7 @@ def render_progress_page():
     with milestone_col2:
         st.markdown("""
         <div class="card" style="padding: 16px;">
-            <h4 style="margin-bottom: 12px; color: #0f172a;">🔥 Streak</h4>
+            <h4 style="margin-bottom: 12px; color: #000000;">🔥 Streak</h4>
         """, unsafe_allow_html=True)
 
         for threshold, name, emoji in streak_milestones:
@@ -1363,11 +1363,11 @@ def render_progress_page():
 
             st.markdown(f"""
             <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;
-                        opacity: {opacity}; border-bottom: 1px solid #f1f5f9;">
+                        opacity: {opacity}; border-bottom: 1px solid #F2F2F7;">
                 <span style="font-size: 20px;">{emoji}</span>
                 <div style="flex: 1;">
-                    <div style="font-weight: 500; color: #0f172a;">{threshold} days</div>
-                    <div style="font-size: 12px; color: #64748b;">{name}</div>
+                    <div style="font-weight: 500; color: #000000;">{threshold} days</div>
+                    <div style="font-size: 12px; color: #8E8E93;">{name}</div>
                 </div>
                 <span style="color: #10b981; font-weight: 600;">{check}</span>
             </div>
@@ -1378,7 +1378,7 @@ def render_progress_page():
     with milestone_col3:
         st.markdown("""
         <div class="card" style="padding: 16px;">
-            <h4 style="margin-bottom: 12px; color: #0f172a;">🎯 Errors Fixed</h4>
+            <h4 style="margin-bottom: 12px; color: #000000;">🎯 Errors Fixed</h4>
         """, unsafe_allow_html=True)
 
         for threshold, name, emoji in error_milestones:
@@ -1388,11 +1388,11 @@ def render_progress_page():
 
             st.markdown(f"""
             <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;
-                        opacity: {opacity}; border-bottom: 1px solid #f1f5f9;">
+                        opacity: {opacity}; border-bottom: 1px solid #F2F2F7;">
                 <span style="font-size: 20px;">{emoji}</span>
                 <div style="flex: 1;">
-                    <div style="font-weight: 500; color: #0f172a;">{threshold} errors</div>
-                    <div style="font-size: 12px; color: #64748b;">{name}</div>
+                    <div style="font-weight: 500; color: #000000;">{threshold} errors</div>
+                    <div style="font-size: 12px; color: #8E8E93;">{name}</div>
                 </div>
                 <span style="color: #10b981; font-weight: 600;">{check}</span>
             </div>
@@ -1416,12 +1416,12 @@ def render_progress_page():
 
                 st.markdown(f"""
                 <div style="display: flex; align-items: center; gap: 12px; padding: 12px;
-                            background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid {color};
+                            background: #ffffff; border: 1px solid #E5E5EA; border-left: 4px solid {color};
                             border-radius: 8px; margin-bottom: 8px;">
                     <div style="font-size: 18px; width: 28px; height: 28px; background: {color}20;
                                 border-radius: 50%; display: flex; align-items: center; justify-content: center;
                                 color: {color}; font-weight: 600;">{i+1}</div>
-                    <div style="color: #0f172a; font-weight: 500;">{area}</div>
+                    <div style="color: #000000; font-weight: 500;">{area}</div>
                 </div>
                 """, unsafe_allow_html=True)
         else:
@@ -1466,20 +1466,20 @@ def render_progress_page():
                     """, unsafe_allow_html=True)
             else:
                 st.markdown("""
-                <div style="text-align: center; padding: 24px; background: #f8fafc; border-radius: 12px;
-                            border: 1px solid #e2e8f0;">
+                <div style="text-align: center; padding: 24px; background: #F2F2F7; border-radius: 12px;
+                            border: 1px solid #E5E5EA;">
                     <div style="font-size: 32px; margin-bottom: 8px;">💪</div>
-                    <div style="color: #334155; font-weight: 500;">Keep practicing!</div>
-                    <div style="color: #64748b; font-size: 14px;">Your strengths will appear as you improve.</div>
+                    <div style="color: #3C3C43; font-weight: 500;">Keep practicing!</div>
+                    <div style="color: #8E8E93; font-size: 14px;">Your strengths will appear as you improve.</div>
                 </div>
                 """, unsafe_allow_html=True)
         else:
             st.markdown("""
-            <div style="text-align: center; padding: 24px; background: #f8fafc; border-radius: 12px;
-                        border: 1px solid #e2e8f0;">
+            <div style="text-align: center; padding: 24px; background: #F2F2F7; border-radius: 12px;
+                        border: 1px solid #E5E5EA;">
                 <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
-                <div style="color: #334155; font-weight: 500;">Analysis in progress</div>
-                <div style="color: #64748b; font-size: 14px;">Complete more exercises to see your strengths.</div>
+                <div style="color: #3C3C43; font-weight: 500;">Analysis in progress</div>
+                <div style="color: #8E8E93; font-size: 14px;">Complete more exercises to see your strengths.</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -1496,8 +1496,8 @@ def render_progress_page():
         st.markdown("""
         <div class="card" style="text-align: center; padding: 20px;">
             <div style="font-size: 32px; margin-bottom: 8px;">📋</div>
-            <div style="font-weight: 600; color: #0f172a;">My Spanish Portfolio</div>
-            <div style="font-size: 13px; color: #64748b; margin-bottom: 12px;">View your complete learning record</div>
+            <div style="font-weight: 600; color: #000000;">My Spanish Portfolio</div>
+            <div style="font-size: 13px; color: #8E8E93; margin-bottom: 12px;">View your complete learning record</div>
         </div>
         """, unsafe_allow_html=True)
         if st.button("View Portfolio", use_container_width=True, key="prog_portfolio"):
@@ -1508,8 +1508,8 @@ def render_progress_page():
         st.markdown("""
         <div class="card" style="text-align: center; padding: 20px;">
             <div style="font-size: 32px; margin-bottom: 8px;">🔍</div>
-            <div style="font-weight: 600; color: #0f172a;">Error Analysis</div>
-            <div style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Deep dive into your error patterns</div>
+            <div style="font-weight: 600; color: #000000;">Error Analysis</div>
+            <div style="font-size: 13px; color: #8E8E93; margin-bottom: 12px;">Deep dive into your error patterns</div>
         </div>
         """, unsafe_allow_html=True)
         if st.button("View Errors", use_container_width=True, key="prog_errors"):
@@ -1520,8 +1520,8 @@ def render_progress_page():
         st.markdown("""
         <div class="card" style="text-align: center; padding: 20px;">
             <div style="font-size: 32px; margin-bottom: 8px;">🔄</div>
-            <div style="font-weight: 600; color: #0f172a;">Start Review</div>
-            <div style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Review items due today</div>
+            <div style="font-weight: 600; color: #000000;">Start Review</div>
+            <div style="font-size: 13px; color: #8E8E93; margin-bottom: 12px;">Review items due today</div>
         </div>
         """, unsafe_allow_html=True)
         if st.button("Start Review", type="primary", use_container_width=True, key="prog_review"):

@@ -181,7 +181,7 @@ MNEMONICS = {
 REGISTER_DESCRIPTIONS = {
     "formal": {
         "label": "Formal",
-        "color": "#6366f1",
+        "color": "#007AFF",
         "icon": "suit",
         "description": "Used in professional, academic, or official contexts. Uses 'usted' form.",
         "examples": ["business meetings", "official documents", "academic writing"]
@@ -380,10 +380,10 @@ def _render_domain_sidebar(exposures: dict):
         st.markdown(f"""
         <div style="margin-bottom: 8px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 500; color: #0f172a;">{name}</span>
+                <span style="font-weight: 500; color: #000000;">{name}</span>
                 <span style="font-size: 0.75rem; color: {color};">{status}</span>
             </div>
-            <div style="font-size: 0.7rem; color: #64748b;">
+            <div style="font-size: 0.7rem; color: #8E8E93;">
                 {mastered}/{total_items} mastered | {exp} exposures
             </div>
         </div>
@@ -411,11 +411,11 @@ def _render_domain_vocabulary_enhanced(domain_data: dict, exposures: dict, is_st
     <div style="background: linear-gradient(135deg, {badge_color}15, {badge_color}05);
                 border-left: 4px solid {badge_color}; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; color: #0f172a;">{domain_name}</h3>
+            <h3 style="margin: 0; color: #000000;">{domain_name}</h3>
             <span style="background: {badge_color}; color: white; padding: 4px 12px;
                          border-radius: 20px; font-size: 0.75rem;">{badge_text}</span>
         </div>
-        <p style="margin: 8px 0 0 0; color: #475569; font-style: italic;">"{sample}"</p>
+        <p style="margin: 8px 0 0 0; color: #8E8E93; font-style: italic;">"{sample}"</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -471,7 +471,7 @@ def _render_vocabulary_card(item: dict, domain_name: str, index: int, exposures:
                          padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;">
                 {register_info['label']}
             </span>
-            <span style="color: #64748b; font-size: 0.75rem; margin-left: 8px;">
+            <span style="color: #8E8E93; font-size: 0.75rem; margin-left: 8px;">
                 {register_info['description']}
             </span>
             """, unsafe_allow_html=True)
@@ -1079,7 +1079,7 @@ def _render_progress_tab(exposures: dict):
                 <div style="text-align: center; padding: 16px; background: {status_color}15;
                             border-radius: 8px; border: 1px solid {status_color}40;">
                     <div style="font-size: 2rem; font-weight: bold; color: {status_color};">{health:.0f}%</div>
-                    <div style="font-size: 0.8rem; color: #64748b;">Domain Health</div>
+                    <div style="font-size: 0.8rem; color: #8E8E93;">Domain Health</div>
                 </div>
                 """, unsafe_allow_html=True)
 

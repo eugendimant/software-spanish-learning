@@ -214,7 +214,7 @@ def render_vocab_exercise(card: dict):
     # Show the term
     st.markdown(f"""
     <div class="card" style="text-align: center; padding: 2rem;">
-        <div style="font-size: 2rem; font-weight: 600; color: #0f172a; margin-bottom: 1rem;">
+        <div style="font-size: 2rem; font-weight: 600; color: #000000; margin-bottom: 1rem;">
             {card['term']}
         </div>
     </div>
@@ -229,10 +229,10 @@ def render_vocab_exercise(card: dict):
         # Show the answer
         st.markdown(f"""
         <div class="card-muted" style="text-align: center;">
-            <div style="font-size: 1.25rem; font-weight: 500; color: #0f172a; margin-bottom: 0.5rem;">
+            <div style="font-size: 1.25rem; font-weight: 500; color: #000000; margin-bottom: 0.5rem;">
                 {card['meaning']}
             </div>
-            <div style="color: #64748b; font-style: italic;">
+            <div style="color: #8E8E93; font-style: italic;">
                 {card.get('example', '')}
             </div>
         </div>
@@ -437,10 +437,10 @@ def render_review_complete():
     st.markdown(f"""
     <div class="card" style="text-align: center; padding: 2rem; background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3);">
         <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
-        <div style="font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
+        <div style="font-size: 1.5rem; font-weight: 700; color: #000000; margin-bottom: 0.5rem;">
             Session Complete!
         </div>
-        <div style="color: #475569;">
+        <div style="color: #8E8E93;">
             You reviewed {total} items
         </div>
     </div>
