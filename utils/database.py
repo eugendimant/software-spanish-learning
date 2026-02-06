@@ -340,15 +340,30 @@ def get_all_profiles() -> list:
         return []
 
 
-def create_profile(name: str, level: str = "C1") -> Optional[int]:
-    """Create a new profile and return its ID."""
+def create_profile(name: str, level: str = "C1", dialect_preference: str = "Spain",
+                   weekly_goal: int = 5, focus_areas: list = None) -> Optional[int]:
+    """Create a new profile and return its ID.
+
+    Args:
+        name: User's display name
+        level: Spanish proficiency level (B2, C1, C2)
+        dialect_preference: Preferred Spanish dialect (Spain, Mexico, Argentina, Colombia, Chile)
+        weekly_goal: Target practice sessions per week (3-7)
+        focus_areas: List of focus areas (Grammar, Vocabulary, Conversation, Writing)
+
+    Returns:
+        Profile ID if created successfully, None otherwise
+    """
     profile_id = None
+    focus_areas_json = json.dumps(focus_areas) if focus_areas else json.dumps([])
     try:
         with get_connection() as conn:
             cursor = conn.execute("""
-                INSERT INTO profiles (name, level, is_active, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?)
-            """, (name, level, 0, datetime.now().isoformat(), datetime.now().isoformat()))
+                INSERT INTO profiles (name, level, dialect_preference, weekly_goal, focus_areas,
+                                      is_active, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (name, level, dialect_preference, weekly_goal, focus_areas_json,
+                  0, datetime.now().isoformat(), datetime.now().isoformat()))
             conn.commit()
             profile_id = cursor.lastrowid
 
@@ -1637,3 +1652,263 @@ def get_issue_reports(status: str = None) -> list:
             return [dict(row) for row in rows]
     except Exception:
         return []
+
+
+# ============== Analytics Operations ==============
+
+def get_sessions_this_week() -> int:
+    """Count unique days with activity in the last 7 days for the active profile.
+
+    Returns:
+        Number of unique days with recorded activity (0-7).
+    """
+    profile_id = get_active_profile_id()
+    try:
+        week_ago = (date.today() - timedelta(days=7)).isoformat()
+        with get_connection() as conn:
+            row = conn.execute("""
+                SELECT COUNT(DISTINCT DATE(created_at)) as active_days
+                FROM activity_log
+                WHERE profile_id = ? AND DATE(created_at) >= ?
+            """, (profile_id, week_ago)).fetchone()
+            return row["active_days"] if row and row["active_days"] else 0
+    except Exception as e:
+        logger.warning(f"Failed to get sessions this week: {e}")
+        return 0
+
+
+def get_weak_areas() -> list:
+    """Analyze mistakes and errors to identify the top 3 weakness areas.
+
+    Returns:
+        List of up to 3 human-readable weakness area strings
+        (e.g., ["Subjunctive mood", "Ser vs Estar", "Gender agreement"]).
+    """
+    profile_id = get_active_profile_id()
+
+    # Mapping of error types to human-readable names
+    error_type_labels = {
+        "verb_tense": "Verb tenses",
+        "preterito_imperfecto": "Preterite vs Imperfect",
+        "subjunctive": "Subjunctive mood",
+        "subjunctive_triggers": "Subjunctive triggers",
+        "conditional": "Conditional mood",
+        "ser_estar": "Ser vs Estar",
+        "preposition": "Prepositions",
+        "prepositions": "Prepositions",
+        "por_para": "Por vs Para",
+        "pronoun": "Pronouns",
+        "pronouns": "Pronouns",
+        "clitic": "Clitic placement",
+        "agreement": "Agreement",
+        "gender": "Gender agreement",
+        "gender_noun": "Gender agreement",
+        "gender_adjective": "Adjective agreement",
+        "number": "Number agreement",
+        "vocabulary": "Vocabulary",
+        "false_friends": "False cognates",
+        "word_order": "Word order",
+        "spelling": "Spelling",
+        "accent": "Accent marks",
+        "punctuation": "Punctuation",
+        "article": "Articles",
+        "conjugation": "Verb conjugation",
+    }
+
+    try:
+        with get_connection() as conn:
+            # First try error_fingerprints table for detailed tracking
+            rows = conn.execute("""
+                SELECT category, subcategory, error_count
+                FROM error_fingerprints
+                WHERE profile_id = ? AND error_count > 0
+                ORDER BY error_count DESC, priority_score DESC
+                LIMIT 3
+            """, (profile_id,)).fetchall()
+
+            if rows:
+                result = []
+                for row in rows:
+                    # Use subcategory label if available, otherwise category
+                    label = error_type_labels.get(
+                        row["subcategory"],
+                        error_type_labels.get(row["category"], row["category"].replace("_", " ").title())
+                    )
+                    result.append(label)
+                return result
+
+            # Fallback to mistakes table
+            rows = conn.execute("""
+                SELECT error_type, COUNT(*) as count
+                FROM mistakes
+                WHERE profile_id = ?
+                GROUP BY error_type
+                ORDER BY count DESC
+                LIMIT 3
+            """, (profile_id,)).fetchall()
+
+            result = []
+            for row in rows:
+                error_type = row["error_type"] or "unknown"
+                label = error_type_labels.get(
+                    error_type.lower(),
+                    error_type.replace("_", " ").title()
+                )
+                result.append(label)
+            return result
+    except Exception as e:
+        logger.warning(f"Failed to get weak areas: {e}")
+        return []
+
+
+def get_learning_velocity() -> float:
+    """Calculate vocabulary items mastered per week for the active profile.
+
+    Returns:
+        Average number of vocab items mastered per week (float).
+        Returns 0.0 if no data available.
+    """
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            # Get mastered items with their mastery dates
+            rows = conn.execute("""
+                SELECT last_reviewed
+                FROM vocab_items
+                WHERE profile_id = ? AND status = 'mastered' AND last_reviewed IS NOT NULL
+            """, (profile_id,)).fetchall()
+
+            if not rows:
+                return 0.0
+
+            # Find date range
+            dates = [row["last_reviewed"][:10] for row in rows if row["last_reviewed"]]
+            if not dates:
+                return 0.0
+
+            dates.sort()
+            first_date = datetime.strptime(dates[0], "%Y-%m-%d").date()
+            last_date = date.today()
+
+            # Calculate weeks elapsed (minimum 1 to avoid division by zero)
+            days_elapsed = (last_date - first_date).days
+            weeks_elapsed = max(1, days_elapsed / 7)
+
+            # Items per week
+            return round(len(rows) / weeks_elapsed, 1)
+    except Exception as e:
+        logger.warning(f"Failed to calculate learning velocity: {e}")
+        return 0.0
+
+
+def get_review_performance() -> float:
+    """Get average quality score from recent reviews for the active profile.
+
+    Analyzes activity_log entries with scores and vocab/mistake reviews.
+
+    Returns:
+        Average quality score as a percentage (0-100).
+        Returns 0.0 if no review data available.
+    """
+    profile_id = get_active_profile_id()
+    try:
+        thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
+        with get_connection() as conn:
+            # Get average score from activity_log for review-type activities
+            row = conn.execute("""
+                SELECT AVG(score) as avg_score, COUNT(*) as count
+                FROM activity_log
+                WHERE profile_id = ?
+                    AND score IS NOT NULL
+                    AND DATE(created_at) >= ?
+                    AND activity_type IN ('vocab_review', 'mistake_review', 'grammar_review', 'review', 'flashcard')
+            """, (profile_id, thirty_days_ago)).fetchone()
+
+            if row and row["avg_score"] is not None and row["count"] > 0:
+                # Assuming scores are 0-5 scale (SM-2), convert to percentage
+                avg = row["avg_score"]
+                if avg <= 5:
+                    return round((avg / 5) * 100, 1)
+                return round(min(avg, 100), 1)
+
+            # Fallback: calculate from vocab items ease_factor
+            # Higher ease_factor = better performance
+            row = conn.execute("""
+                SELECT AVG(ease_factor) as avg_ease, COUNT(*) as count
+                FROM vocab_items
+                WHERE profile_id = ?
+                    AND status IN ('learning', 'mastered')
+                    AND exposure_count > 0
+            """, (profile_id,)).fetchone()
+
+            if row and row["avg_ease"] is not None and row["count"] > 0:
+                # Ease factor ranges from 1.3 to ~3.0, normalize to percentage
+                # 1.3 = poor (0%), 2.5 = good (75%), 3.0+ = excellent (100%)
+                ease = row["avg_ease"]
+                normalized = min(100, max(0, (ease - 1.3) / (3.0 - 1.3) * 100))
+                return round(normalized, 1)
+
+            return 0.0
+    except Exception as e:
+        logger.warning(f"Failed to get review performance: {e}")
+        return 0.0
+
+
+def get_daily_activity_summary() -> dict:
+    """Get today's activity statistics for the active profile.
+
+    Returns:
+        Dict with keys:
+        - items_reviewed: int (vocab + grammar items reviewed today)
+        - errors_fixed: int (mistakes addressed today)
+        - time_spent: int (total seconds spent on activities today)
+    """
+    profile_id = get_active_profile_id()
+    default_result = {"items_reviewed": 0, "errors_fixed": 0, "time_spent": 0}
+
+    try:
+        today = date.today().isoformat()
+        with get_connection() as conn:
+            # Get from progress_metrics for today
+            metrics_row = conn.execute("""
+                SELECT vocab_reviewed, grammar_reviewed, errors_fixed
+                FROM progress_metrics
+                WHERE profile_id = ? AND metric_date = ?
+            """, (profile_id, today)).fetchone()
+
+            items_reviewed = 0
+            errors_fixed = 0
+
+            if metrics_row:
+                items_reviewed = (metrics_row["vocab_reviewed"] or 0) + (metrics_row["grammar_reviewed"] or 0)
+                errors_fixed = metrics_row["errors_fixed"] or 0
+
+            # Get time spent from activity_log
+            time_row = conn.execute("""
+                SELECT COALESCE(SUM(duration_seconds), 0) as total_time
+                FROM activity_log
+                WHERE profile_id = ? AND DATE(created_at) = ?
+            """, (profile_id, today)).fetchone()
+
+            time_spent = time_row["total_time"] if time_row else 0
+
+            # If no metrics, try counting from activity_log
+            if items_reviewed == 0:
+                count_row = conn.execute("""
+                    SELECT COUNT(*) as count
+                    FROM activity_log
+                    WHERE profile_id = ?
+                        AND DATE(created_at) = ?
+                        AND activity_type IN ('vocab_review', 'grammar_review', 'review', 'flashcard')
+                """, (profile_id, today)).fetchone()
+                if count_row:
+                    items_reviewed = count_row["count"] or 0
+
+            return {
+                "items_reviewed": items_reviewed,
+                "errors_fixed": errors_fixed,
+                "time_spent": time_spent
+            }
+    except Exception as e:
+        logger.warning(f"Failed to get daily activity summary: {e}")
+        return default_result
