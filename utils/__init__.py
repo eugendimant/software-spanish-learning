@@ -1,4 +1,4 @@
-"""Utils package for VivaLingo Pro."""
+"""Utils package for VivaLingo."""
 from utils.database import (
     init_db,
     get_connection,
@@ -35,16 +35,24 @@ from utils.database import (
 
 from utils.theme import (
     apply_theme,
+    get_css,
     render_hero,
+    render_html,
+    render_stat_card,
     render_metric_card,
     render_metric_grid,
-    render_progress_bar,
-    render_domain_coverage,
-    render_pill,
+    render_action_card,
+    render_streak_badge,
     render_feedback,
     render_card,
+    render_pill,
+    render_progress_bar,
     render_section_header,
     render_quick_actions,
+    render_domain_coverage,
+    render_empty_state,
+    render_loading_skeleton,
+    render_profile_card,
     COLORS,
 )
 
@@ -81,34 +89,3 @@ from utils.content import (
     DIALECT_MODULES,
     PLACEMENT_QUESTIONS,
 )
-
-__all__ = [
-    # Database
-    "init_db", "get_connection", "save_vocab_item", "get_vocab_items",
-    "get_vocab_for_review", "update_vocab_review", "save_mistake",
-    "get_mistakes_for_review", "get_mistake_stats", "update_mistake_review",
-    "record_domain_exposure", "get_domain_exposure", "get_underexposed_domains",
-    "save_grammar_pattern", "get_grammar_for_review", "save_daily_mission",
-    "get_today_mission", "update_mission_response", "save_conversation",
-    "record_progress", "get_progress_history", "get_total_stats",
-    "get_user_profile", "update_user_profile", "load_portfolio", "save_portfolio",
-    "export_vocab_json", "export_mistakes_json", "export_progress_json",
-    "get_active_vocab_count", "save_transcript",
-    # Theme
-    "apply_theme", "render_hero", "render_metric_card", "render_metric_grid",
-    "render_progress_bar", "render_domain_coverage", "render_pill",
-    "render_feedback", "render_card", "render_section_header",
-    "render_quick_actions", "COLORS",
-    # Helpers
-    "seed_for_week", "seed_for_day", "pick_domain_pair", "calculate_domain_coverage",
-    "check_text_for_mistakes", "generate_corrected_text", "highlight_diff",
-    "score_register_response", "analyze_constraints", "sentence_split",
-    "extract_candidate_phrases", "detect_domain", "calculate_srs_interval",
-    "get_review_priority", "format_time_ago", "generate_exercise_feedback",
-    "shuffle_with_seed", "get_streak_days",
-    # Content
-    "TOPIC_DIVERSITY_DOMAINS", "VERB_CHOICE_STUDIO", "GRAMMAR_MICRODRILLS",
-    "COMMON_MISTAKES", "VOCAB_CONTEXT_UNITS", "CONVERSATION_SCENARIOS",
-    "DAILY_MISSION_TEMPLATES", "REGISTER_MARKERS", "DIALECT_MODULES",
-    "PLACEMENT_QUESTIONS",
-]

@@ -3,10 +3,12 @@ VivaLingo - Spanish Learning Platform
 Clean, focused interface for C1-C2 learners.
 """
 import streamlit as st
+import random
+from datetime import date, datetime, timedelta
+from collections import defaultdict
 from textwrap import dedent
-from datetime import date
 
-# Initialize database and theme first
+# Database imports
 from utils.database import (
     init_db, get_user_profile, update_user_profile, get_total_stats,
     get_vocab_for_review, get_mistakes_for_review, get_grammar_for_review,
@@ -16,10 +18,13 @@ from utils.database import (
     get_activity_history, get_mistake_stats, get_fingerprint_summary,
     get_vocab_items, get_active_vocab_count
 )
+
+# Theme imports
 from utils.theme import (
     get_css, render_hero, render_section_header, render_stat_card,
     render_action_card, render_feedback, render_streak_badge,
-    render_empty_state, render_loading_skeleton, render_html
+    render_empty_state, render_loading_skeleton, render_html,
+    render_metric_grid, render_progress_bar
 )
 from utils.helpers import get_streak_days
 
@@ -66,7 +71,7 @@ def init_session_state():
         "active_profile_id": None,
         "show_onboarding": False,
         "onboarding_step": 0,
-        "last_session": None,  # For "Continue" feature
+        "last_session": None,
     }
 
     for key, value in defaults.items():
@@ -90,7 +95,6 @@ init_session_state()
 # NAVIGATION CONFIG
 # ============================================
 
-# Learner-facing navigation only
 NAV_ITEMS = [
     {"icon": "🏠", "label": "Home", "page": "Home"},
     {"icon": "📚", "label": "Learn", "page": "Learn"},
@@ -100,56 +104,50 @@ NAV_ITEMS = [
     {"icon": "⚙️", "label": "Settings", "page": "Settings"},
 ]
 
-# Sub-pages for Practice
-PRACTICE_PAGES = {
-    "Vocabulary": "Topic Diversity",
-    "Verbs": "Verb Studio",
-    "Conversation": "Conversation",
-    "Writing": "Writing Coach",
-}
-
-# Tools (accessible from Practice)
-TOOLS = {
-    "Dialect Guide": "Dialects",
-    "Memory Palace": "Memory Palace",
-    "Error Patterns": "Mistake Catcher",
-}
-
 
 # ============================================
 # SIDEBAR
 # ============================================
 
 def render_sidebar():
-    """Render clean, Duolingo-inspired sidebar."""
+    """Render clean sidebar navigation."""
     with st.sidebar:
         # App header
         render_html("""
-            <div style="padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 16px;">
-                <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">
-                    🇪🇸 VivaLingo
+            <div style="padding: 0.75rem 0 1rem 0; margin-bottom: 1rem;
+                        border-bottom: 1px solid var(--border);">
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text);
+                            display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 1.5rem;">🇪🇸</span> VivaLingo
                 </div>
-                <div style="font-size: 12px; color: var(--text-muted);">Spanish Mastery</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.125rem;">
+                    Spanish Mastery Platform
+                </div>
             </div>
         """)
 
-        # Profile info with streak
+        # Profile info
         profile = get_user_profile()
         if profile.get("name"):
             streak = get_streak_days(get_progress_history())
+            initial = profile['name'][0].upper()
             render_html(f"""
-                <div style="display: flex; align-items: center; gap: 12px; padding: 12px;
-                            background: var(--bg-surface); border-radius: 8px; margin-bottom: 16px;">
-                    <div style="width: 36px; height: 36px; border-radius: 50%;
-                                background: var(--accent); display: flex; align-items: center;
-                                justify-content: center; color: white; font-weight: 600;">
-                        {profile['name'][0].upper()}
+                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem;
+                            background: var(--surface-alt); border-radius: 0.75rem; margin-bottom: 1rem;">
+                    <div style="width: 2.25rem; height: 2.25rem; border-radius: 50%;
+                                background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+                                display: flex; align-items: center; justify-content: center;
+                                color: white; font-weight: 700; font-size: 0.875rem;">{initial}</div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; color: var(--text); font-size: 0.875rem;
+                                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {profile['name']}
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">
+                            Level {profile.get('level', 'C1')}
+                        </div>
                     </div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 500; color: var(--text-primary);">{profile['name']}</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">Level {profile.get('level', 'C1')}</div>
-                    </div>
-                    {f'<div style="font-size: 14px;">🔥 {streak}</div>' if streak > 0 else ''}
+                    {'<div style="font-size: 0.8rem; font-weight: 600; color: var(--orange);">🔥 ' + str(streak) + '</div>' if streak > 0 else ''}
                 </div>
             """)
 
@@ -160,21 +158,22 @@ def render_sidebar():
 
         if total_due > 0:
             render_html(f"""
-                <div style="background: var(--accent-muted); border: 1px solid rgba(99, 102, 241, 0.3);
-                            border-radius: 8px; padding: 10px 12px; margin-bottom: 16px;">
-                    <div style="font-size: 13px; color: var(--accent);">
-                        <strong>{total_due}</strong> items due for review
+                <div style="background: var(--primary-light); border: 1px solid #A7F3D0;
+                            border-radius: 0.5rem; padding: 0.625rem 0.75rem; margin-bottom: 1rem;">
+                    <div style="font-size: 0.8rem; color: #065F46; font-weight: 600;">
+                        📋 {total_due} items due for review
                     </div>
                 </div>
             """)
 
-        # Navigation buttons
-        st.markdown('<div style="margin-bottom: 8px; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Navigation</div>', unsafe_allow_html=True)
+        # Navigation label
+        render_html('<div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 0.5rem; padding-left: 0.25rem;">Navigation</div>')
 
+        # Navigation buttons
         for item in NAV_ITEMS:
             is_active = st.session_state.current_page == item["page"]
             if st.button(
-                f"{item['icon']} {item['label']}",
+                f"{item['icon']}  {item['label']}",
                 key=f"nav_{item['page']}",
                 use_container_width=True,
                 type="primary" if is_active else "secondary"
@@ -182,15 +181,15 @@ def render_sidebar():
                 st.session_state.current_page = item["page"]
                 st.rerun()
 
-        # Admin tools - only show if user has admin flag
+        # Admin tools
         profile = get_user_profile()
         if profile.get("is_admin"):
-            st.markdown('<hr style="margin: 20px 0; border: none; border-top: 1px solid #E5E5E5;">', unsafe_allow_html=True)
-            st.markdown('<div style="margin-bottom: 8px; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Developer</div>', unsafe_allow_html=True)
+            render_html('<hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--border);">')
+            render_html('<div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 0.5rem; padding-left: 0.25rem;">Developer</div>')
             admin_pages = [
-                ("Content Ingest", "Content Ingest"),
-                ("Error Notebook", "Error Notebook"),
-                ("Fingerprint", "Fingerprint"),
+                ("📥 Content Ingest", "Content Ingest"),
+                ("📓 Error Notebook", "Error Notebook"),
+                ("🔍 Fingerprint", "Fingerprint"),
             ]
             for label, page in admin_pages:
                 if st.button(label, key=f"admin_{page}", use_container_width=True):
@@ -203,49 +202,44 @@ def render_sidebar():
 # ============================================
 
 def render_onboarding():
-    """Render onboarding flow for new users with enhanced UX."""
+    """Render onboarding flow for new users."""
     step = st.session_state.onboarding_step
     total_steps = 6
 
-    # Center container
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
         render_html("""
-            <div style="text-align: center; padding: 32px 0;">
-                <div style="font-size: 48px; margin-bottom: 16px;">🇪🇸</div>
-                <h1 style="margin-bottom: 8px;">Welcome to VivaLingo</h1>
-                <p style="color: var(--text-secondary);">Let's set up your learning profile</p>
+            <div style="text-align: center; padding: 2rem 0 1rem 0;">
+                <div style="font-size: 3rem; margin-bottom: 0.75rem;">🇪🇸</div>
+                <h1 style="margin-bottom: 0.25rem; font-size: 2rem;">Welcome to VivaLingo</h1>
+                <p style="color: var(--text-secondary); font-size: 1rem;">Let's set up your learning profile</p>
             </div>
         """)
 
-        # Progress indicator
+        # Progress
         progress_pct = (step + 1) / total_steps
-        st.markdown(f"""
-        <div style="margin-bottom: 24px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="font-size: 13px; color: #8E8E93;">Step {step + 1} of {total_steps}</span>
-                <span style="font-size: 13px; color: #007AFF; font-weight: 500;">{int(progress_pct * 100)}%</span>
+        render_html(f"""
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Step {step + 1} of {total_steps}</span>
+                    <span style="font-size: 0.8rem; color: var(--primary); font-weight: 600;">{int(progress_pct * 100)}%</span>
+                </div>
+                <div class="vl-progress-track" style="height: 0.375rem;">
+                    <div class="vl-progress-fill" style="width: {progress_pct * 100}%; background: linear-gradient(90deg, var(--primary), var(--teal));"></div>
+                </div>
             </div>
-            <div style="background: #E5E5EA; height: 6px; border-radius: 3px; overflow: hidden;">
-                <div style="background: linear-gradient(90deg, #007AFF, #8b5cf6);
-                            height: 100%; width: {progress_pct * 100}%;
-                            border-radius: 3px; transition: width 0.3s ease;"></div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        """)
 
-        # ============================================
         # STEP 0: Name
-        # ============================================
         if step == 0:
-            st.markdown("""
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 32px; margin-bottom: 8px;">👋</div>
-                <h3 style="margin-bottom: 4px;">What's your name?</h3>
-                <p style="color: #8E8E93; font-size: 14px;">We'll use this to personalize your experience</p>
-            </div>
-            """, unsafe_allow_html=True)
+            render_html("""
+                <div style="text-align: center; margin-bottom: 1.25rem;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">👋</div>
+                    <h3 style="margin-bottom: 0.25rem;">What's your name?</h3>
+                    <p style="color: var(--text-muted); font-size: 0.875rem;">We'll use this to personalize your experience</p>
+                </div>
+            """)
 
             name = st.text_input("Name", placeholder="Enter your name", label_visibility="collapsed")
 
@@ -254,278 +248,206 @@ def render_onboarding():
                 st.session_state.onboarding_step = 1
                 st.rerun()
 
-        # ============================================
-        # STEP 1: Level Selection
-        # ============================================
+        # STEP 1: Level
         elif step == 1:
-            st.markdown("""
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
-                <h3 style="margin-bottom: 4px;">What's your current Spanish level?</h3>
-                <p style="color: #8E8E93; font-size: 14px;">This helps us tailor content to your abilities</p>
-            </div>
-            """, unsafe_allow_html=True)
+            render_html("""
+                <div style="text-align: center; margin-bottom: 1.25rem;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
+                    <h3 style="margin-bottom: 0.25rem;">Your Spanish level?</h3>
+                    <p style="color: var(--text-muted); font-size: 0.875rem;">This helps us tailor content to your abilities</p>
+                </div>
+            """)
 
-            # Level cards with descriptions
             levels = [
-                {
-                    "code": "B2",
-                    "name": "Upper Intermediate",
-                    "icon": "📗",
-                    "desc": "You can handle most everyday situations and express opinions on familiar topics with some complexity."
-                },
-                {
-                    "code": "C1",
-                    "name": "Advanced",
-                    "icon": "📘",
-                    "desc": "You can express yourself fluently and spontaneously, using language flexibly for social, academic, and professional purposes."
-                },
-                {
-                    "code": "C2",
-                    "name": "Proficiency",
-                    "icon": "📙",
-                    "desc": "You can understand virtually everything and express yourself with precision, differentiating finer shades of meaning."
-                }
+                ("B2", "Upper Intermediate", "Handle most situations, express opinions"),
+                ("C1", "Advanced", "Express fluently for professional purposes"),
+                ("C2", "Proficiency", "Understand virtually everything, near-native"),
             ]
 
-            # Initialize selection if not set
             if "onboarding_level" not in st.session_state:
                 st.session_state.onboarding_level = "C1"
 
-            for lvl in levels:
-                is_selected = st.session_state.get("onboarding_level") == lvl["code"]
-                border_color = "#007AFF" if is_selected else "#E5E5EA"
-                bg_color = "#eef2ff" if is_selected else "#ffffff"
+            for code, name, desc in levels:
+                is_selected = st.session_state.get("onboarding_level") == code
+                border = "var(--primary)" if is_selected else "var(--border)"
+                bg = "var(--primary-light)" if is_selected else "var(--surface)"
+                check = '<span style="color: var(--primary); font-weight: 700;">✓</span>' if is_selected else ''
 
-                st.markdown(f"""
-                <div style="border: 2px solid {border_color}; border-radius: 12px; padding: 16px;
-                            margin-bottom: 12px; background: {bg_color}; cursor: pointer;
-                            transition: all 0.2s ease;">
-                    <div style="display: flex; align-items: flex-start; gap: 12px;">
-                        <div style="font-size: 24px;">{lvl['icon']}</div>
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #000000; margin-bottom: 2px;">
-                                {lvl['code']} - {lvl['name']}
+                render_html(f"""
+                    <div style="border: 2px solid {border}; border-radius: 0.75rem; padding: 0.875rem;
+                                margin-bottom: 0.5rem; background: {bg};">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: var(--text);">{code} - {name}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">{desc}</div>
                             </div>
-                            <div style="font-size: 13px; color: #8E8E93; line-height: 1.4;">
-                                {lvl['desc']}
-                            </div>
+                            {check}
                         </div>
-                        {'<div style="color: #007AFF; font-size: 20px;">✓</div>' if is_selected else ''}
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
+                """)
 
-                if st.button(f"Select {lvl['code']}", key=f"level_{lvl['code']}", use_container_width=True,
+                if st.button(f"Select {code}", key=f"level_{code}", use_container_width=True,
                             type="primary" if is_selected else "secondary"):
-                    st.session_state.onboarding_level = lvl["code"]
+                    st.session_state.onboarding_level = code
                     st.rerun()
 
-            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+            _onboarding_nav_buttons(0, 1, 2)
 
-            col_a, col_b = st.columns(2)
-            with col_a:
-                if st.button("← Back", use_container_width=True, key="back_1"):
-                    st.session_state.onboarding_step = 0
-                    st.rerun()
-            with col_b:
-                if st.button("Continue →", type="primary", use_container_width=True, key="next_1"):
-                    st.session_state.onboarding_step = 2
-                    st.rerun()
-
-        # ============================================
-        # STEP 2: Learning Goal
-        # ============================================
+        # STEP 2: Goal
         elif step == 2:
-            st.markdown("""
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 32px; margin-bottom: 8px;">🎯</div>
-                <h3 style="margin-bottom: 4px;">What's your main goal?</h3>
-                <p style="color: #8E8E93; font-size: 14px;">We'll prioritize content that matches your objectives</p>
-            </div>
-            """, unsafe_allow_html=True)
+            render_html("""
+                <div style="text-align: center; margin-bottom: 1.25rem;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎯</div>
+                    <h3 style="margin-bottom: 0.25rem;">Main learning goal?</h3>
+                    <p style="color: var(--text-muted); font-size: 0.875rem;">We'll prioritize matching content</p>
+                </div>
+            """)
 
             goals = [
-                {"icon": "💼", "label": "Professional communication", "desc": "Business meetings, emails, presentations"},
-                {"icon": "🎓", "label": "Academic study", "desc": "University courses, research, exams"},
-                {"icon": "✈️", "label": "Travel & culture", "desc": "Travel, cultural immersion, social situations"},
-                {"icon": "🌟", "label": "General fluency", "desc": "Overall improvement across all skills"},
+                ("💼", "Professional communication", "Business, emails, presentations"),
+                ("🎓", "Academic study", "University, research, exams"),
+                ("✈️", "Travel & culture", "Travel, immersion, social"),
+                ("🌟", "General fluency", "Overall improvement"),
             ]
 
             if "onboarding_goal" not in st.session_state:
                 st.session_state.onboarding_goal = "General fluency"
 
-            for goal in goals:
-                is_selected = st.session_state.get("onboarding_goal") == goal["label"]
-                border_color = "#007AFF" if is_selected else "#E5E5EA"
-                bg_color = "#eef2ff" if is_selected else "#ffffff"
+            for icon, label, desc in goals:
+                is_selected = st.session_state.get("onboarding_goal") == label
+                border = "var(--primary)" if is_selected else "var(--border)"
+                bg = "var(--primary-light)" if is_selected else "var(--surface)"
+                check = '<span style="color: var(--primary); font-weight: 700;">✓</span>' if is_selected else ''
 
-                st.markdown(f"""
-                <div style="border: 2px solid {border_color}; border-radius: 12px; padding: 14px;
-                            margin-bottom: 10px; background: {bg_color};">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="font-size: 24px;">{goal['icon']}</div>
-                        <div style="flex: 1;">
-                            <div style="font-weight: 500; color: #000000;">{goal['label']}</div>
-                            <div style="font-size: 12px; color: #8E8E93;">{goal['desc']}</div>
+                render_html(f"""
+                    <div style="border: 2px solid {border}; border-radius: 0.75rem; padding: 0.875rem;
+                                margin-bottom: 0.5rem; background: {bg};">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 1.5rem;">{icon}</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 500; color: var(--text);">{label}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">{desc}</div>
+                            </div>
+                            {check}
                         </div>
-                        {'<div style="color: #007AFF; font-size: 18px;">✓</div>' if is_selected else ''}
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
+                """)
 
-                if st.button(f"Select", key=f"goal_{goal['label']}", use_container_width=True,
+                if st.button(f"Select", key=f"goal_{label}", use_container_width=True,
                             type="primary" if is_selected else "secondary"):
-                    st.session_state.onboarding_goal = goal["label"]
+                    st.session_state.onboarding_goal = label
                     st.rerun()
 
-            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+            _onboarding_nav_buttons(1, 2, 3)
 
-            col_a, col_b = st.columns(2)
-            with col_a:
-                if st.button("← Back", use_container_width=True, key="back_2"):
-                    st.session_state.onboarding_step = 1
-                    st.rerun()
-            with col_b:
-                if st.button("Continue →", type="primary", use_container_width=True, key="next_2"):
-                    st.session_state.onboarding_step = 3
-                    st.rerun()
-
-        # ============================================
-        # STEP 3: Dialect Preference
-        # ============================================
+        # STEP 3: Dialect
         elif step == 3:
-            st.markdown("""
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 32px; margin-bottom: 8px;">🌎</div>
-                <h3 style="margin-bottom: 4px;">Which Spanish dialect do you prefer?</h3>
-                <p style="color: #8E8E93; font-size: 14px;">We'll adapt vocabulary and expressions to your preference</p>
-            </div>
-            """, unsafe_allow_html=True)
+            render_html("""
+                <div style="text-align: center; margin-bottom: 1.25rem;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🌎</div>
+                    <h3 style="margin-bottom: 0.25rem;">Preferred dialect?</h3>
+                    <p style="color: var(--text-muted); font-size: 0.875rem;">We'll adapt vocabulary and expressions</p>
+                </div>
+            """)
 
             dialects = [
-                {"code": "Spain", "icon": "🇪🇸", "name": "Spain", "desc": "Castilian Spanish with vosotros"},
-                {"code": "Mexico", "icon": "🇲🇽", "name": "Mexico", "desc": "Mexican Spanish, widely understood"},
-                {"code": "Argentina", "icon": "🇦🇷", "name": "Argentina", "desc": "Rioplatense with vos conjugation"},
-                {"code": "Colombia", "icon": "🇨🇴", "name": "Colombia", "desc": "Clear, neutral Latin American"},
-                {"code": "Chile", "icon": "🇨🇱", "name": "Chile", "desc": "Chilean with unique expressions"},
+                ("🇪🇸", "Spain", "Castilian with vosotros"),
+                ("🇲🇽", "Mexico", "Widely understood"),
+                ("🇦🇷", "Argentina", "Rioplatense with vos"),
+                ("🇨🇴", "Colombia", "Clear Latin American"),
+                ("🇨🇱", "Chile", "Unique expressions"),
             ]
 
             if "onboarding_dialect" not in st.session_state:
                 st.session_state.onboarding_dialect = "Spain"
 
-            # Display in 2 columns for compact layout
             cols = st.columns(2)
-            for i, dialect in enumerate(dialects):
-                is_selected = st.session_state.get("onboarding_dialect") == dialect["code"]
-                border_color = "#007AFF" if is_selected else "#E5E5EA"
-                bg_color = "#eef2ff" if is_selected else "#ffffff"
+            for i, (flag, name, desc) in enumerate(dialects):
+                is_selected = st.session_state.get("onboarding_dialect") == name
+                border = "var(--primary)" if is_selected else "var(--border)"
+                bg = "var(--primary-light)" if is_selected else "var(--surface)"
 
                 with cols[i % 2]:
-                    st.markdown(f"""
-                    <div style="border: 2px solid {border_color}; border-radius: 12px; padding: 12px;
-                                margin-bottom: 10px; background: {bg_color}; text-align: center;">
-                        <div style="font-size: 28px; margin-bottom: 4px;">{dialect['icon']}</div>
-                        <div style="font-weight: 600; color: #000000;">{dialect['name']}</div>
-                        <div style="font-size: 11px; color: #8E8E93;">{dialect['desc']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    if st.button(f"{'✓ ' if is_selected else ''}{dialect['name']}", key=f"dialect_{dialect['code']}",
+                    render_html(f"""
+                        <div style="border: 2px solid {border}; border-radius: 0.75rem; padding: 0.75rem;
+                                    margin-bottom: 0.5rem; background: {bg}; text-align: center;">
+                            <div style="font-size: 1.75rem; margin-bottom: 0.25rem;">{flag}</div>
+                            <div style="font-weight: 600; color: var(--text); font-size: 0.875rem;">{name}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">{desc}</div>
+                        </div>
+                    """)
+                    btn_label = f"{'✓ ' if is_selected else ''}{name}"
+                    if st.button(btn_label, key=f"dialect_{name}",
                                 use_container_width=True, type="primary" if is_selected else "secondary"):
-                        st.session_state.onboarding_dialect = dialect["code"]
+                        st.session_state.onboarding_dialect = name
                         st.rerun()
 
-            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+            _onboarding_nav_buttons(2, 3, 4)
 
-            col_a, col_b = st.columns(2)
-            with col_a:
-                if st.button("← Back", use_container_width=True, key="back_3"):
-                    st.session_state.onboarding_step = 2
-                    st.rerun()
-            with col_b:
-                if st.button("Continue →", type="primary", use_container_width=True, key="next_3"):
-                    st.session_state.onboarding_step = 4
-                    st.rerun()
-
-        # ============================================
-        # STEP 4: Weekly Practice Goal
-        # ============================================
+        # STEP 4: Weekly goal
         elif step == 4:
-            st.markdown("""
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 32px; margin-bottom: 8px;">📅</div>
-                <h3 style="margin-bottom: 4px;">How often do you want to practice?</h3>
-                <p style="color: #8E8E93; font-size: 14px;">Set a realistic weekly goal to build consistency</p>
-            </div>
-            """, unsafe_allow_html=True)
+            render_html("""
+                <div style="text-align: center; margin-bottom: 1.25rem;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📅</div>
+                    <h3 style="margin-bottom: 0.25rem;">How often will you practice?</h3>
+                    <p style="color: var(--text-muted); font-size: 0.875rem;">Set a realistic weekly goal</p>
+                </div>
+            """)
 
-            weekly_options = [
-                {"days": 3, "icon": "🌱", "label": "Light", "desc": "3 days/week - Great for busy schedules"},
-                {"days": 4, "icon": "🌿", "label": "Moderate", "desc": "4 days/week - Steady progress"},
-                {"days": 5, "icon": "🌳", "label": "Regular", "desc": "5 days/week - Recommended for best results"},
-                {"days": 6, "icon": "🔥", "label": "Intensive", "desc": "6 days/week - Fast-track your learning"},
-                {"days": 7, "icon": "⚡", "label": "Daily", "desc": "Every day - Maximum immersion"},
+            options = [
+                (3, "🌱", "Light", "3 days/week"),
+                (4, "🌿", "Moderate", "4 days/week"),
+                (5, "🌳", "Regular", "5 days/week"),
+                (6, "🔥", "Intensive", "6 days/week"),
+                (7, "⚡", "Daily", "Every day"),
             ]
 
             if "onboarding_weekly_goal" not in st.session_state:
                 st.session_state.onboarding_weekly_goal = 5
 
-            for opt in weekly_options:
-                is_selected = st.session_state.get("onboarding_weekly_goal") == opt["days"]
-                border_color = "#007AFF" if is_selected else "#E5E5EA"
-                bg_color = "#eef2ff" if is_selected else "#ffffff"
+            for days, icon, label, desc in options:
+                is_selected = st.session_state.get("onboarding_weekly_goal") == days
+                border = "var(--primary)" if is_selected else "var(--border)"
+                bg = "var(--primary-light)" if is_selected else "var(--surface)"
+                check = '<span style="color: var(--primary); font-weight: 700;">✓</span>' if is_selected else ''
 
-                st.markdown(f"""
-                <div style="border: 2px solid {border_color}; border-radius: 12px; padding: 14px;
-                            margin-bottom: 10px; background: {bg_color};">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="font-size: 24px;">{opt['icon']}</div>
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #000000;">
-                                {opt['label']} <span style="color: #007AFF;">({opt['days']} days)</span>
+                render_html(f"""
+                    <div style="border: 2px solid {border}; border-radius: 0.75rem; padding: 0.75rem;
+                                margin-bottom: 0.5rem; background: {bg};">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 1.5rem;">{icon}</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: var(--text);">{label}
+                                    <span style="color: var(--primary); font-weight: 500;">({desc})</span>
+                                </div>
                             </div>
-                            <div style="font-size: 12px; color: #8E8E93;">{opt['desc']}</div>
+                            {check}
                         </div>
-                        {'<div style="color: #007AFF; font-size: 18px;">✓</div>' if is_selected else ''}
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
+                """)
 
-                if st.button(f"Select {opt['days']} days", key=f"weekly_{opt['days']}", use_container_width=True,
+                if st.button(f"Select {days} days", key=f"weekly_{days}", use_container_width=True,
                             type="primary" if is_selected else "secondary"):
-                    st.session_state.onboarding_weekly_goal = opt["days"]
+                    st.session_state.onboarding_weekly_goal = days
                     st.rerun()
 
-            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+            _onboarding_nav_buttons(3, 4, 5)
 
-            col_a, col_b = st.columns(2)
-            with col_a:
-                if st.button("← Back", use_container_width=True, key="back_4"):
-                    st.session_state.onboarding_step = 3
-                    st.rerun()
-            with col_b:
-                if st.button("Continue →", type="primary", use_container_width=True, key="next_4"):
-                    st.session_state.onboarding_step = 5
-                    st.rerun()
-
-        # ============================================
-        # STEP 5: Focus Areas
-        # ============================================
+        # STEP 5: Focus areas
         elif step == 5:
-            st.markdown("""
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 32px; margin-bottom: 8px;">🎨</div>
-                <h3 style="margin-bottom: 4px;">What do you want to focus on?</h3>
-                <p style="color: #8E8E93; font-size: 14px;">Select all areas you'd like to improve (at least one)</p>
-            </div>
-            """, unsafe_allow_html=True)
+            render_html("""
+                <div style="text-align: center; margin-bottom: 1.25rem;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎨</div>
+                    <h3 style="margin-bottom: 0.25rem;">Focus areas</h3>
+                    <p style="color: var(--text-muted); font-size: 0.875rem;">Select all you'd like to improve</p>
+                </div>
+            """)
 
             focus_options = [
-                {"id": "Grammar", "icon": "📖", "label": "Grammar", "desc": "Verb tenses, subjunctive, sentence structure"},
-                {"id": "Vocabulary", "icon": "📚", "label": "Vocabulary", "desc": "New words, idioms, collocations"},
-                {"id": "Conversation", "icon": "💬", "label": "Conversation", "desc": "Speaking fluency, pronunciation, listening"},
-                {"id": "Writing", "icon": "✍️", "label": "Writing", "desc": "Essays, emails, creative writing"},
+                ("Grammar", "📖", "Verb tenses, subjunctive, structure"),
+                ("Vocabulary", "📚", "Words, idioms, collocations"),
+                ("Conversation", "💬", "Speaking fluency, listening"),
+                ("Writing", "✍️", "Essays, emails, creative"),
             ]
 
             if "onboarding_focus_areas" not in st.session_state:
@@ -534,38 +456,37 @@ def render_onboarding():
             selected_areas = st.session_state.get("onboarding_focus_areas", [])
 
             cols = st.columns(2)
-            for i, focus in enumerate(focus_options):
-                is_selected = focus["id"] in selected_areas
-                border_color = "#007AFF" if is_selected else "#E5E5EA"
-                bg_color = "#eef2ff" if is_selected else "#ffffff"
+            for i, (fid, icon, desc) in enumerate(focus_options):
+                is_selected = fid in selected_areas
+                border = "var(--primary)" if is_selected else "var(--border)"
+                bg = "var(--primary-light)" if is_selected else "var(--surface)"
 
                 with cols[i % 2]:
-                    st.markdown(f"""
-                    <div style="border: 2px solid {border_color}; border-radius: 12px; padding: 16px;
-                                margin-bottom: 12px; background: {bg_color}; text-align: center;">
-                        <div style="font-size: 32px; margin-bottom: 8px;">{focus['icon']}</div>
-                        <div style="font-weight: 600; color: #000000; margin-bottom: 4px;">{focus['label']}</div>
-                        <div style="font-size: 11px; color: #8E8E93; line-height: 1.3;">{focus['desc']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    render_html(f"""
+                        <div style="border: 2px solid {border}; border-radius: 0.75rem; padding: 1rem;
+                                    margin-bottom: 0.5rem; background: {bg}; text-align: center;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">{icon}</div>
+                            <div style="font-weight: 600; color: var(--text); margin-bottom: 0.25rem;">{fid}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">{desc}</div>
+                        </div>
+                    """)
 
-                    btn_label = f"✓ {focus['label']}" if is_selected else focus['label']
-                    if st.button(btn_label, key=f"focus_{focus['id']}", use_container_width=True,
+                    btn_label = f"{'✓ ' if is_selected else ''}{fid}"
+                    if st.button(btn_label, key=f"focus_{fid}", use_container_width=True,
                                 type="primary" if is_selected else "secondary"):
-                        current = list(st.session_state.get("onboarding_focus_areas", []))
-                        if focus["id"] in current:
-                            current.remove(focus["id"])
+                        current = list(selected_areas)
+                        if fid in current:
+                            current.remove(fid)
                         else:
-                            current.append(focus["id"])
+                            current.append(fid)
                         st.session_state.onboarding_focus_areas = current
                         st.rerun()
 
-            # Show selected count
-            st.markdown(f"""
-            <div style="text-align: center; margin: 16px 0; color: #8E8E93; font-size: 13px;">
-                {len(selected_areas)} area{'s' if len(selected_areas) != 1 else ''} selected
-            </div>
-            """, unsafe_allow_html=True)
+            render_html(f"""
+                <div style="text-align: center; margin: 1rem 0; color: var(--text-muted); font-size: 0.8rem;">
+                    {len(selected_areas)} area{"s" if len(selected_areas) != 1 else ""} selected
+                </div>
+            """)
 
             col_a, col_b = st.columns(2)
             with col_a:
@@ -576,33 +497,7 @@ def render_onboarding():
                 can_finish = len(selected_areas) > 0
                 if st.button("Start Learning 🚀", type="primary", use_container_width=True,
                             key="finish", disabled=not can_finish):
-                    # Gather all onboarding data
-                    name = st.session_state.get("onboarding_name", "Learner")
-                    level = st.session_state.get("onboarding_level", "C1")
-                    dialect = st.session_state.get("onboarding_dialect", "Spain")
-                    weekly_goal = st.session_state.get("onboarding_weekly_goal", 5)
-                    focus_areas = st.session_state.get("onboarding_focus_areas", ["Grammar", "Vocabulary"])
-
-                    # Create profile with all preferences
-                    profile_id = create_profile(
-                        name=name,
-                        level=level,
-                        dialect_preference=dialect,
-                        weekly_goal=weekly_goal,
-                        focus_areas=focus_areas
-                    )
-
-                    if profile_id:
-                        st.session_state.active_profile_id = profile_id
-                        set_active_profile_id(profile_id)
-                        st.session_state.show_onboarding = False
-                        # Clean up onboarding state
-                        for key in ["onboarding_step", "onboarding_name", "onboarding_level",
-                                   "onboarding_goal", "onboarding_dialect", "onboarding_weekly_goal",
-                                   "onboarding_focus_areas"]:
-                            if key in st.session_state:
-                                del st.session_state[key]
-                        st.rerun()
+                    _finish_onboarding()
 
         # Skip option
         render_html("<br>")
@@ -615,247 +510,186 @@ def render_onboarding():
                 st.rerun()
 
 
+def _onboarding_nav_buttons(prev_step: int, current_step: int, next_step: int):
+    """Render back/continue buttons for onboarding."""
+    render_html('<div style="height: 1rem;"></div>')
+    col_a, col_b = st.columns(2)
+    with col_a:
+        if st.button("← Back", use_container_width=True, key=f"back_{current_step}"):
+            st.session_state.onboarding_step = prev_step
+            st.rerun()
+    with col_b:
+        if st.button("Continue →", type="primary", use_container_width=True, key=f"next_{current_step}"):
+            st.session_state.onboarding_step = next_step
+            st.rerun()
+
+
+def _finish_onboarding():
+    """Finish onboarding and create profile."""
+    name = st.session_state.get("onboarding_name", "Learner")
+    level = st.session_state.get("onboarding_level", "C1")
+    dialect = st.session_state.get("onboarding_dialect", "Spain")
+    weekly_goal = st.session_state.get("onboarding_weekly_goal", 5)
+    focus_areas = st.session_state.get("onboarding_focus_areas", ["Grammar", "Vocabulary"])
+
+    profile_id = create_profile(
+        name=name, level=level, dialect_preference=dialect,
+        weekly_goal=weekly_goal, focus_areas=focus_areas
+    )
+
+    if profile_id:
+        st.session_state.active_profile_id = profile_id
+        set_active_profile_id(profile_id)
+        st.session_state.show_onboarding = False
+        for key in ["onboarding_step", "onboarding_name", "onboarding_level",
+                   "onboarding_goal", "onboarding_dialect", "onboarding_weekly_goal",
+                   "onboarding_focus_areas"]:
+            if key in st.session_state:
+                del st.session_state[key]
+        st.rerun()
+
+
 # ============================================
-# HOME / TODAY DASHBOARD
+# HOME PAGE
 # ============================================
 
 def render_home_page():
-    """Render Duolingo-style Today dashboard."""
+    """Render the home dashboard."""
     profile = get_user_profile()
     stats = get_total_stats()
 
-    # Get review counts
+    # Review counts
     vocab_due = len(get_vocab_for_review())
     errors_due = len(get_mistakes_for_review())
     grammar_due = len(get_grammar_for_review())
     total_due = vocab_due + errors_due + grammar_due
 
-    # Get streak
+    # Streak
     streak = get_streak_days(get_progress_history())
 
-    # Hero greeting
+    # Greeting
     name = profile.get('name', 'there')
     hour = datetime.now().hour
     greeting = "Good morning" if hour < 12 else "Good afternoon" if hour < 18 else "Good evening"
 
-    st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #58CC02 0%, #89E219 100%);
-                border-radius: 20px; padding: 32px; margin-bottom: 24px; color: #FFFFFF;">
-        <h1 style="color: #FFFFFF !important; margin: 0 0 8px 0; font-size: 28px; font-weight: 800;">
-            {greeting}, {name}! 👋
-        </h1>
-        <p style="color: rgba(255,255,255,0.9) !important; margin: 0; font-size: 16px;">
-            Ready to continue your Spanish journey?
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Hero greeting
+    render_html(f"""
+        <div class="vl-hero">
+            <div class="vl-hero-title">{greeting}, {name}! 👋</div>
+            <div class="vl-hero-subtitle">Ready to continue your Spanish journey?</div>
+        </div>
+    """)
 
-    # ============================================
-    # STATS ROW
-    # ============================================
+    # Stats row
     stat_cols = st.columns(4)
+    stats_data = [
+        ("🔥", str(streak), "Day Streak", "#F59E0B"),
+        ("📚", str(stats.get('total_vocab', 0)), "Words", "#10B981"),
+        ("🎯", f"{get_sessions_this_week()}/{profile.get('weekly_goal', 5)}", "Weekly Goal", "#3B82F6"),
+        ("⭐", str(stats.get('total_xp', 0)), "Total XP", "#F59E0B"),
+    ]
 
-    with stat_cols[0]:
-        st.markdown(f"""
-        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
-                    padding: 20px; text-align: center;">
-            <div style="font-size: 32px; margin-bottom: 8px;">🔥</div>
-            <div style="font-size: 32px; font-weight: 800; color: #FF9600; line-height: 1;">{streak}</div>
-            <div style="font-size: 12px; color: #777777; text-transform: uppercase;
-                        letter-spacing: 1px; margin-top: 6px;">Day Streak</div>
-        </div>
-        """, unsafe_allow_html=True)
+    for col, (icon, value, label, color) in zip(stat_cols, stats_data):
+        with col:
+            st.markdown(render_stat_card(value, label, icon, color), unsafe_allow_html=True)
 
-    with stat_cols[1]:
-        st.markdown(f"""
-        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
-                    padding: 20px; text-align: center;">
-            <div style="font-size: 32px; margin-bottom: 8px;">📚</div>
-            <div style="font-size: 32px; font-weight: 800; color: #58CC02; line-height: 1;">{stats.get('total_vocab', 0)}</div>
-            <div style="font-size: 12px; color: #777777; text-transform: uppercase;
-                        letter-spacing: 1px; margin-top: 6px;">Words</div>
-        </div>
-        """, unsafe_allow_html=True)
+    render_html('<div style="height: 1.5rem;"></div>')
 
-    with stat_cols[2]:
-        weekly_goal = profile.get('weekly_goal', 5)
-        sessions_this_week = get_sessions_this_week()
-        st.markdown(f"""
-        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
-                    padding: 20px; text-align: center;">
-            <div style="font-size: 32px; margin-bottom: 8px;">🎯</div>
-            <div style="font-size: 32px; font-weight: 800; color: #1CB0F6; line-height: 1;">{sessions_this_week}/{weekly_goal}</div>
-            <div style="font-size: 12px; color: #777777; text-transform: uppercase;
-                        letter-spacing: 1px; margin-top: 6px;">Weekly Goal</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with stat_cols[3]:
-        st.markdown(f"""
-        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
-                    padding: 20px; text-align: center;">
-            <div style="font-size: 32px; margin-bottom: 8px;">⭐</div>
-            <div style="font-size: 32px; font-weight: 800; color: #FFC800; line-height: 1;">{stats.get('total_xp', 0)}</div>
-            <div style="font-size: 12px; color: #777777; text-transform: uppercase;
-                        letter-spacing: 1px; margin-top: 6px;">Total XP</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
-
-    # ============================================
-    # MAIN CONTENT: Actions (60%) + Side (40%)
-    # ============================================
+    # Main content
     main_col, side_col = st.columns([3, 2])
 
     with main_col:
-        # Continue Learning - Primary CTA
+        # Continue Learning
+        render_action_card("Continue Learning", "Pick up where you left off", icon="▶️", primary=True)
         last_page = st.session_state.get("last_session", "Topic Diversity")
-
-        render_html(f"""
-            <div class="action-card action-card-primary" style="margin-bottom: 16px;">
-                <div style="display: flex; align-items: center; gap: 16px;">
-                    <div style="font-size: 32px;">▶️</div>
-                    <div style="flex: 1;">
-                        <div class="action-card-title">Continue Learning</div>
-                        <div class="action-card-subtitle">Pick up where you left off</div>
-                    </div>
-                </div>
-            </div>
-        """)
-
         if st.button("CONTINUE", type="primary", use_container_width=True, key="btn_continue"):
             st.session_state.current_page = last_page
             st.session_state.last_session = last_page
             st.rerun()
 
-        # Review Due Card
+        # Review Due
         if total_due > 0:
             review_time = max(1, total_due // 2)
-            render_html(f"""
-                <div class="action-card" style="margin-bottom: 16px; margin-top: 16px;">
-                    <div style="display: flex; align-items: center; gap: 16px;">
-                        <div style="font-size: 32px;">🔄</div>
-                        <div style="flex: 1;">
-                            <div class="action-card-title">Review Due</div>
-                            <div class="action-card-subtitle">{total_due} items ready • ~{review_time} min</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <span class="pill pill-accent">{vocab_due} vocab</span>
-                            {f'<span class="pill pill-error" style="margin-left: 4px;">{errors_due} errors</span>' if errors_due > 0 else ''}
-                        </div>
-                    </div>
-                </div>
-            """)
-
+            render_action_card(
+                "Review Due",
+                f"{total_due} items ready ~ {review_time} min",
+                icon="🔄",
+                badge=f"{vocab_due} vocab" + (f" + {errors_due} errors" if errors_due > 0 else "")
+            )
             if st.button("START REVIEW", use_container_width=True, key="btn_review"):
                 st.session_state.current_page = "Review"
                 st.rerun()
 
-        # ----------------------------------------
-        # QUICK 5 MIN SESSION
-        # ----------------------------------------
-        render_html("""
-            <div class="action-card" style="margin-top: 16px;">
-                <div style="display: flex; align-items: center; gap: 16px;">
-                    <div style="font-size: 32px;">⚡</div>
-                    <div style="flex: 1;">
-                        <div class="action-card-title">Quick 5 min session</div>
-                        <div class="action-card-subtitle">Mixed practice: vocab + grammar + listening</div>
-                    </div>
-                </div>
-            </div>
-        """)
-
+        # Quick Session
+        render_action_card("Quick 5-min session", "Mixed practice: vocab + grammar", icon="⚡")
         if st.button("QUICK START", use_container_width=True, key="btn_quick"):
             st.session_state.quick_session_mode = True
             st.session_state.current_page = "Review"
             st.rerun()
 
-        # Practice Activities Section
-        st.markdown('<div style="margin-top: 32px; margin-bottom: 16px;"><h3 style="color: #3C3C3C; margin: 0;">Practice Activities</h3></div>', unsafe_allow_html=True)
+        # Practice Activities
+        render_html('<div style="height: 1rem;"></div>')
+        render_section_header("Practice Activities")
 
-        activity_cols = st.columns(2)
         activities = [
-            {"icon": "💬", "title": "Conversation", "desc": "Practice speaking", "page": "Conversation", "color": "#1CB0F6"},
-            {"icon": "✍️", "title": "Writing", "desc": "Get feedback", "page": "Writing Coach", "color": "#CE82FF"},
-            {"icon": "🔤", "title": "Vocabulary", "desc": "Learn new words", "page": "Topic Diversity", "color": "#58CC02"},
-            {"icon": "📖", "title": "Verbs", "desc": "Master conjugations", "page": "Verb Studio", "color": "#FF9600"},
+            {"icon": "💬", "title": "Conversation", "desc": "Practice speaking", "page": "Conversation"},
+            {"icon": "✍️", "title": "Writing", "desc": "Get feedback", "page": "Writing Coach"},
+            {"icon": "🔤", "title": "Vocabulary", "desc": "Learn new words", "page": "Topic Diversity"},
+            {"icon": "📖", "title": "Verbs", "desc": "Master conjugations", "page": "Verb Studio"},
         ]
 
-        for i, rec in enumerate(recommendations):
-            with rec_cols[i]:
+        activity_cols = st.columns(2)
+        for i, act in enumerate(activities):
+            with activity_cols[i % 2]:
                 render_html(f"""
-                    <div class="card" style="text-align: center; padding: 20px;">
-                        <div style="font-size: 28px; margin-bottom: 8px;">{rec['icon']}</div>
-                        <div style="font-weight: 600; margin-bottom: 4px;">{rec['title']}</div>
-                        <div style="font-size: 13px; color: var(--text-muted);">{rec['desc']}</div>
+                    <div class="vl-feature-card">
+                        <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">{act['icon']}</div>
+                        <div style="font-weight: 600; color: var(--text); margin-bottom: 0.25rem;">{act['title']}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">{act['desc']}</div>
                     </div>
                 """)
-                if st.button("Start", key=f"rec_{i}", use_container_width=True):
-                    st.session_state.current_page = rec['page']
+                if st.button("Start", key=f"act_{i}", use_container_width=True):
+                    st.session_state.current_page = act['page']
+                    st.session_state.last_session = act['page']
                     st.rerun()
 
-    # ----------------------------------------
-    # RIGHT RAIL - Stats
-    # ----------------------------------------
-    with rail_col:
-        # Streak
-        streak = get_streak_days(get_progress_history())
-        render_html(f"""
-            <div class="stat-card" style="margin-bottom: 12px; text-align: center;">
-                <div style="font-size: 36px; margin-bottom: 4px;">🔥</div>
-                <div class="stat-value">{streak}</div>
-                <div class="stat-label">Day Streak</div>
-            </div>
-        """)
-
-        # Weekly goal
-        weekly_goal = profile.get('weekly_goal', 6)
+    # Right sidebar
+    with side_col:
+        # Weekly goal progress
+        weekly_goal = profile.get('weekly_goal', 5)
         sessions_this_week = get_sessions_this_week()
-        progress_pct = min((sessions_this_week / weekly_goal * 100), 100) if weekly_goal > 0 else 0
+        progress_pct = min(100, (sessions_this_week / weekly_goal * 100)) if weekly_goal > 0 else 0
 
         render_html(f"""
-            <div class="stat-card" style="margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-weight: 500;">Weekly Goal</span>
-                    <span style="color: var(--text-muted);">{sessions_this_week}/{weekly_goal}</span>
+            <div class="vl-card" style="margin-bottom: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="font-weight: 600; font-size: 0.875rem; color: var(--text);">Weekly Goal</span>
+                    <span style="color: var(--text-muted); font-size: 0.875rem;">{sessions_this_week}/{weekly_goal}</span>
                 </div>
-                <div style="background: var(--bg-elevated); height: 8px; border-radius: 4px; overflow: hidden;">
-                    <div style="background: var(--accent); height: 100%; width: {progress_pct * 100}%; border-radius: 4px;"></div>
+                <div class="vl-progress-track">
+                    <div class="vl-progress-fill" style="width: {progress_pct}%; background: linear-gradient(90deg, var(--primary), var(--teal));"></div>
                 </div>
             </div>
         """)
 
-        # Words learned
+        # Stats
         render_html(f"""
-            <div class="stat-card" style="margin-bottom: 12px;">
-                <div class="stat-value">{stats.get('total_vocab', 0)}</div>
-                <div class="stat-label">Words Learned</div>
+            <div class="vl-card" style="margin-bottom: 0.75rem; text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text);">{stats.get('total_vocab', 0)}</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Words Learned</div>
             </div>
         """)
 
-        # Speaking time
-        render_html(f"""
-            <div class="stat-card" style="margin-bottom: 12px;">
-                <div class="stat-value">{stats.get('total_speaking', 0):.0f}</div>
-                <div class="stat-label">Minutes Speaking</div>
-            </div>
-        """)
-
+        # Weak areas
         weak_areas = get_weak_areas()
-        if not weak_areas:
-            weak_areas = ["Complete exercises to see focus areas"]
-
-        for area in weak_areas[:3]:
-            render_html(f"""
-                <div style="padding: 8px 12px; background: var(--bg-surface); border-radius: 6px;
-                            margin-bottom: 8px; font-size: 13px; border-left: 3px solid var(--warning);">
-                    {area}
-                </div>
-            """)
-
-        st.markdown("</div>", unsafe_allow_html=True)
+        if weak_areas:
+            render_html('<div style="font-size: 0.8rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem;">Areas to Focus</div>')
+            for area in weak_areas[:3]:
+                render_html(f"""
+                    <div style="padding: 0.5rem 0.75rem; background: var(--surface); border: 1px solid var(--border);
+                                border-left: 3px solid var(--orange); border-radius: 0.375rem; margin-bottom: 0.5rem;
+                                font-size: 0.8rem; color: var(--text-secondary);">{area}</div>
+                """)
 
         # Tip of the Day
         tips = [
@@ -865,21 +699,19 @@ def render_home_page():
             "Try thinking in Spanish during everyday activities.",
             "Write short journal entries to practice writing.",
         ]
-        import random
         tip = random.choice(tips)
 
-        st.markdown(f"""
-        <div style="background: rgba(28, 176, 246, 0.1); border: 2px solid #1CB0F6;
-                    border-radius: 16px; padding: 20px;">
-            <div style="display: flex; align-items: flex-start; gap: 12px;">
-                <div style="font-size: 24px;">💡</div>
-                <div>
-                    <div style="font-weight: 700; color: #1CB0F6; margin-bottom: 4px;">Tip of the Day</div>
-                    <div style="font-size: 14px; color: #3C3C3C; line-height: 1.5;">{tip}</div>
+        render_html(f"""
+            <div class="vl-tip" style="margin-top: 0.75rem;">
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                    <div style="font-size: 1.25rem;">💡</div>
+                    <div>
+                        <div style="font-weight: 600; color: #1D4ED8; margin-bottom: 0.25rem; font-size: 0.8rem;">Tip of the Day</div>
+                        <div style="font-size: 0.8rem; color: #1E40AF; line-height: 1.4;">{tip}</div>
+                    </div>
                 </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+        """)
 
 
 # ============================================
@@ -887,103 +719,30 @@ def render_home_page():
 # ============================================
 
 def render_learn_page():
-    """Render Learn page with vocabulary and grammar paths."""
-    st.markdown("## Learn")
-    st.markdown("Build your vocabulary and grammar skills")
+    """Render the Learn page."""
+    render_hero("Learn", "Build your vocabulary and grammar skills")
 
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        render_html("""
-            <div class="card">
-                <div style="font-size: 32px; margin-bottom: 12px;">📚</div>
-                <h3>Vocabulary</h3>
-                <p style="color: var(--text-muted);">Learn new words in context with the Topic Diversity Engine</p>
-            </div>
-        """)
-        if st.button("Start Vocabulary", type="primary", use_container_width=True, key="learn_vocab"):
-            st.session_state.current_page = "Topic Diversity"
-            st.session_state.last_session = "Topic Diversity"
-            st.rerun()
-
-    with col2:
-        render_html("""
-            <div class="card">
-                <div style="font-size: 32px; margin-bottom: 12px;">🔤</div>
-                <h3>Verb Mastery</h3>
-                <p style="color: var(--text-muted);">Master verb nuances, tenses, and near-synonyms</p>
-            </div>
-        """)
-        if st.button("Start Verbs", type="primary", use_container_width=True, key="learn_verbs"):
-            st.session_state.current_page = "Verb Studio"
-            st.session_state.last_session = "Verb Studio"
-            st.rerun()
-
-    with col3:
-        st.markdown("""
-        <div class="card">
-            <div style="font-size: 32px; margin-bottom: 12px;">🧩</div>
-            <h3>Context Units</h3>
-            <p style="color: var(--text-muted);">Practice chunked phrases and contextual grammar patterns</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Start Context Units", type="primary", use_container_width=True, key="learn_context"):
-            st.session_state.current_page = "Context Units"
-            st.session_state.last_session = "Context Units"
-            st.rerun()
-
-    with col3:
-        render_html("""
-            <div class="card">
-                <div style="font-size: 32px; margin-bottom: 12px;">🧩</div>
-                <h3>Context Units</h3>
-                <p style="color: var(--text-muted);">Practice chunked phrases and contextual grammar patterns</p>
-            </div>
-        """)
-        if st.button("Start Context Units", type="primary", use_container_width=True, key="learn_context"):
-            st.session_state.current_page = "Context Units"
-            st.session_state.last_session = "Context Units"
-            st.rerun()
-
-    with col3:
-        render_html("""
-            <div class="card">
-                <div style="font-size: 32px; margin-bottom: 12px;">🧩</div>
-                <h3>Context Units</h3>
-                <p style="color: var(--text-muted);">Practice chunked phrases and contextual grammar patterns</p>
-            </div>
-        """)
-        if st.button("Start Context Units", type="primary", use_container_width=True, key="learn_context"):
-            st.session_state.current_page = "Context Units"
-            st.session_state.last_session = "Context Units"
-            st.rerun()
-
-    with col3:
-        render_html("""
-            <div class="card">
-                <div style="font-size: 32px; margin-bottom: 12px;">🧩</div>
-                <h3>Context Units</h3>
-                <p style="color: var(--text-muted);">Practice chunked phrases and contextual grammar patterns</p>
-            </div>
-        """)
-        if st.button("Start Context Units", type="primary", use_container_width=True, key="learn_context"):
-            st.session_state.current_page = "Context Units"
-            st.session_state.last_session = "Context Units"
-            st.rerun()
+    paths = [
+        {"icon": "📚", "title": "Vocabulary", "desc": "Learn new words in context with the Topic Diversity Engine",
+         "page": "Topic Diversity", "color": "#10B981"},
+        {"icon": "🔤", "title": "Verb Mastery", "desc": "Master verb nuances, tenses, and near-synonyms",
+         "page": "Verb Studio", "color": "#F59E0B"},
+        {"icon": "🧩", "title": "Context Units", "desc": "Practice chunked phrases and contextual grammar",
+         "page": "Context Units", "color": "#3B82F6"},
+    ]
 
     cols = st.columns(3)
     for i, path in enumerate(paths):
         with cols[i]:
-            st.markdown(f"""
-            <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 20px;
-                        padding: 28px; text-align: center; height: 100%;">
-                <div style="width: 72px; height: 72px; border-radius: 50%; background: {path['color']}20;
-                            display: flex; align-items: center; justify-content: center; font-size: 36px;
-                            margin: 0 auto 16px auto;">{path['icon']}</div>
-                <h3 style="color: #3C3C3C; margin: 0 0 8px 0; font-size: 20px; font-weight: 700;">{path['title']}</h3>
-                <p style="color: #777777; font-size: 14px; margin: 0; line-height: 1.5;">{path['desc']}</p>
-            </div>
-            """, unsafe_allow_html=True)
+            render_html(f"""
+                <div class="vl-feature-card">
+                    <div style="width: 4rem; height: 4rem; border-radius: 50%; background: {path['color']}15;
+                                display: flex; align-items: center; justify-content: center; font-size: 2rem;
+                                margin: 0 auto 1rem auto;">{path['icon']}</div>
+                    <h4 style="color: var(--text); margin: 0 0 0.5rem 0;">{path['title']}</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5;">{path['desc']}</p>
+                </div>
+            """)
             if st.button("START", type="primary", use_container_width=True, key=f"learn_{i}"):
                 st.session_state.current_page = path['page']
                 st.session_state.last_session = path['page']
@@ -995,31 +754,24 @@ def render_learn_page():
 # ============================================
 
 def render_practice_page():
-    """Render Practice page with skill modes."""
-    # Header
-    st.markdown("""
-    <div style="margin-bottom: 32px;">
-        <h1 style="color: #3C3C3C; margin: 0 0 8px 0; font-size: 32px; font-weight: 800;">Practice</h1>
-        <p style="color: #777777; margin: 0; font-size: 16px;">Apply your skills in realistic scenarios</p>
-    </div>
-    """, unsafe_allow_html=True)
+    """Render the Practice page."""
+    render_hero("Practice", "Apply your skills in realistic scenarios")
 
-    # Practice modes
     modes = [
-        {"icon": "💬", "title": "Conversation", "desc": "Practice speaking in real scenarios", "page": "Conversation", "color": "#1CB0F6"},
-        {"icon": "✍️", "title": "Writing Coach", "desc": "Get feedback on your writing", "page": "Writing Coach", "color": "#CE82FF"},
-        {"icon": "🔤", "title": "Verb Drills", "desc": "Master conjugations", "page": "Verb Studio", "color": "#FF9600"},
-        {"icon": "🎯", "title": "Quick Practice", "desc": "Fast-paced mixed exercises", "page": "Topic Diversity", "color": "#58CC02"},
+        {"icon": "💬", "title": "Conversation", "desc": "Practice speaking in real scenarios", "page": "Conversation"},
+        {"icon": "✍️", "title": "Writing Coach", "desc": "Get feedback on your writing", "page": "Writing Coach"},
+        {"icon": "🔤", "title": "Verb Drills", "desc": "Master conjugations and nuance", "page": "Verb Studio"},
+        {"icon": "🎯", "title": "Quick Practice", "desc": "Fast-paced mixed exercises", "page": "Topic Diversity"},
     ]
 
     cols = st.columns(2)
     for i, mode in enumerate(modes):
         with cols[i % 2]:
             render_html(f"""
-                <div class="card">
-                    <div style="font-size: 28px; margin-bottom: 8px;">{mode['icon']}</div>
-                    <h4>{mode['title']}</h4>
-                    <p style="color: var(--text-muted); font-size: 14px;">{mode['desc']}</p>
+                <div class="vl-feature-card">
+                    <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">{mode['icon']}</div>
+                    <h4 style="color: var(--text); margin: 0 0 0.25rem 0;">{mode['title']}</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; margin: 0;">{mode['desc']}</p>
                 </div>
             """)
             if st.button(f"Start {mode['title']}", key=f"practice_{i}", use_container_width=True):
@@ -1028,8 +780,8 @@ def render_practice_page():
                 st.rerun()
 
     # Tools section
-    st.markdown('<hr style="margin: 32px 0; border: none; border-top: 1px solid #E5E5E5;">', unsafe_allow_html=True)
-    st.markdown('<h3 style="color: #3C3C3C; margin: 0 0 16px 0;">Learning Tools</h3>', unsafe_allow_html=True)
+    render_html('<hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">')
+    render_section_header("Learning Tools")
 
     tools = [
         {"icon": "🌎", "title": "Dialect Guide", "desc": "Regional variations", "page": "Dialects"},
@@ -1040,14 +792,14 @@ def render_practice_page():
     tool_cols = st.columns(3)
     for i, tool in enumerate(tools):
         with tool_cols[i]:
-            st.markdown(f"""
-            <div style="background: #F7F7F7; border-radius: 12px; padding: 16px; text-align: center;">
-                <div style="font-size: 28px; margin-bottom: 8px;">{tool['icon']}</div>
-                <div style="font-weight: 600; color: #3C3C3C; font-size: 14px;">{tool['title']}</div>
-                <div style="font-size: 12px; color: #777777;">{tool['desc']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button(f"Open", key=f"tool_{i}", use_container_width=True):
+            render_html(f"""
+                <div style="background: var(--surface-alt); border-radius: 0.75rem; padding: 1rem; text-align: center;">
+                    <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">{tool['icon']}</div>
+                    <div style="font-weight: 600; color: var(--text); font-size: 0.875rem;">{tool['title']}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">{tool['desc']}</div>
+                </div>
+            """)
+            if st.button("Open", key=f"tool_{i}", use_container_width=True):
                 st.session_state.current_page = tool['page']
                 st.rerun()
 
@@ -1057,243 +809,177 @@ def render_practice_page():
 # ============================================
 
 def render_progress_page():
-    """Render comprehensive Progress page with visualizations and insights."""
-    # Header
-    st.markdown("""
-    <div style="margin-bottom: 32px;">
-        <h1 style="color: #3C3C3C; margin: 0 0 8px 0; font-size: 32px; font-weight: 800;">Your Progress</h1>
-        <p style="color: #777777; margin: 0; font-size: 16px;">Track your Spanish learning journey</p>
-    </div>
-    """, unsafe_allow_html=True)
+    """Render the Progress page."""
+    render_hero("Your Progress", "Track your Spanish learning journey")
 
-    # Gather all data
+    # Gather data
     stats = get_total_stats()
     profile = get_user_profile()
     progress_history = get_progress_history(days=30)
     streak = get_streak_days(progress_history)
     sessions_this_week = get_sessions_this_week()
     weak_areas = get_weak_areas()
-    learning_velocity = get_learning_velocity()
     activity_history = get_activity_history(days=30)
     mistake_stats = get_mistake_stats()
     vocab_items = get_vocab_items()
 
-    # Calculate derived metrics
-    mastered_vocab = len([v for v in vocab_items if v.get('status') == 'mastered'])
-    learning_vocab = len([v for v in vocab_items if v.get('status') == 'learning'])
     total_vocab_count = len(vocab_items)
 
-    # ============================================
-    # TOP STATS ROW
-    # ============================================
-    st.markdown("### Overview")
-    cols = st.columns(5)
+    # Overview stats
+    render_section_header("Overview")
+    overview_cols = st.columns(4)
+    overview_data = [
+        ("🔥", str(streak), "Day Streak", "#F59E0B"),
+        ("📚", str(stats.get('total_vocab', 0)), "Words", "#10B981"),
+        ("🎤", f"{stats.get('total_speaking', 0):.0f}", "Min Speaking", "#8B5CF6"),
+        ("🎯", str(stats.get('total_missions', 0)), "Missions", "#3B82F6"),
+    ]
 
-    with cols[0]:
-        render_html(f"""
-            <div class="stat-card" style="text-align: center;">
-                <div style="font-size: 24px; margin-bottom: 4px;">🔥</div>
-                <div class="stat-value">{streak}</div>
-                <div class="stat-label">Day Streak</div>
-            </div>
-        """)
+    for col, (icon, value, label, color) in zip(overview_cols, overview_data):
+        with col:
+            st.markdown(render_stat_card(value, label, icon, color), unsafe_allow_html=True)
 
-    with cols[1]:
-        render_html(f"""
-            <div class="stat-card" style="text-align: center;">
-                <div style="font-size: 24px; margin-bottom: 4px;">📚</div>
-                <div class="stat-value">{stats.get('total_vocab', 0)}</div>
-                <div class="stat-label">Words</div>
-            </div>
-        """)
+    render_html('<hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">')
 
-    with cols[2]:
-        render_html(f"""
-            <div class="stat-card" style="text-align: center;">
-                <div style="font-size: 24px; margin-bottom: 4px;">🎤</div>
-                <div class="stat-value">{stats.get('total_speaking', 0):.0f}</div>
-                <div class="stat-label">Min Speaking</div>
-            </div>
-        """)
-
-    with cols[3]:
-        render_html(f"""
-            <div class="stat-card" style="text-align: center;">
-                <div style="font-size: 24px; margin-bottom: 4px;">🎯</div>
-                <div class="stat-value">{stats.get('total_missions', 0)}</div>
-                <div class="stat-label">Missions</div>
-            </div>
-        """)
-
-    st.markdown('<hr style="margin: 32px 0; border: none; border-top: 1px solid #E5E5E5;">', unsafe_allow_html=True)
-
-    # ============================================
-    # WEEKLY REPORT SECTION
-    # ============================================
-    st.markdown("### Weekly Report")
-
-    # Calculate weekly stats
+    # Weekly Report
+    render_section_header("Weekly Report")
     week_ago = date.today() - timedelta(days=7)
     weekly_history = [h for h in progress_history if h.get('metric_date', '') >= week_ago.isoformat()]
 
     weekly_vocab_reviewed = sum(h.get('vocab_reviewed', 0) for h in weekly_history)
     weekly_errors_fixed = sum(h.get('errors_fixed', 0) for h in weekly_history)
     weekly_speaking = sum(h.get('speaking_minutes', 0) for h in weekly_history)
-    weekly_missions = sum(h.get('missions_completed', 0) for h in weekly_history)
+    new_words_this_week = len([v for v in vocab_items if v.get('created_at', '')[:10] >= week_ago.isoformat()])
 
-    # New words this week (from vocab_items created this week)
-    new_words_this_week = len([v for v in vocab_items
-                               if v.get('created_at', '')[:10] >= week_ago.isoformat()])
-
-    # Weekly goal progress
-    weekly_goal = profile.get('weekly_goal', 6)
+    weekly_goal = profile.get('weekly_goal', 5)
     goal_progress = min(100, (sessions_this_week / weekly_goal * 100)) if weekly_goal > 0 else 0
 
     report_col1, report_col2 = st.columns(2)
 
     with report_col1:
-        st.markdown("""
-        <div class="card" style="padding: 20px;">
-            <h4 style="margin-bottom: 16px; color: #000000;">This Week's Activity</h4>
-        """, unsafe_allow_html=True)
-
-        # Weekly goal progress bar
-        st.markdown(f"""
-            <div style="margin-bottom: 16px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                    <span style="font-weight: 500; color: #3C3C43;">Weekly Goal</span>
-                    <span style="color: #8E8E93;">{sessions_this_week}/{weekly_goal} days</span>
+        render_html(f"""
+            <div class="vl-card">
+                <h4 style="margin: 0 0 1rem 0; color: var(--text);">This Week's Activity</h4>
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.375rem;">
+                        <span style="font-weight: 500; font-size: 0.875rem; color: var(--text);">Weekly Goal</span>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">{sessions_this_week}/{weekly_goal} days</span>
+                    </div>
+                    <div class="vl-progress-track" style="height: 0.625rem;">
+                        <div class="vl-progress-fill" style="width: {goal_progress}%; background: linear-gradient(90deg, var(--primary), var(--teal));"></div>
+                    </div>
                 </div>
-                <div style="background: #E5E5EA; height: 10px; border-radius: 5px; overflow: hidden;">
-                    <div style="background: linear-gradient(90deg, #007AFF, #8b5cf6); height: 100%;
-                                width: {goal_progress}%; border-radius: 5px; transition: width 0.3s;"></div>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-
-        # Weekly stats grid
-        st.markdown(f"""
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="background: #F2F2F7; padding: 12px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: 700; color: #007AFF;">{weekly_vocab_reviewed}</div>
-                    <div style="font-size: 12px; color: #8E8E93; text-transform: uppercase;">Items Reviewed</div>
-                </div>
-                <div style="background: #F2F2F7; padding: 12px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: 700; color: #10b981;">{new_words_this_week}</div>
-                    <div style="font-size: 12px; color: #8E8E93; text-transform: uppercase;">New Words</div>
-                </div>
-                <div style="background: #F2F2F7; padding: 12px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: 700; color: #f59e0b;">{weekly_errors_fixed}</div>
-                    <div style="font-size: 12px; color: #8E8E93; text-transform: uppercase;">Errors Fixed</div>
-                </div>
-                <div style="background: #F2F2F7; padding: 12px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: 700; color: #3b82f6;">{weekly_speaking:.0f}</div>
-                    <div style="font-size: 12px; color: #8E8E93; text-transform: uppercase;">Min Speaking</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div style="background: var(--surface-alt); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--blue);">{weekly_vocab_reviewed}</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Items Reviewed</div>
+                    </div>
+                    <div style="background: var(--surface-alt); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">{new_words_this_week}</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">New Words</div>
+                    </div>
+                    <div style="background: var(--surface-alt); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--orange);">{weekly_errors_fixed}</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Errors Fixed</div>
+                    </div>
+                    <div style="background: var(--surface-alt); padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--purple);">{weekly_speaking:.0f}</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Min Speaking</div>
+                    </div>
                 </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+        """)
 
     with report_col2:
-        # Streak and motivation
-        st.markdown(f"""
-        <div class="card" style="padding: 20px;">
-            <h4 style="margin-bottom: 16px; color: #000000;">Streak & Motivation</h4>
-            <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, #fef3c7, #fde68a);
-                        border-radius: 12px; margin-bottom: 16px;">
-                <div style="font-size: 48px;">🔥</div>
-                <div style="font-size: 36px; font-weight: 700; color: #b45309;">{streak}</div>
-                <div style="color: #92400e; font-weight: 500;">Day Streak</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-        # Motivational message based on streak
+        # Streak & motivation
         if streak == 0:
-            message = "Start your streak today! Every journey begins with a single step."
-            emoji = "🌱"
+            message, emoji = "Start your streak today!", "🌱"
         elif streak < 7:
-            message = "Great start! Keep going to build a strong habit."
-            emoji = "💪"
+            message, emoji = "Great start! Keep building the habit.", "💪"
         elif streak < 30:
-            message = "Fantastic consistency! You're building real momentum."
-            emoji = "🌟"
+            message, emoji = "Fantastic consistency! Real momentum.", "🌟"
         elif streak < 100:
-            message = "Incredible dedication! You're mastering the art of consistency."
-            emoji = "🏆"
+            message, emoji = "Incredible dedication!", "🏆"
         else:
-            message = "Legendary! Your commitment is truly inspiring."
-            emoji = "👑"
+            message, emoji = "Legendary commitment!", "👑"
 
-        st.markdown(f"""
-            <div style="text-align: center; padding: 12px; background: #f0fdf4; border-radius: 8px;
-                        border: 1px solid #bbf7d0;">
-                <span style="font-size: 24px;">{emoji}</span>
-                <p style="color: #166534; margin: 8px 0 0 0; font-size: 14px;">{message}</p>
+        render_html(f"""
+            <div class="vl-card">
+                <h4 style="margin: 0 0 1rem 0; color: var(--text);">Streak & Motivation</h4>
+                <div style="text-align: center; padding: 1rem; background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+                            border-radius: 0.75rem; margin-bottom: 1rem;">
+                    <div style="font-size: 3rem;">🔥</div>
+                    <div style="font-size: 2.25rem; font-weight: 800; color: #92400E;">{streak}</div>
+                    <div style="color: #92400E; font-weight: 600; font-size: 0.875rem;">Day Streak</div>
+                </div>
+                <div style="text-align: center; padding: 0.75rem; background: var(--primary-light);
+                            border-radius: 0.5rem; border: 1px solid #A7F3D0;">
+                    <span style="font-size: 1.5rem;">{emoji}</span>
+                    <p style="color: #065F46; margin: 0.5rem 0 0 0; font-size: 0.875rem;">{message}</p>
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+        """)
 
-    st.divider()
+    render_html('<hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">')
 
-    # ============================================
-    # WEEKLY ACTIVITY CHART
-    # ============================================
-    st.markdown("### Weekly Activity")
-
-    # Create activity data for last 7 days
+    # Weekly Activity Chart
+    render_section_header("Weekly Activity")
     activity_by_day = {}
     for i in range(7):
         day = date.today() - timedelta(days=6-i)
         activity_by_day[day.strftime('%a')] = {'active': False, 'items': 0}
 
-    # Mark active days from progress history
     for h in progress_history:
         try:
             h_date = datetime.strptime(h.get('metric_date', '')[:10], '%Y-%m-%d').date()
             if h_date >= week_ago:
                 day_name = h_date.strftime('%a')
                 if day_name in activity_by_day:
-                    items = (h.get('vocab_reviewed', 0) + h.get('grammar_reviewed', 0) +
-                             h.get('errors_fixed', 0))
+                    items = (h.get('vocab_reviewed', 0) + h.get('grammar_reviewed', 0) + h.get('errors_fixed', 0))
                     if items > 0:
                         activity_by_day[day_name] = {'active': True, 'items': items}
         except (ValueError, TypeError):
             pass
 
-    # Render activity chart
     day_cols = st.columns(7)
     for i, (day_name, data) in enumerate(activity_by_day.items()):
         with day_cols[i]:
             is_today = i == 6
-            bg_color = "#10b981" if data['active'] else ("#E5E5EA" if not is_today else "#fef3c7")
-            text_color = "#ffffff" if data['active'] else ("#8E8E93" if not is_today else "#b45309")
-            border = "2px solid #007AFF" if is_today else "none"
+            if data['active']:
+                bg_color = "var(--primary)"
+                text_color = "#FFFFFF"
+                content = "✓"
+            elif is_today:
+                bg_color = "var(--orange-light)"
+                text_color = "#92400E"
+                content = "?"
+            else:
+                bg_color = "var(--surface-alt)"
+                text_color = "var(--text-muted)"
+                content = day_name[0]
 
-            st.markdown(f"""
-            <div style="text-align: center;">
-                <div style="width: 48px; height: 48px; border-radius: 12px; background: {bg_color};
-                            display: flex; align-items: center; justify-content: center; margin: 0 auto 8px;
-                            border: {border};">
-                    <span style="color: {text_color}; font-weight: 600;">
-                        {"✓" if data['active'] else (day_name[0] if not is_today else "?")}
-                    </span>
+            border = "2px solid var(--primary)" if is_today else "none"
+            items_html = f'<div style="font-size: 0.65rem; color: var(--primary);">{data["items"]} items</div>' if data['active'] else ''
+
+            render_html(f"""
+                <div style="text-align: center;">
+                    <div style="width: 3rem; height: 3rem; border-radius: 0.75rem; background: {bg_color};
+                                display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem;
+                                border: {border};">
+                        <span style="color: {text_color}; font-weight: 600; font-size: 0.875rem;">{content}</span>
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">{day_name}</div>
+                    {items_html}
                 </div>
-                <div style="font-size: 12px; color: #8E8E93;">{day_name}</div>
-                {f'<div style="font-size: 11px; color: #10b981;">{data["items"]} items</div>' if data['active'] else ''}
-            </div>
-            """, unsafe_allow_html=True)
+            """)
 
-    st.divider()
+    render_html('<hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">')
 
-    # ============================================
-    # VOCABULARY GROWTH & ERROR TRENDS
-    # ============================================
+    # Vocabulary & Errors
     chart_col1, chart_col2 = st.columns(2)
 
     with chart_col1:
-        st.markdown("### Vocabulary Growth")
-
-        # Group vocab by week
+        render_section_header("Vocabulary Growth")
         vocab_by_week = defaultdict(int)
         for v in vocab_items:
             try:
@@ -1306,296 +992,137 @@ def render_progress_page():
                 pass
 
         if vocab_by_week:
-            # Show last 4 weeks
             sorted_weeks = sorted(vocab_by_week.keys())[-4:]
-            cumulative = 0
+            max_val = max(vocab_by_week[w] for w in sorted_weeks) if sorted_weeks else 1
 
-            st.markdown('<div class="card" style="padding: 16px;">', unsafe_allow_html=True)
+            render_html('<div class="vl-card">')
             for week in sorted_weeks:
-                cumulative += vocab_by_week[week]
                 week_display = datetime.strptime(week, '%Y-%m-%d').strftime('%b %d')
-                bar_width = min(100, (vocab_by_week[week] / max(vocab_by_week.values()) * 100)) if vocab_by_week else 0
-
-                st.markdown(f"""
-                <div style="margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span style="font-size: 13px; color: #8E8E93;">{week_display}</span>
-                        <span style="font-size: 13px; font-weight: 500; color: #000000;">+{vocab_by_week[week]} words</span>
+                bar_width = min(100, (vocab_by_week[week] / max_val * 100)) if max_val > 0 else 0
+                render_html(f"""
+                    <div style="margin-bottom: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">{week_display}</span>
+                            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text);">+{vocab_by_week[week]}</span>
+                        </div>
+                        <div class="vl-progress-track">
+                            <div class="vl-progress-fill" style="width: {bar_width}%; background: linear-gradient(90deg, var(--primary), var(--teal));"></div>
+                        </div>
                     </div>
-                    <div style="background: #E5E5EA; height: 8px; border-radius: 4px; overflow: hidden;">
-                        <div style="background: linear-gradient(90deg, #007AFF, #8b5cf6); height: 100%;
-                                    width: {bar_width}%; border-radius: 4px;"></div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            st.markdown(f"""
-                <div style="text-align: center; padding-top: 12px; border-top: 1px solid #E5E5EA;">
-                    <span style="font-size: 24px; font-weight: 700; color: #007AFF;">{total_vocab_count}</span>
-                    <span style="color: #8E8E93;"> total words</span>
+                """)
+            render_html(f"""
+                <div style="text-align: center; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+                    <span style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">{total_vocab_count}</span>
+                    <span style="color: var(--text-muted); font-size: 0.875rem;"> total words</span>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """)
         else:
-            render_empty_state("Start learning to see your vocabulary growth!", "📈")
+            render_empty_state("Start learning to see vocabulary growth!", "📈")
 
     with chart_col2:
-        st.markdown("### Error Patterns")
-
+        render_section_header("Error Patterns")
         if mistake_stats:
-            st.markdown('<div class="card" style="padding: 16px;">', unsafe_allow_html=True)
-
-            # Sort by count
             sorted_errors = sorted(mistake_stats.items(), key=lambda x: x[1].get('count', 0), reverse=True)[:5]
             max_count = max(e[1].get('count', 1) for e in sorted_errors) if sorted_errors else 1
 
+            render_html('<div class="vl-card">')
             for error_type, data in sorted_errors:
                 count = data.get('count', 0)
                 avg_ease = data.get('avg_ease', 2.5)
                 bar_width = (count / max_count * 100) if max_count > 0 else 0
 
-                # Color based on improvement (higher ease = more improved)
                 if avg_ease >= 2.8:
-                    bar_color = "#10b981"  # Green - improving
-                    status = "Improving"
+                    bar_color, status = "var(--primary)", "Improving"
                 elif avg_ease >= 2.2:
-                    bar_color = "#f59e0b"  # Yellow - working on it
-                    status = "In Progress"
+                    bar_color, status = "var(--orange)", "In Progress"
                 else:
-                    bar_color = "#ef4444"  # Red - needs work
-                    status = "Needs Focus"
+                    bar_color, status = "var(--red)", "Needs Focus"
 
-                st.markdown(f"""
-                <div style="margin-bottom: 14px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span style="font-size: 13px; color: #000000;">{error_type.replace('_', ' ').title()}</span>
-                        <span style="font-size: 11px; color: {bar_color}; font-weight: 500;">{status}</span>
+                render_html(f"""
+                    <div style="margin-bottom: 0.875rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="font-size: 0.8rem; color: var(--text);">{error_type.replace('_', ' ').title()}</span>
+                            <span style="font-size: 0.7rem; color: {bar_color}; font-weight: 600;">{status}</span>
+                        </div>
+                        <div class="vl-progress-track">
+                            <div class="vl-progress-fill" style="width: {bar_width}%; background: {bar_color};"></div>
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.125rem;">{count} occurrences</div>
                     </div>
-                    <div style="background: #E5E5EA; height: 8px; border-radius: 4px; overflow: hidden;">
-                        <div style="background: {bar_color}; height: 100%; width: {bar_width}%; border-radius: 4px;"></div>
-                    </div>
-                    <div style="font-size: 11px; color: #8E8E93; margin-top: 2px;">{count} occurrences</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            st.markdown('</div>', unsafe_allow_html=True)
+                """)
+            render_html('</div>')
         else:
-            render_empty_state("Complete exercises to track your error patterns!", "🎯")
+            render_empty_state("Complete exercises to track error patterns!", "🎯")
 
-    st.divider()
+    render_html('<hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">')
 
-    # ============================================
-    # TIME SPENT BY ACTIVITY
-    # ============================================
-    st.markdown("### Time by Activity")
-
-    # Aggregate time by activity type
-    time_by_activity = defaultdict(int)
-    for activity in activity_history:
-        act_type = activity.get('activity_type', 'other')
-        duration = activity.get('duration_seconds', 0)
-        time_by_activity[act_type] += duration
-
-    if time_by_activity:
-        # Convert to minutes and sort
-        time_minutes = {k: v / 60 for k, v in time_by_activity.items()}
-        sorted_activities = sorted(time_minutes.items(), key=lambda x: x[1], reverse=True)[:6]
-        total_time = sum(time_minutes.values())
-
-        activity_icons = {
-            'vocab_review': '📚',
-            'conversation': '💬',
-            'writing': '✍️',
-            'speaking': '🎤',
-            'grammar': '📝',
-            'review': '🔄',
-            'flashcard': '🃏',
-            'exercise': '🎯',
-        }
-
-        activity_names = {
-            'vocab_review': 'Vocabulary',
-            'conversation': 'Conversation',
-            'writing': 'Writing',
-            'speaking': 'Speaking',
-            'grammar': 'Grammar',
-            'review': 'Review',
-            'flashcard': 'Flashcards',
-            'exercise': 'Exercises',
-        }
-
-        act_cols = st.columns(min(len(sorted_activities), 6))
-        for i, (act_type, minutes) in enumerate(sorted_activities):
-            if i < len(act_cols):
-                with act_cols[i]:
-                    icon = activity_icons.get(act_type, '📌')
-                    name = activity_names.get(act_type, act_type.replace('_', ' ').title())
-                    pct = (minutes / total_time * 100) if total_time > 0 else 0
-
-                    st.markdown(f"""
-                    <div class="stat-card" style="text-align: center; padding: 16px;">
-                        <div style="font-size: 24px; margin-bottom: 8px;">{icon}</div>
-                        <div style="font-size: 20px; font-weight: 700; color: #000000;">{minutes:.0f}</div>
-                        <div style="font-size: 12px; color: #8E8E93;">minutes</div>
-                        <div style="font-size: 11px; color: #007AFF; margin-top: 4px;">{pct:.0f}%</div>
-                        <div style="font-size: 12px; color: #3C3C43; margin-top: 4px;">{name}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-    else:
-        render_empty_state("Activity time tracking will appear as you practice!", "⏱️")
-
-    st.divider()
-
-    # ============================================
-    # LEARNING MILESTONES
-    # ============================================
-    st.markdown("### Learning Milestones")
-
-    # Define milestones
-    vocab_milestones = [
-        (50, "Beginner", "🌱"),
-        (100, "Getting Started", "🌿"),
-        (250, "Building Foundation", "🌳"),
-        (500, "Solid Progress", "⭐"),
-        (1000, "Advanced Learner", "🌟"),
-        (2500, "Expert Level", "💫"),
-        (5000, "Master", "👑"),
-    ]
-
-    streak_milestones = [
-        (7, "One Week", "🔥"),
-        (30, "One Month", "🔥🔥"),
-        (100, "100 Days", "🔥🔥🔥"),
-        (365, "One Year", "🏆"),
-    ]
-
-    errors_fixed = stats.get('total_errors', 0)
-    error_milestones = [
-        (10, "First Corrections", "🔧"),
-        (50, "Active Learner", "🛠️"),
-        (100, "Error Hunter", "🎯"),
-        (500, "Perfectionist", "💎"),
-    ]
-
+    # Milestones
+    render_section_header("Learning Milestones")
     milestone_col1, milestone_col2, milestone_col3 = st.columns(3)
 
-    with milestone_col1:
-        st.markdown("""
-        <div class="card" style="padding: 16px;">
-            <h4 style="margin-bottom: 12px; color: #000000;">📚 Vocabulary</h4>
-        """, unsafe_allow_html=True)
+    def _render_milestones(milestones, current_val, title, container):
+        with container:
+            render_html(f'<div class="vl-card"><h4 style="margin: 0 0 0.75rem 0; color: var(--text);">{title}</h4>')
+            for threshold, name, emoji in milestones:
+                achieved = current_val >= threshold
+                opacity = "1" if achieved else "0.35"
+                check = '<span style="color: var(--primary); font-weight: 700;">✓</span>' if achieved else ''
+                render_html(f"""
+                    <div style="display: flex; align-items: center; gap: 0.625rem; padding: 0.5rem 0;
+                                opacity: {opacity}; border-bottom: 1px solid var(--surface-alt);">
+                        <span style="font-size: 1.25rem;">{emoji}</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 500; color: var(--text); font-size: 0.875rem;">{threshold}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">{name}</div>
+                        </div>
+                        {check}
+                    </div>
+                """)
+            render_html('</div>')
 
-        for threshold, name, emoji in vocab_milestones:
-            achieved = total_vocab_count >= threshold
-            opacity = "1" if achieved else "0.4"
-            check = "✓" if achieved else ""
+    _render_milestones(
+        [(50, "Beginner", "🌱"), (100, "Getting Started", "🌿"), (250, "Foundation", "🌳"),
+         (500, "Solid Progress", "⭐"), (1000, "Advanced", "🌟")],
+        total_vocab_count, "📚 Vocabulary", milestone_col1
+    )
+    _render_milestones(
+        [(7, "One Week", "🔥"), (30, "One Month", "🔥🔥"), (100, "100 Days", "🔥🔥🔥"), (365, "One Year", "🏆")],
+        streak, "🔥 Streak", milestone_col2
+    )
+    _render_milestones(
+        [(10, "First Fixes", "🔧"), (50, "Active Learner", "🛠️"), (100, "Error Hunter", "🎯"), (500, "Perfectionist", "💎")],
+        stats.get('total_errors', 0), "🎯 Errors Fixed", milestone_col3
+    )
 
-            st.markdown(f"""
-            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;
-                        opacity: {opacity}; border-bottom: 1px solid #F2F2F7;">
-                <span style="font-size: 20px;">{emoji}</span>
-                <div style="flex: 1;">
-                    <div style="font-weight: 500; color: #000000;">{threshold} words</div>
-                    <div style="font-size: 12px; color: #8E8E93;">{name}</div>
-                </div>
-                <span style="color: #10b981; font-weight: 600;">{check}</span>
-            </div>
-            """, unsafe_allow_html=True)
+    render_html('<hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">')
 
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with milestone_col2:
-        st.markdown("""
-        <div class="card" style="padding: 16px;">
-            <h4 style="margin-bottom: 12px; color: #000000;">🔥 Streak</h4>
-        """, unsafe_allow_html=True)
-
-        for threshold, name, emoji in streak_milestones:
-            achieved = streak >= threshold
-            opacity = "1" if achieved else "0.4"
-            check = "✓" if achieved else ""
-
-            st.markdown(f"""
-            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;
-                        opacity: {opacity}; border-bottom: 1px solid #F2F2F7;">
-                <span style="font-size: 20px;">{emoji}</span>
-                <div style="flex: 1;">
-                    <div style="font-weight: 500; color: #000000;">{threshold} days</div>
-                    <div style="font-size: 12px; color: #8E8E93;">{name}</div>
-                </div>
-                <span style="color: #10b981; font-weight: 600;">{check}</span>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with milestone_col3:
-        st.markdown("""
-        <div class="card" style="padding: 16px;">
-            <h4 style="margin-bottom: 12px; color: #000000;">🎯 Errors Fixed</h4>
-        """, unsafe_allow_html=True)
-
-        for threshold, name, emoji in error_milestones:
-            achieved = errors_fixed >= threshold
-            opacity = "1" if achieved else "0.4"
-            check = "✓" if achieved else ""
-
-            st.markdown(f"""
-            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;
-                        opacity: {opacity}; border-bottom: 1px solid #F2F2F7;">
-                <span style="font-size: 20px;">{emoji}</span>
-                <div style="flex: 1;">
-                    <div style="font-weight: 500; color: #000000;">{threshold} errors</div>
-                    <div style="font-size: 12px; color: #8E8E93;">{name}</div>
-                </div>
-                <span style="color: #10b981; font-weight: 600;">{check}</span>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    st.divider()
-
-    # ============================================
-    # AREAS TO FOCUS & IMPROVED AREAS
-    # ============================================
+    # Focus areas and strengths
     focus_col1, focus_col2 = st.columns(2)
 
     with focus_col1:
-        st.markdown("### Areas Needing Work")
+        render_section_header("Areas Needing Work")
         if weak_areas:
             for i, area in enumerate(weak_areas[:5]):
-                priority_colors = ["#ef4444", "#f59e0b", "#eab308", "#84cc16", "#22c55e"]
-                color = priority_colors[min(i, len(priority_colors)-1)]
-
-                st.markdown(f"""
-                <div style="display: flex; align-items: center; gap: 12px; padding: 12px;
-                            background: #ffffff; border: 1px solid #E5E5EA; border-left: 4px solid {color};
-                            border-radius: 8px; margin-bottom: 8px;">
-                    <div style="font-size: 18px; width: 28px; height: 28px; background: {color}20;
-                                border-radius: 50%; display: flex; align-items: center; justify-content: center;
-                                color: {color}; font-weight: 600;">{i+1}</div>
-                    <div style="color: #000000; font-weight: 500;">{area}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                colors = ["#EF4444", "#F59E0B", "#EAB308", "#84CC16", "#22C55E"]
+                color = colors[min(i, len(colors)-1)]
+                render_html(f"""
+                    <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem;
+                                background: var(--surface); border: 1px solid var(--border);
+                                border-left: 3px solid {color}; border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                        <div style="width: 1.5rem; height: 1.5rem; background: {color}15; border-radius: 50%;
+                                    display: flex; align-items: center; justify-content: center;
+                                    color: {color}; font-weight: 700; font-size: 0.75rem;">{i+1}</div>
+                        <div style="color: var(--text); font-weight: 500; font-size: 0.875rem;">{area}</div>
+                    </div>
+                """)
         else:
-            st.markdown("""
-            <div style="text-align: center; padding: 24px; background: #f0fdf4; border-radius: 12px;
-                        border: 1px solid #bbf7d0;">
-                <div style="font-size: 32px; margin-bottom: 8px;">🎉</div>
-                <div style="color: #166534; font-weight: 500;">No weak areas identified yet!</div>
-                <div style="color: #15803d; font-size: 14px;">Keep practicing to discover areas to improve.</div>
-            </div>
-            """, unsafe_allow_html=True)
+            render_empty_state("Keep practicing to discover areas to improve.", "🎉")
 
     with focus_col2:
-        st.markdown("### Strengths")
-
-        # Analyze fingerprint summary for improved areas
+        render_section_header("Strengths")
         fingerprint_summary = get_fingerprint_summary()
-
         if fingerprint_summary:
-            # Find categories with high confidence (improved areas)
             strong_areas = [
                 (cat, data) for cat, data in fingerprint_summary.items()
                 if data.get('avg_confidence', 0) >= 0.7 and data.get('total_correct', 0) > 5
@@ -1606,81 +1133,45 @@ def render_progress_page():
                 for cat, data in strong_areas[:5]:
                     confidence = data.get('avg_confidence', 0) * 100
                     cat_display = cat.replace('_', ' ').title()
-
-                    st.markdown(f"""
-                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px;
-                                background: #f0fdf4; border: 1px solid #bbf7d0;
-                                border-radius: 8px; margin-bottom: 8px;">
-                        <div style="font-size: 18px;">✓</div>
-                        <div style="flex: 1;">
-                            <div style="color: #166534; font-weight: 500;">{cat_display}</div>
+                    render_html(f"""
+                        <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem;
+                                    background: var(--primary-light); border: 1px solid #A7F3D0;
+                                    border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                            <span style="color: var(--primary); font-weight: 700;">✓</span>
+                            <div style="flex: 1; color: #065F46; font-weight: 500; font-size: 0.875rem;">{cat_display}</div>
+                            <div style="color: #047857; font-weight: 700; font-size: 0.875rem;">{confidence:.0f}%</div>
                         </div>
-                        <div style="color: #15803d; font-weight: 600;">{confidence:.0f}%</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    """)
             else:
-                st.markdown("""
-                <div style="text-align: center; padding: 24px; background: #F2F2F7; border-radius: 12px;
-                            border: 1px solid #E5E5EA;">
-                    <div style="font-size: 32px; margin-bottom: 8px;">💪</div>
-                    <div style="color: #3C3C43; font-weight: 500;">Keep practicing!</div>
-                    <div style="color: #8E8E93; font-size: 14px;">Your strengths will appear as you improve.</div>
-                </div>
-                """, unsafe_allow_html=True)
+                render_empty_state("Keep practicing to discover your strengths.", "💪")
         else:
-            st.markdown("""
-            <div style="text-align: center; padding: 24px; background: #F2F2F7; border-radius: 12px;
-                        border: 1px solid #E5E5EA;">
-                <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
-                <div style="color: #3C3C43; font-weight: 500;">Analysis in progress</div>
-                <div style="color: #8E8E93; font-size: 14px;">Complete more exercises to see your strengths.</div>
-            </div>
-            """, unsafe_allow_html=True)
+            render_empty_state("Complete more exercises to see strengths.", "📊")
 
-    st.divider()
+    render_html('<hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">')
 
-    # ============================================
-    # QUICK ACTIONS
-    # ============================================
-    st.markdown("### Take Action")
-
+    # Quick actions
+    render_section_header("Take Action")
     action_cols = st.columns(3)
 
-    with action_cols[0]:
-        st.markdown("""
-        <div class="card" style="text-align: center; padding: 20px;">
-            <div style="font-size: 32px; margin-bottom: 8px;">📋</div>
-            <div style="font-weight: 600; color: #000000;">My Spanish Portfolio</div>
-            <div style="font-size: 13px; color: #8E8E93; margin-bottom: 12px;">View your complete learning record</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("View Portfolio", use_container_width=True, key="prog_portfolio"):
-            st.session_state.current_page = "My Spanish"
-            st.rerun()
+    actions = [
+        ("📋", "My Spanish Portfolio", "Your complete learning record", "My Spanish"),
+        ("🔍", "Error Analysis", "Deep dive into error patterns", "Error Notebook"),
+        ("🔄", "Start Review", "Review items due today", "Review"),
+    ]
 
-    with action_cols[1]:
-        st.markdown("""
-        <div class="card" style="text-align: center; padding: 20px;">
-            <div style="font-size: 32px; margin-bottom: 8px;">🔍</div>
-            <div style="font-weight: 600; color: #000000;">Error Analysis</div>
-            <div style="font-size: 13px; color: #8E8E93; margin-bottom: 12px;">Deep dive into your error patterns</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("View Errors", use_container_width=True, key="prog_errors"):
-            st.session_state.current_page = "Error Notebook"
-            st.rerun()
-
-    with action_cols[2]:
-        st.markdown("""
-        <div class="card" style="text-align: center; padding: 20px;">
-            <div style="font-size: 32px; margin-bottom: 8px;">🔄</div>
-            <div style="font-weight: 600; color: #000000;">Start Review</div>
-            <div style="font-size: 13px; color: #8E8E93; margin-bottom: 12px;">Review items due today</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Start Review", type="primary", use_container_width=True, key="prog_review"):
-            st.session_state.current_page = "Review"
-            st.rerun()
+    for col, (icon, title, desc, page) in zip(action_cols, actions):
+        with col:
+            render_html(f"""
+                <div class="vl-feature-card">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">{icon}</div>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 0.25rem;">{title}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">{desc}</div>
+                </div>
+            """)
+            btn_type = "primary" if page == "Review" else "secondary"
+            if st.button(f"Open", use_container_width=True, key=f"prog_{page}", type=btn_type):
+                st.session_state.current_page = page
+                st.rerun()
 
 
 # ============================================
@@ -1710,15 +1201,12 @@ from pages.my_spanish import render_my_spanish_page
 
 def main():
     """Main application entry point."""
-    # Show onboarding for new users
     if st.session_state.show_onboarding or st.session_state.active_profile_id is None:
         render_onboarding()
         return
 
-    # Render sidebar
     render_sidebar()
 
-    # Route to page
     page = st.session_state.current_page
 
     page_map = {
@@ -1728,7 +1216,6 @@ def main():
         "Progress": render_progress_page,
         "Review": render_review_hub_page,
         "Settings": render_settings_page,
-        # Sub-pages
         "Topic Diversity": render_topic_diversity_page,
         "Context Units": render_context_units_page,
         "Verb Studio": render_verb_studio_page,
