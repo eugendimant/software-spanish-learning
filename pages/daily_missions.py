@@ -661,7 +661,7 @@ def render_mission(mission: dict):
 
     # Mission card
     st.markdown(f"""
-    <div class="card" style="border-left: 4px solid #6366f1;">
+    <div class="card" style="border-left: 4px solid #007AFF;">
         <div class="card-header">
             <div class="card-icon">{'🎤' if mission_type == 'speaking' else '✍️'}</div>
             <h3 class="card-title">{title}</h3>
@@ -719,7 +719,7 @@ def render_speaking_input(mission: dict):
 
     # Web Speech API recorder
     components.html("""
-    <div style="padding: 1rem; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
+    <div style="padding: 1rem; background: #F2F2F7; border-radius: 10px; border: 1px solid #E5E5EA;">
         <div id="recorder-status" style="margin-bottom: 1rem; font-weight: 500;">Click to start recording</div>
         <button id="record-btn" onclick="toggleRecording()"
             style="padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none;

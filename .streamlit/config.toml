@@ -1,13 +1,13 @@
 [theme]
 base = "light"
-primaryColor = "#6366f1"
-backgroundColor = "#ffffff"
-secondaryBackgroundColor = "#f8fafc"
-textColor = "#0f172a"
+primaryColor = "#007AFF"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F2F2F7"
+textColor = "#000000"
 font = "sans serif"
 
-[ui]
-hideSidebarNav = false
+[server]
+headless = true
 
-[client]
-showSidebarNavigation = true
+[browser]
+gatherUsageStats = false

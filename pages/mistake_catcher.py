@@ -128,7 +128,7 @@ def render_text_checker():
         if grammar_issues:
             # Summary - encouraging tone
             st.markdown(f"""
-            <div class="card" style="border-left: 4px solid #6366f1;">
+            <div class="card" style="border-left: 4px solid #007AFF;">
                 <strong>Here are {len(grammar_issues)} suggestion{'s' if len(grammar_issues) > 1 else ''} to improve your writing:</strong>
             </div>
             """, unsafe_allow_html=True)
@@ -360,7 +360,7 @@ def render_mistakes_reference():
                             <span style="color: #10b981; font-weight: 600;">{mistake['correction']}</span>
                         </div>
                     </div>
-                    <p style="margin-top: 0.5rem; color: #64748b;">{mistake['explanation']}</p>
+                    <p style="margin-top: 0.5rem; color: #8E8E93;">{mistake['explanation']}</p>
                 </div>
                 """, unsafe_allow_html=True)
 

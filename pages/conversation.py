@@ -1177,7 +1177,7 @@ def render_scenario_selection():
                     <h4 style="margin: 0;">{scenario['title']}</h4>
                     <span class="pill pill-{formality_color}">{formality_icon} {formality.title()}</span>
                 </div>
-                <p style="color: #64748b; margin-bottom: 0.75rem;">{scenario['brief']}</p>
+                <p style="color: #8E8E93; margin-bottom: 0.75rem;">{scenario['brief']}</p>
                 <div style="background: rgba(99, 102, 241, 0.1); padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.85rem;">
                     <strong>Speaking with:</strong> {relationship_label}
                 </div>

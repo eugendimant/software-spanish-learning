@@ -1,43 +1,58 @@
 """
-Clean design system for Streamlit app.
-Works with Streamlit's light theme (set in .streamlit/config.toml)
+iPhone-style clean white design system.
+Pure white backgrounds with colorful accents.
 """
 import streamlit as st
 from textwrap import dedent
 
 
 # ============================================
-# DESIGN TOKENS
+# DESIGN TOKENS - iPhone Style
 # ============================================
 COLORS = {
-    "bg_base": "#ffffff",
-    "bg_card": "#f8fafc",
-    "bg_elevated": "#f1f5f9",
-    "text_primary": "#0f172a",
-    "text_secondary": "#475569",
-    "text_muted": "#64748b",
-    "accent": "#6366f1",
-    "accent_light": "#818cf8",
-    "success": "#10b981",
-    "warning": "#f59e0b",
-    "error": "#ef4444",
-    "info": "#3b82f6",
-    "border": "#e2e8f0",
+    # Backgrounds - Pure white
+    "bg_base": "#FFFFFF",
+    "bg_card": "#FFFFFF",
+    "bg_elevated": "#F2F2F7",
+    "bg_grouped": "#F2F2F7",
+
+    # Text - iOS style
+    "text_primary": "#000000",
+    "text_secondary": "#3C3C43",
+    "text_tertiary": "#8E8E93",
+
+    # iOS Accent Colors
+    "blue": "#007AFF",
+    "green": "#34C759",
+    "orange": "#FF9500",
+    "red": "#FF3B30",
+    "purple": "#AF52DE",
+    "pink": "#FF2D55",
+    "teal": "#5AC8FA",
+    "indigo": "#5856D6",
+
+    # Semantic
+    "success": "#34C759",
+    "warning": "#FF9500",
+    "error": "#FF3B30",
+    "info": "#007AFF",
+
+    # Borders
+    "separator": "#C6C6C8",
+    "border": "#E5E5EA",
 }
 
-SPACING = {"xs": "4px", "sm": "8px", "md": "16px", "lg": "24px", "xl": "32px"}
-RADII = {"sm": "8px", "md": "12px", "lg": "16px", "xl": "20px", "full": "9999px"}
+SPACING = {"xs": "4px", "sm": "8px", "md": "16px", "lg": "20px", "xl": "32px"}
+RADII = {"sm": "8px", "md": "12px", "lg": "16px", "xl": "22px", "full": "9999px"}
 
 
 def get_css() -> str:
-    """Return CSS that works with Streamlit's light theme."""
+    """Return iPhone-style CSS - clean white with colorful accents."""
     return """
     <style>
-    /* Import Inter font */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
     /* ============================================
-       HIDE SIDEBAR COLLAPSE BUTTON - Keep sidebar always visible
+       iPHONE-STYLE DESIGN SYSTEM
+       Pure White • Colorful Accents • Clean
        ============================================ */
     :root {
         --bg-surface: rgba(255, 255, 255, 0.03);
@@ -67,12 +82,7 @@ def get_css() -> str:
             'Segoe UI Emoji', 'Noto Color Emoji' !important;
     }
 
-    /* Force sidebar to always be visible */
-    [data-testid="stSidebar"] {
-        transform: none !important;
-        width: 300px !important;
-        min-width: 300px !important;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     /* Hide Streamlit branding */
     footer,
@@ -99,42 +109,38 @@ def get_css() -> str:
     }
 
     /* ============================================
-       PARAGRAPHS AND TEXT
+       SIDEBAR - Clean White
        ============================================ */
-    p, .stMarkdown p, .stText, span {
-        color: #334155 !important;
+    [data-testid="stSidebar"],
+    [data-testid="stSidebar"] > div,
+    section[data-testid="stSidebar"] {
+        background: #F2F2F7 !important;
+        background-color: #F2F2F7 !important;
     }
 
-    label {
-        color: #334155 !important;
-        font-weight: 500 !important;
+    /* Hide sidebar collapse button */
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="collapsedControl"],
+    button[kind="header"] {
+        display: none !important;
     }
 
-    strong, b { color: #0f172a !important; }
-
-    /* ============================================
-       SIDEBAR STYLING
-       ============================================ */
-    [data-testid="stSidebar"] {
-        background-color: #f8fafc !important;
-    }
-
+    /* Sidebar content */
     [data-testid="stSidebar"] h1,
     [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3,
-    [data-testid="stSidebar"] h4 {
-        color: #64748b !important;
+    [data-testid="stSidebar"] h3 {
+        color: #8E8E93 !important;
         font-size: 0.75rem !important;
         font-weight: 600 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.05em !important;
+        letter-spacing: 0.5px !important;
     }
 
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] span,
     [data-testid="stSidebar"] div,
     [data-testid="stSidebar"] label {
-        color: #334155 !important;
+        color: #000000 !important;
     }
 
     /* Hide default Streamlit pages navigation (use custom nav) */
@@ -143,30 +149,61 @@ def get_css() -> str:
     }
 
     /* ============================================
-       BUTTONS
+       TYPOGRAPHY - iOS Style
        ============================================ */
-    .stButton > button {
-        font-family: 'Inter', sans-serif !important;
-        font-weight: 500 !important;
-        border-radius: 10px !important;
-        padding: 0.6rem 1.25rem !important;
-        min-height: 44px !important;
-        transition: all 0.15s ease !important;
+    html, body, .stApp, .stMarkdown, p, span, div, label, button, input, textarea {
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif !important;
+        -webkit-font-smoothing: antialiased !important;
     }
 
-    /* Secondary buttons - gray background, dark text */
+    h1, h2, h3, h4, h5, h6,
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
+        color: #000000 !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.5px !important;
+    }
+
+    h1, .stMarkdown h1 { font-size: 34px !important; }
+    h2, .stMarkdown h2 { font-size: 28px !important; }
+    h3, .stMarkdown h3 { font-size: 22px !important; }
+    h4, .stMarkdown h4 { font-size: 17px !important; font-weight: 600 !important; }
+
+    p, .stMarkdown p, .stText {
+        color: #3C3C43 !important;
+        font-size: 17px !important;
+        line-height: 1.5 !important;
+    }
+
+    label {
+        color: #000000 !important;
+        font-weight: 500 !important;
+    }
+
+    /* ============================================
+       BUTTONS - iOS Style
+       ============================================ */
+    .stButton > button {
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif !important;
+        font-weight: 600 !important;
+        font-size: 17px !important;
+        border-radius: 12px !important;
+        padding: 12px 20px !important;
+        min-height: 50px !important;
+        transition: all 0.2s ease !important;
+        border: none !important;
+    }
+
+    /* Secondary button - Light gray fill */
     .stButton > button:not([kind="primary"]):not([data-testid="baseButton-primary"]) {
-        background-color: #f1f5f9 !important;
-        color: #0f172a !important;
-        border: 1px solid #e2e8f0 !important;
+        background: #F2F2F7 !important;
+        color: #007AFF !important;
     }
 
     .stButton > button:not([kind="primary"]):not([data-testid="baseButton-primary"]):hover {
-        background-color: #e2e8f0 !important;
-        color: #0f172a !important;
+        background: #E5E5EA !important;
     }
 
-    /* Primary buttons - purple background, white text */
+    /* Primary button - iOS Blue */
     .stButton > button[kind="primary"],
     .stButton > button[data-testid="baseButton-primary"] {
         background-color: #6366f1 !important;
@@ -192,7 +229,7 @@ def get_css() -> str:
     }
 
     /* ============================================
-       FORM INPUTS
+       FORM INPUTS - iOS Style
        ============================================ */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea,
@@ -233,11 +270,12 @@ def get_css() -> str:
     }
 
     /* ============================================
-       SELECT/DROPDOWN
+       SELECT / DROPDOWN
        ============================================ */
     .stSelectbox > div > div {
-        background-color: #ffffff !important;
-        color: #0f172a !important;
+        background: #FFFFFF !important;
+        border: 1px solid #C6C6C8 !important;
+        border-radius: 10px !important;
     }
 
     /* Radio buttons - make selection obvious */
@@ -281,51 +319,143 @@ def get_css() -> str:
     }
 
     /* ============================================
-       PROGRESS BAR
+       RADIO BUTTONS - iOS Segmented Style
        ============================================ */
-    .stProgress > div > div {
-        background-color: #e2e8f0 !important;
+    .stRadio > div > label {
+        background: #FFFFFF !important;
+        border: 1px solid #E5E5EA !important;
+        border-radius: 10px !important;
+        padding: 12px 16px !important;
+        color: #000000 !important;
+        font-weight: 500 !important;
     }
 
-    .stProgress > div > div > div {
-        background: linear-gradient(90deg, #6366f1, #8b5cf6) !important;
+    .stRadio > div > label:hover {
+        background: #F2F2F7 !important;
+    }
+
+    .stRadio > div > label[data-checked="true"],
+    .stRadio > div > label:has(input:checked) {
+        background: #007AFF !important;
+        border-color: #007AFF !important;
+        color: #FFFFFF !important;
     }
 
     /* ============================================
-       CUSTOM CARD CLASSES
+       PROGRESS BAR - iOS Style
+       ============================================ */
+    .stProgress > div > div {
+        background: #E5E5EA !important;
+        border-radius: 4px !important;
+        height: 8px !important;
+    }
+
+    .stProgress > div > div > div {
+        background: linear-gradient(90deg, #007AFF, #5AC8FA) !important;
+        border-radius: 4px !important;
+    }
+
+    /* ============================================
+       TABS - iOS Segmented Control
+       ============================================ */
+    .stTabs [data-baseweb="tab-list"] {
+        background: #F2F2F7 !important;
+        border-radius: 10px !important;
+        padding: 2px !important;
+        gap: 2px !important;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        background: transparent !important;
+        color: #8E8E93 !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        border: none !important;
+    }
+
+    .stTabs [data-baseweb="tab"]:hover {
+        color: #000000 !important;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    }
+
+    /* ============================================
+       EXPANDER
+       ============================================ */
+    .streamlit-expanderHeader {
+        background: #FFFFFF !important;
+        border: 1px solid #E5E5EA !important;
+        border-radius: 12px !important;
+        color: #000000 !important;
+    }
+
+    .streamlit-expanderContent {
+        background: #FFFFFF !important;
+        border: 1px solid #E5E5EA !important;
+        border-top: none !important;
+        border-radius: 0 0 12px 12px !important;
+    }
+
+    /* ============================================
+       ALERTS
+       ============================================ */
+    .stAlert, div[data-testid="stAlert"] {
+        background: #F2F2F7 !important;
+        border: none !important;
+        border-radius: 12px !important;
+        color: #000000 !important;
+    }
+
+    /* ============================================
+       DIVIDER
+       ============================================ */
+    hr {
+        border: none !important;
+        border-top: 1px solid #E5E5EA !important;
+        margin: 20px 0 !important;
+    }
+
+    /* ============================================
+       CUSTOM CARD CLASSES - iOS Style
        ============================================ */
     .card {
-        background-color: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 12px !important;
-        padding: 1.25rem !important;
-        margin-bottom: 1rem !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E5E5EA !important;
+        border-radius: 16px !important;
+        padding: 16px !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
     }
 
     .card h3, .card h4 {
-        color: #0f172a !important;
-        margin-bottom: 0.5rem !important;
+        color: #000000 !important;
+        margin-bottom: 8px !important;
     }
 
     .card p {
-        color: #64748b !important;
+        color: #8E8E93 !important;
         margin: 0 !important;
+        font-size: 15px !important;
     }
 
     .glass-card {
-        background-color: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 12px !important;
-        padding: 1.25rem !important;
-        margin-bottom: 1rem !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E5E5EA !important;
+        border-radius: 16px !important;
+        padding: 16px !important;
+        margin-bottom: 12px !important;
     }
 
     /* Stat cards */
     .stat-card {
-        background-color: #f8fafc !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 12px !important;
-        padding: 1rem !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E5E5EA !important;
+        border-radius: 16px !important;
+        padding: 16px !important;
         text-align: center !important;
     }
 
@@ -338,9 +468,9 @@ def get_css() -> str:
     }
 
     .stat-value {
-        font-size: 1.5rem !important;
+        font-size: 34px !important;
         font-weight: 700 !important;
-        color: #0f172a !important;
+        color: #000000 !important;
     }
 
     .metric-value {
@@ -352,10 +482,11 @@ def get_css() -> str:
     }
 
     .stat-label {
-        font-size: 0.75rem !important;
-        color: #64748b !important;
+        font-size: 13px !important;
+        color: #8E8E93 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.05em !important;
+        letter-spacing: 0.5px !important;
+        font-weight: 600 !important;
     }
 
     .metric-label {
@@ -367,99 +498,102 @@ def get_css() -> str:
 
     /* Action Card */
     .action-card {
-        background-color: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 12px !important;
-        padding: 1rem !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E5E5EA !important;
+        border-radius: 16px !important;
+        padding: 16px !important;
     }
 
     .action-card-title {
         font-weight: 600 !important;
-        color: #0f172a !important;
+        color: #000000 !important;
+        font-size: 17px !important;
     }
 
     .action-card-subtitle {
-        color: #64748b !important;
-        font-size: 0.875rem !important;
+        color: #8E8E93 !important;
+        font-size: 15px !important;
     }
 
-    /* Pills/badges */
+    /* Pills/badges - Colorful */
     .pill {
         display: inline-block !important;
-        padding: 0.25rem 0.75rem !important;
-        border-radius: 9999px !important;
-        font-size: 0.75rem !important;
+        padding: 4px 12px !important;
+        border-radius: 20px !important;
+        font-size: 13px !important;
         font-weight: 600 !important;
     }
 
-    .pill-accent {
-        background-color: #eef2ff !important;
-        color: #4f46e5 !important;
+    .pill-accent, .pill-blue {
+        background: rgba(0, 122, 255, 0.12) !important;
+        color: #007AFF !important;
     }
 
-    .pill-success {
-        background-color: #d1fae5 !important;
-        color: #047857 !important;
+    .pill-success, .pill-green {
+        background: rgba(52, 199, 89, 0.12) !important;
+        color: #34C759 !important;
     }
 
-    .pill-warning {
-        background-color: #fef3c7 !important;
-        color: #b45309 !important;
+    .pill-warning, .pill-orange {
+        background: rgba(255, 149, 0, 0.12) !important;
+        color: #FF9500 !important;
     }
 
-    .pill-error {
-        background-color: #fee2e2 !important;
-        color: #b91c1c !important;
+    .pill-error, .pill-red {
+        background: rgba(255, 59, 48, 0.12) !important;
+        color: #FF3B30 !important;
+    }
+
+    .pill-purple {
+        background: rgba(175, 82, 222, 0.12) !important;
+        color: #AF52DE !important;
     }
 
     /* Feedback boxes */
     .feedback-box {
-        padding: 1rem !important;
-        border-radius: 10px !important;
-        margin: 1rem 0 !important;
+        padding: 16px !important;
+        border-radius: 12px !important;
+        margin: 12px 0 !important;
     }
 
     .feedback-success {
-        background-color: #d1fae5 !important;
-        border: 1px solid #6ee7b7 !important;
-        color: #047857 !important;
+        background: rgba(52, 199, 89, 0.12) !important;
+        color: #248A3D !important;
     }
 
     .feedback-error {
-        background-color: #fee2e2 !important;
-        border: 1px solid #fca5a5 !important;
-        color: #b91c1c !important;
+        background: rgba(255, 59, 48, 0.12) !important;
+        color: #D70015 !important;
     }
 
     .feedback-warning {
-        background-color: #fef3c7 !important;
-        border: 1px solid #fcd34d !important;
-        color: #b45309 !important;
+        background: rgba(255, 149, 0, 0.12) !important;
+        color: #C93400 !important;
     }
 
     .feedback-info {
-        background-color: #dbeafe !important;
-        border: 1px solid #93c5fd !important;
-        color: #1d4ed8 !important;
+        background: rgba(0, 122, 255, 0.12) !important;
+        color: #0040DD !important;
     }
 
     /* Hero section */
     .hero {
-        background: linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%) !important;
-        border: 1px solid #e0e7ff !important;
-        border-radius: 14px !important;
-        padding: 1.5rem !important;
-        margin-bottom: 1.5rem !important;
+        background: linear-gradient(135deg, rgba(0, 122, 255, 0.08), rgba(90, 200, 250, 0.08)) !important;
+        border: none !important;
+        border-radius: 20px !important;
+        padding: 24px !important;
+        margin-bottom: 20px !important;
     }
 
     .hero-title {
-        font-size: 1.5rem !important;
+        font-size: 28px !important;
         font-weight: 700 !important;
-        color: #0f172a !important;
+        color: #000000 !important;
     }
 
     .hero-subtitle {
-        color: #64748b !important;
+        color: #8E8E93 !important;
+        font-size: 17px !important;
     }
 
     .emoji-flag {
@@ -482,9 +616,16 @@ def get_css() -> str:
     }
 
     /* Hide Streamlit elements */
-    #MainMenu, footer, header[data-testid="stHeader"] {
+    #MainMenu, footer, header[data-testid="stHeader"], [data-testid="stToolbar"] {
         visibility: hidden !important;
+        display: none !important;
     }
+
+    /* Scrollbar - minimal */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #C6C6C8; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #8E8E93; }
     </style>
     """
 
@@ -512,8 +653,8 @@ def render_hero(title: str, subtitle: str = "", pills: list = None) -> None:
     """Render a hero section."""
     pills_html = ""
     if pills:
-        pills_html = '<div style="margin-bottom: 10px;">' + ' '.join(
-            f'<span class="pill pill-accent">{p}</span>' for p in pills
+        pills_html = '<div style="margin-bottom: 12px;">' + ' '.join(
+            f'<span class="pill pill-blue">{p}</span>' for p in pills
         ) + '</div>'
 
     render_html(f"""
@@ -539,7 +680,7 @@ def render_section_header(title: str, action_label: str = None, action_key: str 
     return clicked
 
 
-def render_metric_card(value: str, label: str, icon: str = "") -> str:
+def render_metric_card(value: str, label: str, icon: str = "", color: str = "#007AFF") -> str:
     """Return HTML for a metric card."""
     icon_html = f'<div style="font-size: 24px; margin-bottom: 8px;">{icon}</div>' if icon else ''
     return _clean_html(f"""
@@ -559,7 +700,8 @@ def render_metric_grid(metrics: list) -> None:
             st.markdown(render_metric_card(
                 str(m.get("value", "0")),
                 m.get("label", ""),
-                m.get("icon", "")
+                m.get("icon", ""),
+                m.get("color", "#007AFF")
             ), unsafe_allow_html=True)
 
 
@@ -581,7 +723,7 @@ def render_domain_coverage(domains: dict) -> None:
             st.caption(f"{domain}: {coverage:.0f}%")
 
 
-def render_pill(text: str, variant: str = "accent") -> str:
+def render_pill(text: str, variant: str = "blue") -> str:
     """Return HTML for a pill badge."""
     return f'<span class="pill pill-{variant}">{text}</span>'
 
@@ -623,17 +765,17 @@ def render_quick_actions(actions: list) -> None:
                     action['callback']()
 
 
-def render_stat_card(value: str, label: str, icon: str = "") -> None:
+def render_stat_card(value: str, label: str, icon: str = "", color: str = "#007AFF") -> None:
     """Render a stat card directly."""
-    st.markdown(render_metric_card(value, label, icon), unsafe_allow_html=True)
+    st.markdown(render_metric_card(value, label, icon, color), unsafe_allow_html=True)
 
 
 def render_action_card(title: str, subtitle: str, meta: str = "", primary: bool = False, icon: str = "") -> None:
     """Render an action card."""
-    bg_color = "#eef2ff" if primary else "#ffffff"
-    border_color = "#c7d2fe" if primary else "#e2e8f0"
-    icon_html = f'<span style="font-size: 24px; margin-right: 12px;">{icon}</span>' if icon else ''
-    meta_html = f'<div style="font-size: 0.75rem; color: #64748b; margin-top: 6px;">{meta}</div>' if meta else ''
+    bg_color = "rgba(0, 122, 255, 0.08)" if primary else "#FFFFFF"
+    border_color = "#007AFF" if primary else "#E5E5EA"
+    icon_html = f'<span style="font-size: 32px; margin-right: 16px;">{icon}</span>' if icon else ''
+    meta_html = f'<div style="font-size: 13px; color: #8E8E93; margin-top: 4px;">{meta}</div>' if meta else ''
 
     render_html(f"""
         <div class="action-card {primary_class}">
@@ -700,8 +842,8 @@ def render_error_state(message: str, retry_label: str = "Try again") -> bool:
 
 def render_profile_card(name: str, level: str, vocab_count: int, streak: int, is_active: bool = False) -> str:
     """Render a profile card."""
-    border_color = "#6366f1" if is_active else "#e2e8f0"
-    badge = '<span class="pill pill-success">Active</span>' if is_active else ''
+    border_color = "#007AFF" if is_active else "#E5E5EA"
+    badge = '<span class="pill pill-green">Active</span>' if is_active else ''
 
     return _clean_html(f"""
         <div class="glass-card" style="{border}">
@@ -729,7 +871,7 @@ def render_profile_card(name: str, level: str, vocab_count: int, streak: int, is
 def render_cloze_sentence(before: str, after: str, answer: str = "", show_answer: bool = False) -> None:
     """Render a cloze sentence with visible blank."""
     if show_answer:
-        blank = f'<span class="cloze-blank" style="color: #047857;">{answer}</span>'
+        blank = f'<span class="cloze-blank" style="color: #34C759;">{answer}</span>'
     else:
         blank = '<span class="cloze-blank">_____</span>'
 

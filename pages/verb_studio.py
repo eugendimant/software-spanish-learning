@@ -892,13 +892,13 @@ def render_conjugation_drill():
         # Question card
         st.markdown(f"""
         <div class="card" style="text-align: center; padding: 2rem;">
-            <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;">
+            <div style="font-size: 0.875rem; color: #8E8E93; margin-bottom: 0.5rem;">
                 Conjugate the verb
             </div>
-            <div style="font-size: 2rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
+            <div style="font-size: 2rem; font-weight: 700; color: #000000; margin-bottom: 0.5rem;">
                 {verb.upper()}
             </div>
-            <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 1rem;">
+            <div style="font-size: 0.875rem; color: #8E8E93; margin-bottom: 1rem;">
                 ({meaning})
             </div>
             <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
@@ -1149,8 +1149,8 @@ def render_conjugation_reference():
                     if person in tense_data:
                         table_html += f"""
                         <tr>
-                            <td style="padding: 4px 8px; border-bottom: 1px solid #e2e8f0; color: #64748b;">{PERSON_LABELS.get(person, person)}</td>
-                            <td style="padding: 4px 8px; border-bottom: 1px solid #e2e8f0; font-weight: 500;">{tense_data[person]}</td>
+                            <td style="padding: 4px 8px; border-bottom: 1px solid #E5E5EA; color: #8E8E93;">{PERSON_LABELS.get(person, person)}</td>
+                            <td style="padding: 4px 8px; border-bottom: 1px solid #E5E5EA; font-weight: 500;">{tense_data[person]}</td>
                         </tr>
                         """
 
@@ -1260,8 +1260,8 @@ def render_verb_scenario(scenario: dict, random_mode: bool = False):
             is_selected = st.session_state.vs_selected_verb == opt["verb"]
 
             # Card styling based on selection
-            border_color = "#6366f1" if is_selected else "#e2e8f0"
-            bg_color = "rgba(37, 99, 235, 0.05)" if is_selected else "#f8fafc"
+            border_color = "#007AFF" if is_selected else "#E5E5EA"
+            bg_color = "rgba(37, 99, 235, 0.05)" if is_selected else "#F2F2F7"
 
             render_html(f"""
                 <div class="verb-option {'selected' if is_selected else ''}" style="border-color: {border_color}; background: {bg_color};">

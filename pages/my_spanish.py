@@ -184,7 +184,7 @@ def render_phrasebook_list(filter_type: str = None, search: str = None):
         <div class="card-muted" style="text-align: center; padding: 2rem;">
             <div style="font-size: 2rem; margin-bottom: 0.5rem;">📚</div>
             <strong>No phrases yet</strong>
-            <p style="color: #64748b;">
+            <p style="color: #8E8E93;">
                 Phrases you practice will automatically appear here.
                 You can also add phrases manually.
             </p>
@@ -224,11 +224,11 @@ def render_phrasebook_list(filter_type: str = None, search: str = None):
                 <div style="display: flex; justify-content: space-between; align-items: start;">
                     <div>
                         <strong style="font-size: 1.1rem;">{phrase}</strong>
-                        <p style="color: #64748b; margin: 0.25rem 0;">{translation}</p>
+                        <p style="color: #8E8E93; margin: 0.25rem 0;">{translation}</p>
                     </div>
                     <span class="pill pill-{cat_color}" style="font-size: 0.7rem;">{category}</span>
                 </div>
-                {f'<p style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem; font-style: italic;">{context}</p>' if context else ''}
+                {f'<p style="font-size: 0.85rem; color: #8E8E93; margin-top: 0.5rem; font-style: italic;">{context}</p>' if context else ''}
             </div>
             """, unsafe_allow_html=True)
 

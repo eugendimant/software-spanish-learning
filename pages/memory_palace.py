@@ -248,7 +248,7 @@ def render_walk_through():
 
             if st.session_state[f"reveal_{room['id']}"]:
                 st.markdown(f"""
-                <div class="card" style="border-left: 4px solid #6366f1;">
+                <div class="card" style="border-left: 4px solid #007AFF;">
                     <strong>{placement.get('term', '')}</strong>: {placement.get('meaning', '')}
                     <br><br>
                     <em>Your visualization:</em> {placement.get('visualization', 'None recorded')}
