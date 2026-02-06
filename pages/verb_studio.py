@@ -4,8 +4,8 @@ import random
 from datetime import date, datetime, timedelta
 from typing import Optional
 
-from utils.theme import render_hero, render_section_header, render_feedback
-from utils.database import record_progress, save_vocab_item, get_connection, get_active_profile_id, log_activity
+from utils.theme import render_hero, render_section_header, render_html
+from utils.database import record_progress, save_vocab_item
 from utils.content import VERB_CHOICE_STUDIO
 from utils.helpers import seed_for_day, detect_language, normalize_accents
 
@@ -1236,13 +1236,13 @@ def render_verb_scenario(scenario: dict, random_mode: bool = False):
     """Render a single verb choice scenario."""
     st.markdown("### Scenario")
 
-    st.markdown(f"""
-    <div class="card">
-        <p style="font-size: 1.125rem; line-height: 1.6;">
-            {scenario['scenario']}
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div class="card">
+            <p style="font-size: 1.125rem; line-height: 1.6;">
+                {scenario['scenario']}
+            </p>
+        </div>
+    """)
 
     st.markdown("### Choose the Best Verb")
 
@@ -1263,25 +1263,25 @@ def render_verb_scenario(scenario: dict, random_mode: bool = False):
             border_color = "#6366f1" if is_selected else "#e2e8f0"
             bg_color = "rgba(37, 99, 235, 0.05)" if is_selected else "#f8fafc"
 
-            st.markdown(f"""
-            <div class="verb-option {'selected' if is_selected else ''}" style="border-color: {border_color}; background: {bg_color};">
-                <div class="verb-name">{opt['verb']}</div>
-                <div class="verb-meta">
-                    <span class="pill pill-{'primary' if opt.get('register') == 'formal' else 'secondary' if opt.get('register') == 'neutral' else 'muted'}">
-                        {opt.get('register', 'neutral')}
-                    </span>
-                    <span class="pill pill-{'warning' if opt.get('intensity') == 'alta' else 'muted'}">
-                        {opt.get('intensity', 'media')} intensity
-                    </span>
+            render_html(f"""
+                <div class="verb-option {'selected' if is_selected else ''}" style="border-color: {border_color}; background: {bg_color};">
+                    <div class="verb-name">{opt['verb']}</div>
+                    <div class="verb-meta">
+                        <span class="pill pill-{'primary' if opt.get('register') == 'formal' else 'secondary' if opt.get('register') == 'neutral' else 'muted'}">
+                            {opt.get('register', 'neutral')}
+                        </span>
+                        <span class="pill pill-{'warning' if opt.get('intensity') == 'alta' else 'muted'}">
+                            {opt.get('intensity', 'media')} intensity
+                        </span>
+                    </div>
+                    <div class="verb-note">
+                        <strong>Implies:</strong> {opt.get('implication', '')}
+                    </div>
+                    <div class="verb-note" style="margin-top: 0.5rem;">
+                        <strong>Typical objects:</strong> {opt.get('objects', '')}
+                    </div>
                 </div>
-                <div class="verb-note">
-                    <strong>Implies:</strong> {opt.get('implication', '')}
-                </div>
-                <div class="verb-note" style="margin-top: 0.5rem;">
-                    <strong>Typical objects:</strong> {opt.get('objects', '')}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            """)
 
             if st.button(f"Select '{opt['verb']}'", key=f"select_{i}", use_container_width=True):
                 st.session_state.vs_selected_verb = opt["verb"]
@@ -1313,12 +1313,12 @@ def render_verb_scenario(scenario: dict, random_mode: bool = False):
             if explanation.strip():
                 lang_info = detect_language(explanation)
                 if lang_info["language"] == "english":
-                    st.markdown("""
-                    <div class="feedback-box feedback-warning">
-                        <strong>Try explaining in Spanish!</strong> It's great practice.
-                        Use the "Hint in English" button if you need help.
-                    </div>
-                    """, unsafe_allow_html=True)
+                    render_html("""
+                        <div class="feedback-box feedback-warning">
+                            🌐 <strong>Try explaining in Spanish!</strong> It's great practice.
+                            Use the "Hint in English" button if you need help.
+                        </div>
+                    """)
             st.session_state.vs_revealed = True
 
     with col2:
@@ -1347,25 +1347,25 @@ def render_verb_scenario(scenario: dict, random_mode: bool = False):
         is_acceptable = st.session_state.vs_selected_verb in also
 
         if is_correct:
-            st.markdown("""
-            <div class="feedback-box feedback-success">
-                <strong>Perfect!</strong> You chose the best option for this context.
-            </div>
-            """, unsafe_allow_html=True)
+            render_html("""
+                <div class="feedback-box feedback-success">
+                    ✅ <strong>Perfect!</strong> You chose the best option for this context.
+                </div>
+            """)
             record_progress({"vocab_reviewed": 1})
         elif is_acceptable:
-            st.markdown(f"""
-            <div class="feedback-box feedback-info">
-                <strong>Also acceptable!</strong> '{st.session_state.vs_selected_verb}' works here, but '{best}' is the best fit.
-            </div>
-            """, unsafe_allow_html=True)
+            render_html(f"""
+                <div class="feedback-box feedback-info">
+                    👍 <strong>Also acceptable!</strong> '{st.session_state.vs_selected_verb}' works here, but '{best}' is the best fit.
+                </div>
+            """)
             record_progress({"vocab_reviewed": 1})
         else:
-            st.markdown(f"""
-            <div class="feedback-box feedback-error">
-                <strong>Not quite.</strong> The best choice is '{best}'.
-            </div>
-            """, unsafe_allow_html=True)
+            render_html(f"""
+                <div class="feedback-box feedback-error">
+                    ❌ <strong>Not quite.</strong> The best choice is '{best}'.
+                </div>
+            """)
 
         # Show contrasts
         st.markdown("### Why?")
@@ -1437,12 +1437,12 @@ def render_verb_reference():
                     st.caption(f"- {s}")
 
             with col2:
-                st.markdown(f"""
-                <div class="verb-meta" style="flex-direction: column; align-items: flex-start;">
-                    <span class="pill pill-primary">{verb_data['register']}</span>
-                    <span class="pill pill-warning" style="margin-top: 0.25rem;">{verb_data['intensity']}</span>
-                </div>
-                """, unsafe_allow_html=True)
+                render_html(f"""
+                    <div class="verb-meta" style="flex-direction: column; align-items: flex-start;">
+                        <span class="pill pill-primary">{verb_data['register']}</span>
+                        <span class="pill pill-warning" style="margin-top: 0.25rem;">{verb_data['intensity']}</span>
+                    </div>
+                """)
 
                 if st.button("Practice this verb", key=f"practice_{verb_data['verb']}"):
                     # Find a scenario with this verb
