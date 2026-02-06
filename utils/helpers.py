@@ -5,7 +5,7 @@ import random
 import re
 import unicodedata
 from datetime import date, timedelta
-from typing import Optional
+from typing import Optional, Union
 
 from utils.content import COMMON_MISTAKES, REGISTER_MARKERS
 
@@ -16,6 +16,225 @@ ACCENT_MAP = {
     'ü': 'u', 'ñ': 'n',
     'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U',
     'Ü': 'U', 'Ñ': 'N'
+}
+
+# Reverse accent map for adding accents
+REVERSE_ACCENT_MAP = {
+    'a': 'á', 'e': 'é', 'i': 'í', 'o': 'ó', 'u': 'ú',
+    'A': 'Á', 'E': 'É', 'I': 'Í', 'O': 'Ó', 'U': 'Ú',
+    'n': 'ñ', 'N': 'Ñ'
+}
+
+# Spanish articles for normalization
+SPANISH_ARTICLES = {
+    "definite": {"el", "la", "los", "las"},
+    "indefinite": {"un", "una", "unos", "unas"},
+    "all": {"el", "la", "los", "las", "un", "una", "unos", "unas"}
+}
+
+# Common alternative spellings in Spanish
+ALTERNATIVE_SPELLINGS = {
+    # Regional variations
+    "vosotros": ["ustedes"],
+    "ustedes": ["vosotros"],
+    "coger": ["tomar", "agarrar"],
+    "ordenador": ["computadora", "computador"],
+    "computadora": ["ordenador", "computador"],
+    "móvil": ["celular"],
+    "celular": ["móvil"],
+    "coche": ["carro", "auto", "automóvil"],
+    "carro": ["coche", "auto", "automóvil"],
+    "autobús": ["camión", "bus", "colectivo"],
+    "piso": ["apartamento", "departamento"],
+    "apartamento": ["piso", "departamento"],
+    "zumo": ["jugo"],
+    "jugo": ["zumo"],
+    "patata": ["papa"],
+    "papa": ["patata"],
+    "melocotón": ["durazno"],
+    "durazno": ["melocotón"],
+    "fresa": ["frutilla"],
+    "frutilla": ["fresa"],
+    "vale": ["ok", "está bien", "de acuerdo"],
+    "guay": ["chévere", "genial", "padre", "chido"],
+    # Orthographic variations
+    "psicología": ["sicología"],
+    "sicología": ["psicología"],
+    "psicólogo": ["sicólogo"],
+    "substancia": ["sustancia"],
+    "sustancia": ["substancia"],
+    "obscuro": ["oscuro"],
+    "oscuro": ["obscuro"],
+    "septiembre": ["setiembre"],
+    "setiembre": ["septiembre"],
+    # Common typos/alternatives
+    "por qué": ["porque", "porqué"],  # Different meanings but often confused
+    "solo": ["sólo"],  # Pre-2010 spelling
+    "este": ["éste"],  # Pre-2010 spelling
+    "ese": ["ése"],
+    "aquel": ["aquél"],
+}
+
+# Common verb conjugation patterns for tolerance
+VERB_CONJUGATION_EQUIVALENTS = {
+    # Present indicative variations
+    "tú": "vos",  # tú hablas = vos hablás
+    "vos": "tú",
+    "vosotros": "ustedes",
+    "ustedes": "vosotros",
+}
+
+# Similar words that learners often confuse (for MCQ distractors)
+CONFUSABLE_WORDS = {
+    # Ser vs Estar
+    "ser": ["estar", "haber", "tener"],
+    "estar": ["ser", "haber", "quedar"],
+    # Por vs Para
+    "por": ["para", "de", "a"],
+    "para": ["por", "hacia", "a"],
+    # Saber vs Conocer
+    "saber": ["conocer", "entender", "comprender"],
+    "conocer": ["saber", "reconocer", "encontrar"],
+    # Prepositions
+    "en": ["a", "de", "con"],
+    "a": ["en", "de", "hacia"],
+    "de": ["desde", "a", "en"],
+    "con": ["sin", "de", "por"],
+    # Common verbs
+    "ir": ["venir", "llegar", "salir"],
+    "venir": ["ir", "llegar", "volver"],
+    "llevar": ["traer", "tomar", "coger"],
+    "traer": ["llevar", "tomar", "dar"],
+    "hacer": ["tener", "dar", "poner"],
+    "tener": ["haber", "poseer", "llevar"],
+    "poner": ["colocar", "meter", "dejar"],
+    "decir": ["hablar", "contar", "explicar"],
+    "ver": ["mirar", "observar", "notar"],
+    "mirar": ["ver", "observar", "contemplar"],
+    "oír": ["escuchar", "sentir", "percibir"],
+    "escuchar": ["oír", "atender", "prestar atención"],
+    "pedir": ["preguntar", "solicitar", "rogar"],
+    "preguntar": ["pedir", "cuestionar", "interrogar"],
+    # Similar sounding/looking words
+    "pero": ["perro", "pera", "pelo"],
+    "perro": ["pero", "perra", "ferro"],
+    "casa": ["cosa", "caja", "caza"],
+    "cosa": ["casa", "rosa", "fosa"],
+    "año": ["ano", "amo", "heno"],
+    "hombre": ["hambre", "nombre", "hombro"],
+    "mujer": ["mejor", "mojar"],
+    "tiempo": ["tiempos", "temple", "templo"],
+    "gente": ["mente", "frente", "diente"],
+    "mismo": ["mosmo", "misma", "mísmo"],
+    # False friends (English-Spanish)
+    "actual": ["real", "verdadero", "presente"],
+    "actualmente": ["realmente", "en realidad", "de hecho"],
+    "realizar": ["darse cuenta", "percatarse", "notar"],
+    "sensible": ["sensato", "razonable", "prudente"],
+    "embarazada": ["avergonzada", "apenada"],
+    "excitado": ["emocionado", "entusiasmado", "ilusionado"],
+    "éxito": ["salida", "resultado"],
+    "librería": ["biblioteca"],
+    "biblioteca": ["librería"],
+    # Numbers (often confused)
+    "quince": ["cinco", "cincuenta"],
+    "cinco": ["quince", "cincuenta"],
+    "sesenta": ["setenta", "cincuenta"],
+    "setenta": ["sesenta", "ochenta"],
+    # Days/time words
+    "mañana": ["mañanas", "manaña"],
+    "noche": ["noch", "noches"],
+    "semana": ["mes", "día"],
+    "mes": ["mes", "semana"],
+    # Body parts
+    "mano": ["manos", "mono", "mando"],
+    "pie": ["pies", "pie", "pío"],
+    "ojo": ["ojos", "hojo", "oja"],
+    "oreja": ["orejas", "oresa"],
+    # Colors
+    "rojo": ["roja", "rojos", "roso"],
+    "negro": ["negra", "negar"],
+    "blanco": ["blanca", "franco"],
+    "verde": ["verdes", "verte"],
+    "azul": ["azules", "azu"],
+}
+
+# Verb infinitive to stem mappings for conjugation checking
+VERB_PATTERNS = {
+    "ar": {
+        "yo": "o", "tú": "as", "él/ella/usted": "a",
+        "nosotros": "amos", "vosotros": "áis", "ellos/ustedes": "an"
+    },
+    "er": {
+        "yo": "o", "tú": "es", "él/ella/usted": "e",
+        "nosotros": "emos", "vosotros": "éis", "ellos/ustedes": "en"
+    },
+    "ir": {
+        "yo": "o", "tú": "es", "él/ella/usted": "e",
+        "nosotros": "imos", "vosotros": "ís", "ellos/ustedes": "en"
+    }
+}
+
+# Irregular verb forms (most common)
+IRREGULAR_VERBS = {
+    "ser": {
+        "presente": {"yo": "soy", "tú": "eres", "él": "es", "nosotros": "somos", "vosotros": "sois", "ellos": "son"},
+        "pretérito": {"yo": "fui", "tú": "fuiste", "él": "fue", "nosotros": "fuimos", "vosotros": "fuisteis", "ellos": "fueron"},
+        "imperfecto": {"yo": "era", "tú": "eras", "él": "era", "nosotros": "éramos", "vosotros": "erais", "ellos": "eran"},
+    },
+    "estar": {
+        "presente": {"yo": "estoy", "tú": "estás", "él": "está", "nosotros": "estamos", "vosotros": "estáis", "ellos": "están"},
+        "pretérito": {"yo": "estuve", "tú": "estuviste", "él": "estuvo", "nosotros": "estuvimos", "vosotros": "estuvisteis", "ellos": "estuvieron"},
+    },
+    "ir": {
+        "presente": {"yo": "voy", "tú": "vas", "él": "va", "nosotros": "vamos", "vosotros": "vais", "ellos": "van"},
+        "pretérito": {"yo": "fui", "tú": "fuiste", "él": "fue", "nosotros": "fuimos", "vosotros": "fuisteis", "ellos": "fueron"},
+        "imperfecto": {"yo": "iba", "tú": "ibas", "él": "iba", "nosotros": "íbamos", "vosotros": "ibais", "ellos": "iban"},
+    },
+    "tener": {
+        "presente": {"yo": "tengo", "tú": "tienes", "él": "tiene", "nosotros": "tenemos", "vosotros": "tenéis", "ellos": "tienen"},
+        "pretérito": {"yo": "tuve", "tú": "tuviste", "él": "tuvo", "nosotros": "tuvimos", "vosotros": "tuvisteis", "ellos": "tuvieron"},
+    },
+    "hacer": {
+        "presente": {"yo": "hago", "tú": "haces", "él": "hace", "nosotros": "hacemos", "vosotros": "hacéis", "ellos": "hacen"},
+        "pretérito": {"yo": "hice", "tú": "hiciste", "él": "hizo", "nosotros": "hicimos", "vosotros": "hicisteis", "ellos": "hicieron"},
+    },
+    "poder": {
+        "presente": {"yo": "puedo", "tú": "puedes", "él": "puede", "nosotros": "podemos", "vosotros": "podéis", "ellos": "pueden"},
+        "pretérito": {"yo": "pude", "tú": "pudiste", "él": "pudo", "nosotros": "pudimos", "vosotros": "pudisteis", "ellos": "pudieron"},
+    },
+    "querer": {
+        "presente": {"yo": "quiero", "tú": "quieres", "él": "quiere", "nosotros": "queremos", "vosotros": "queréis", "ellos": "quieren"},
+        "pretérito": {"yo": "quise", "tú": "quisiste", "él": "quiso", "nosotros": "quisimos", "vosotros": "quisisteis", "ellos": "quisieron"},
+    },
+    "venir": {
+        "presente": {"yo": "vengo", "tú": "vienes", "él": "viene", "nosotros": "venimos", "vosotros": "venís", "ellos": "vienen"},
+        "pretérito": {"yo": "vine", "tú": "viniste", "él": "vino", "nosotros": "vinimos", "vosotros": "vinisteis", "ellos": "vinieron"},
+    },
+    "decir": {
+        "presente": {"yo": "digo", "tú": "dices", "él": "dice", "nosotros": "decimos", "vosotros": "decís", "ellos": "dicen"},
+        "pretérito": {"yo": "dije", "tú": "dijiste", "él": "dijo", "nosotros": "dijimos", "vosotros": "dijisteis", "ellos": "dijeron"},
+    },
+    "saber": {
+        "presente": {"yo": "sé", "tú": "sabes", "él": "sabe", "nosotros": "sabemos", "vosotros": "sabéis", "ellos": "saben"},
+        "pretérito": {"yo": "supe", "tú": "supiste", "él": "supo", "nosotros": "supimos", "vosotros": "supisteis", "ellos": "supieron"},
+    },
+    "conocer": {
+        "presente": {"yo": "conozco", "tú": "conoces", "él": "conoce", "nosotros": "conocemos", "vosotros": "conocéis", "ellos": "conocen"},
+    },
+    "dar": {
+        "presente": {"yo": "doy", "tú": "das", "él": "da", "nosotros": "damos", "vosotros": "dais", "ellos": "dan"},
+        "pretérito": {"yo": "di", "tú": "diste", "él": "dio", "nosotros": "dimos", "vosotros": "disteis", "ellos": "dieron"},
+    },
+    "ver": {
+        "presente": {"yo": "veo", "tú": "ves", "él": "ve", "nosotros": "vemos", "vosotros": "veis", "ellos": "ven"},
+        "pretérito": {"yo": "vi", "tú": "viste", "él": "vio", "nosotros": "vimos", "vosotros": "visteis", "ellos": "vieron"},
+    },
+    "haber": {
+        "presente": {"yo": "he", "tú": "has", "él": "ha/hay", "nosotros": "hemos", "vosotros": "habéis", "ellos": "han"},
+        "pretérito": {"yo": "hube", "tú": "hubiste", "él": "hubo", "nosotros": "hubimos", "vosotros": "hubisteis", "ellos": "hubieron"},
+        "imperfecto": {"yo": "había", "tú": "habías", "él": "había", "nosotros": "habíamos", "vosotros": "habíais", "ellos": "habían"},
+    },
 }
 
 
@@ -54,19 +273,150 @@ def levenshtein_distance(s1: str, s2: str) -> int:
     return previous_row[-1]
 
 
-def compare_answers(user_answer: str, correct_answer: str, accent_tolerant: bool = False,
-                    grading_mode: str = "balanced") -> tuple:
-    """Compare user answer with correct answer based on grading settings.
+def normalize_for_comparison(text: str, strip_articles: bool = False) -> str:
+    """Normalize text for comparison purposes.
+
+    Args:
+        text: The text to normalize
+        strip_articles: If True, remove Spanish articles from the beginning
+
+    Returns:
+        Normalized text (lowercase, trimmed, optionally without leading articles)
+    """
+    normalized = text.lower().strip()
+
+    if strip_articles:
+        # Remove leading articles
+        for article in SPANISH_ARTICLES["all"]:
+            if normalized.startswith(article + " "):
+                normalized = normalized[len(article) + 1:].strip()
+                break
+
+    return normalized
+
+
+def are_articles_equivalent(answer1: str, answer2: str) -> bool:
+    """Check if two answers differ only in their article usage.
+
+    Examples:
+        "el libro" vs "la libro" -> True (same word, different article)
+        "un coche" vs "el coche" -> True (same word, different article type)
+        "el libro" vs "el cuaderno" -> False (different words)
+    """
+    words1 = answer1.lower().strip().split()
+    words2 = answer2.lower().strip().split()
+
+    # Check if both start with articles
+    if len(words1) >= 1 and len(words2) >= 1:
+        word1_is_article = words1[0] in SPANISH_ARTICLES["all"]
+        word2_is_article = words2[0] in SPANISH_ARTICLES["all"]
+
+        if word1_is_article and word2_is_article:
+            # Compare the rest of the words
+            rest1 = " ".join(words1[1:])
+            rest2 = " ".join(words2[1:])
+            return rest1 == rest2
+
+    return False
+
+
+def check_alternative_spelling(user_answer: str, correct_answer: str) -> bool:
+    """Check if user's answer is a valid alternative spelling of the correct answer.
+
+    Handles regional variations and orthographic alternatives.
+    """
+    user_normalized = user_answer.lower().strip()
+    correct_normalized = correct_answer.lower().strip()
+
+    # Direct match in alternatives
+    if correct_normalized in ALTERNATIVE_SPELLINGS:
+        if user_normalized in ALTERNATIVE_SPELLINGS[correct_normalized]:
+            return True
+
+    # Reverse check - user's answer might be the "main" spelling
+    if user_normalized in ALTERNATIVE_SPELLINGS:
+        if correct_normalized in ALTERNATIVE_SPELLINGS[user_normalized]:
+            return True
+
+    # Check word-by-word for multi-word answers
+    user_words = user_normalized.split()
+    correct_words = correct_normalized.split()
+
+    if len(user_words) == len(correct_words):
+        all_match = True
+        for u_word, c_word in zip(user_words, correct_words):
+            if u_word == c_word:
+                continue
+            # Check if words are alternatives of each other
+            if c_word in ALTERNATIVE_SPELLINGS and u_word in ALTERNATIVE_SPELLINGS[c_word]:
+                continue
+            if u_word in ALTERNATIVE_SPELLINGS and c_word in ALTERNATIVE_SPELLINGS[u_word]:
+                continue
+            all_match = False
+            break
+        if all_match:
+            return True
+
+    return False
+
+
+def compare_answers(
+    user_answer: str,
+    correct_answer: Union[str, list[str]],
+    accent_tolerant: bool = False,
+    grading_mode: str = "balanced",
+    article_tolerant: bool = False,
+    allow_alternatives: bool = True
+) -> tuple[bool, str, Optional[str]]:
+    """Compare user answer with correct answer(s) based on grading settings.
+
+    Enhanced version with support for:
+    - Multiple acceptable answers
+    - Article variation tolerance (el/la/los/las)
+    - Alternative spellings (regional, orthographic)
+    - Verb conjugation variations
+    - Intelligent typo detection
 
     Args:
         user_answer: The answer provided by the user
-        correct_answer: The expected correct answer
+        correct_answer: The expected correct answer(s) - can be string or list
         accent_tolerant: If True, accept answers without proper accents
         grading_mode: "strict", "balanced", or "lenient"
+        article_tolerant: If True, accept different article variations
+        allow_alternatives: If True, accept regional/spelling alternatives
 
     Returns:
-        Tuple of (is_correct: bool, feedback_type: str)
+        Tuple of (is_correct: bool, feedback_type: str, matched_answer: Optional[str])
         feedback_type explains why the answer was accepted/rejected
+        matched_answer is the specific correct answer that matched (if any)
+    """
+    # Handle multiple acceptable answers
+    correct_answers = correct_answer if isinstance(correct_answer, list) else [correct_answer]
+
+    # Try each correct answer
+    for correct in correct_answers:
+        result, feedback = _compare_single_answer(
+            user_answer, correct, accent_tolerant, grading_mode,
+            article_tolerant, allow_alternatives
+        )
+        if result:
+            return (True, feedback, correct)
+
+    # None of the answers matched
+    return (False, "mismatch", None)
+
+
+def _compare_single_answer(
+    user_answer: str,
+    correct_answer: str,
+    accent_tolerant: bool,
+    grading_mode: str,
+    article_tolerant: bool,
+    allow_alternatives: bool
+) -> tuple[bool, str]:
+    """Compare user answer with a single correct answer.
+
+    Internal helper function for compare_answers.
     """
     # Normalize whitespace and case
     user_normalized = user_answer.lower().strip()
@@ -76,12 +426,27 @@ def compare_answers(user_answer: str, correct_answer: str, accent_tolerant: bool
     if user_normalized == correct_normalized:
         return (True, "exact_match")
 
+    # Check article tolerance (el libro vs la libro, un coche vs el coche)
+    if article_tolerant:
+        if are_articles_equivalent(user_normalized, correct_normalized):
+            return (True, "article_variation")
+        # Also check without articles entirely
+        user_no_article = normalize_for_comparison(user_normalized, strip_articles=True)
+        correct_no_article = normalize_for_comparison(correct_normalized, strip_articles=True)
+        if user_no_article == correct_no_article:
+            return (True, "article_omitted")
+
     # If accent tolerant, compare without accents
     if accent_tolerant:
         user_no_accent = normalize_accents(user_normalized)
         correct_no_accent = normalize_accents(correct_normalized)
         if user_no_accent == correct_no_accent:
             return (True, "accent_tolerance")
+
+    # Check alternative spellings (regional variations, etc.)
+    if allow_alternatives:
+        if check_alternative_spelling(user_answer, correct_answer):
+            return (True, "alternative_spelling")
 
     # Strict mode: only exact matches (already handled above)
     if grading_mode == "strict":
@@ -128,7 +493,39 @@ def compare_answers(user_answer: str, correct_answer: str, accent_tolerant: bool
             if overlap >= 0.7:  # 70% of important words match
                 return (True, "semantic_match")
 
+        # Check for conjugation variations (tú/vos, vosotros/ustedes)
+        if _check_conjugation_equivalent(user_normalized, correct_normalized):
+            return (True, "conjugation_variation")
+
     return (False, "mismatch")
+
+
+def _check_conjugation_equivalent(user_answer: str, correct_answer: str) -> bool:
+    """Check if answers differ only in regional conjugation (tú vs vos, vosotros vs ustedes)."""
+    # Common patterns for tú vs vos
+    tu_vos_patterns = [
+        (r"(\w+)as\b", r"\1ás"),  # hablas -> hablás
+        (r"(\w+)es\b", r"\1és"),  # comes -> comés
+        (r"(\w+)is\b", r"\1ís"),  # vives -> vivís
+        (r"\btienes\b", "tenés"),
+        (r"\bquieres\b", "querés"),
+        (r"\bpuedes\b", "podés"),
+        (r"\bvienes\b", "venís"),
+        (r"\bsabes\b", "sabés"),
+        (r"\beres\b", "sos"),
+    ]
+
+    for pattern, replacement in tu_vos_patterns:
+        # Check if converting tú to vos matches
+        converted = re.sub(pattern, replacement, correct_answer)
+        if normalize_accents(converted) == normalize_accents(user_answer):
+            return True
+        # Check reverse (vos to tú)
+        converted = re.sub(pattern, replacement, user_answer)
+        if normalize_accents(converted) == normalize_accents(correct_answer):
+            return True
+
+    return False
 
 
 def get_accent_feedback(user_answer: str, correct_answer: str) -> Optional[str]:
@@ -152,6 +549,461 @@ def get_accent_feedback(user_answer: str, correct_answer: str) -> Optional[str]:
         return "Close! Check your accent marks."
 
     return None
+
+
+def check_conjugation_answer(
+    user_answer: str,
+    correct_forms: dict[str, str],
+    verb_infinitive: str,
+    tense: str = "presente",
+    target_person: Optional[str] = None,
+    accent_tolerant: bool = True
+) -> dict:
+    """Compare user conjugation to correct forms with detailed feedback.
+
+    Analyzes user's conjugation attempt and provides specific feedback
+    about what's wrong (wrong person, wrong tense, accent errors, etc.).
+
+    Args:
+        user_answer: The conjugation provided by the user
+        correct_forms: Dictionary mapping person to correct form
+                       e.g., {"yo": "hablo", "tú": "hablas", ...}
+        verb_infinitive: The infinitive form of the verb (e.g., "hablar")
+        tense: The target tense (e.g., "presente", "pretérito", "imperfecto")
+        target_person: If specified, the specific person being tested
+        accent_tolerant: If True, analyze accent errors separately
+
+    Returns:
+        Dictionary with:
+            - correct: bool - whether the answer is correct
+            - feedback: str - human-readable feedback message
+            - error_type: str - category of error (if incorrect)
+            - details: dict - additional details about the error
+            - hint: str - a hint to help the learner (if incorrect)
+    """
+    user_normalized = user_answer.lower().strip()
+
+    # If target person specified, check that specific form
+    if target_person:
+        correct_form = correct_forms.get(target_person, "")
+        correct_normalized = correct_form.lower().strip()
+
+        # Exact match
+        if user_normalized == correct_normalized:
+            return {
+                "correct": True,
+                "feedback": "Correcto! Muy bien.",
+                "error_type": None,
+                "details": {"matched_form": correct_form},
+                "hint": None
+            }
+
+        # Check accent tolerance
+        if accent_tolerant:
+            user_no_accent = normalize_accents(user_normalized)
+            correct_no_accent = normalize_accents(correct_normalized)
+            if user_no_accent == correct_no_accent:
+                # Find missing accents
+                accent_issues = _find_accent_differences(user_normalized, correct_normalized)
+                return {
+                    "correct": False,
+                    "feedback": f"Casi correcto, pero revisa los acentos: {correct_form}",
+                    "error_type": "accent_error",
+                    "details": {
+                        "correct_form": correct_form,
+                        "accent_issues": accent_issues
+                    },
+                    "hint": f"El acento va en: {', '.join(accent_issues)}" if accent_issues else "Revisa los acentos."
+                }
+
+    # Check if user gave a form for a different person
+    for person, form in correct_forms.items():
+        form_normalized = form.lower().strip()
+        if user_normalized == form_normalized or normalize_accents(user_normalized) == normalize_accents(form_normalized):
+            if target_person and person != target_person:
+                return {
+                    "correct": False,
+                    "feedback": f"Esa es la forma de '{person}', no de '{target_person}'.",
+                    "error_type": "wrong_person",
+                    "details": {
+                        "user_gave_person": person,
+                        "expected_person": target_person,
+                        "correct_form": correct_forms.get(target_person, "")
+                    },
+                    "hint": f"Para '{target_person}', piensa en la terminación correcta."
+                }
+
+    # Check for common conjugation errors
+    error_analysis = _analyze_conjugation_error(
+        user_normalized, verb_infinitive, tense, target_person, correct_forms
+    )
+
+    return error_analysis
+
+
+def _find_accent_differences(user_form: str, correct_form: str) -> list[str]:
+    """Find differences in accents between two strings."""
+    differences = []
+    user_chars = list(user_form)
+    correct_chars = list(correct_form)
+
+    for i, (uc, cc) in enumerate(zip(user_chars, correct_chars)):
+        if uc != cc and normalize_accents(uc) == normalize_accents(cc):
+            differences.append(f"'{uc}' -> '{cc}'")
+
+    return differences
+
+
+def _analyze_conjugation_error(
+    user_form: str,
+    verb_infinitive: str,
+    tense: str,
+    target_person: Optional[str],
+    correct_forms: dict[str, str]
+) -> dict:
+    """Analyze what type of conjugation error was made."""
+    verb_lower = verb_infinitive.lower()
+    correct_form = correct_forms.get(target_person, "") if target_person else ""
+
+    # Check if it's the infinitive (common beginner error)
+    if user_form == verb_lower or normalize_accents(user_form) == normalize_accents(verb_lower):
+        return {
+            "correct": False,
+            "feedback": "Has escrito el infinitivo. Necesitas conjugar el verbo.",
+            "error_type": "infinitive_used",
+            "details": {"user_wrote": "infinitive", "expected": "conjugated form"},
+            "hint": f"El infinitivo '{verb_infinitive}' necesita cambiar su terminación para '{target_person}'."
+        }
+
+    # Check if stem is correct but ending is wrong
+    if verb_lower.endswith(("ar", "er", "ir")):
+        stem = verb_lower[:-2]
+        verb_type = verb_lower[-2:]
+
+        if user_form.startswith(stem):
+            # Stem is correct, ending is wrong
+            user_ending = user_form[len(stem):]
+            expected_endings = VERB_PATTERNS.get(verb_type, {})
+
+            return {
+                "correct": False,
+                "feedback": f"La raíz '{stem}' está bien, pero la terminación '-{user_ending}' no es correcta.",
+                "error_type": "wrong_ending",
+                "details": {
+                    "stem": stem,
+                    "user_ending": user_ending,
+                    "verb_type": verb_type
+                },
+                "hint": f"Para verbos en '-{verb_type}' y '{target_person}', revisa las terminaciones del {tense}."
+            }
+
+    # Check for stem-changing verb errors
+    if _is_stem_changing_verb(verb_lower):
+        stem_change_hint = _get_stem_change_hint(verb_lower)
+        return {
+            "correct": False,
+            "feedback": f"'{verb_infinitive}' es un verbo con cambio de raíz.",
+            "error_type": "stem_change_error",
+            "details": {"verb": verb_infinitive, "type": "stem-changing"},
+            "hint": stem_change_hint
+        }
+
+    # Check for irregular verb
+    if verb_lower in IRREGULAR_VERBS:
+        return {
+            "correct": False,
+            "feedback": f"'{verb_infinitive}' es un verbo irregular.",
+            "error_type": "irregular_verb_error",
+            "details": {"verb": verb_infinitive, "type": "irregular"},
+            "hint": f"'{verb_infinitive}' no sigue las reglas regulares. La forma correcta para '{target_person}' es '{correct_form}'."
+        }
+
+    # Generic error
+    return {
+        "correct": False,
+        "feedback": f"La conjugación no es correcta. La forma correcta es: {correct_form}",
+        "error_type": "general_error",
+        "details": {"correct_form": correct_form},
+        "hint": f"Revisa las terminaciones del {tense} para '{target_person}'."
+    }
+
+
+def _is_stem_changing_verb(verb: str) -> bool:
+    """Check if a verb is a stem-changing verb."""
+    stem_changing = {
+        "pensar", "querer", "poder", "dormir", "pedir", "sentir",
+        "entender", "perder", "volver", "jugar", "empezar", "comenzar",
+        "cerrar", "despertar", "encontrar", "mostrar", "recordar",
+        "contar", "costar", "mover", "probar", "almorzar",
+        "preferir", "mentir", "divertir", "morir", "servir", "vestir",
+        "repetir", "seguir", "conseguir"
+    }
+    return verb in stem_changing
+
+
+def _get_stem_change_hint(verb: str) -> str:
+    """Get a hint about the stem change for a verb."""
+    e_to_ie = {"pensar", "querer", "entender", "perder", "empezar", "comenzar",
+               "cerrar", "despertar", "preferir", "mentir", "sentir", "divertir"}
+    o_to_ue = {"poder", "dormir", "volver", "encontrar", "mostrar", "recordar",
+               "contar", "costar", "mover", "probar", "almorzar", "morir"}
+    e_to_i = {"pedir", "servir", "vestir", "repetir", "seguir", "conseguir"}
+    u_to_ue = {"jugar"}
+
+    if verb in e_to_ie:
+        return "La 'e' de la raíz cambia a 'ie' en las formas acentuadas (yo, tú, él, ellos)."
+    elif verb in o_to_ue:
+        return "La 'o' de la raíz cambia a 'ue' en las formas acentuadas (yo, tú, él, ellos)."
+    elif verb in e_to_i:
+        return "La 'e' de la raíz cambia a 'i' en las formas acentuadas."
+    elif verb in u_to_ue:
+        return "La 'u' de la raíz cambia a 'ue' en las formas acentuadas."
+    return "Este verbo tiene un cambio en la raíz."
+
+
+def get_similar_words(
+    word: str,
+    count: int = 3,
+    include_types: Optional[list[str]] = None
+) -> list[str]:
+    """Find similar Spanish words that learners often confuse.
+
+    Useful for generating distractors in multiple-choice questions (MCQ).
+
+    Args:
+        word: The Spanish word to find similar words for
+        count: Number of similar words to return (default 3)
+        include_types: Types of similar words to include:
+            - "phonetic": Similar sounding words
+            - "semantic": Words with similar meanings
+            - "orthographic": Words with similar spelling
+            - "false_friends": English-Spanish false friends
+            If None, includes all types.
+
+    Returns:
+        List of similar/confusable words
+    """
+    word_lower = word.lower().strip()
+    similar = []
+
+    # Check predefined confusable words
+    if word_lower in CONFUSABLE_WORDS:
+        similar.extend(CONFUSABLE_WORDS[word_lower])
+
+    # Generate orthographically similar words
+    orthographic_similar = _get_orthographic_similar(word_lower)
+    similar.extend(orthographic_similar)
+
+    # Generate phonetically similar words (accent variations, similar sounds)
+    phonetic_similar = _get_phonetic_similar(word_lower)
+    similar.extend(phonetic_similar)
+
+    # Filter by type if specified
+    if include_types:
+        # For now, we include all since categorization is implicit
+        pass
+
+    # Remove duplicates and the original word
+    similar = list(set(similar))
+    if word_lower in similar:
+        similar.remove(word_lower)
+
+    # Limit to count
+    return similar[:count]
+
+
+def _get_orthographic_similar(word: str) -> list[str]:
+    """Generate orthographically similar words (edit distance 1-2)."""
+    similar = []
+
+    # Common letter substitutions in Spanish
+    substitutions = {
+        'b': ['v'], 'v': ['b'],
+        's': ['c', 'z'], 'c': ['s', 'z'], 'z': ['s', 'c'],
+        'g': ['j'], 'j': ['g'],
+        'y': ['ll', 'i'], 'll': ['y'],
+        'h': [''],  # Silent h
+        'qu': ['k', 'c'], 'k': ['c', 'qu'],
+        'rr': ['r'], 'r': ['rr'],
+        'n': ['m'], 'm': ['n'],
+    }
+
+    # Single letter changes
+    for i, char in enumerate(word):
+        if char in substitutions:
+            for sub in substitutions[char]:
+                new_word = word[:i] + sub + word[i+1:]
+                if new_word != word and len(new_word) >= 2:
+                    similar.append(new_word)
+
+    # Common endings confusion
+    ending_confusions = {
+        'ción': ['sión', 'cion'],
+        'sión': ['ción', 'sion'],
+        'dad': ['tad'],
+        'tad': ['dad'],
+        'mente': ['miente'],
+        'ando': ['endo', 'iendo'],
+        'endo': ['ando', 'iendo'],
+        'iendo': ['ando', 'endo'],
+    }
+
+    for ending, confusions in ending_confusions.items():
+        if word.endswith(ending):
+            base = word[:-len(ending)]
+            for conf in confusions:
+                similar.append(base + conf)
+
+    # Accent variations
+    for i, char in enumerate(word):
+        if char in REVERSE_ACCENT_MAP:
+            accented = word[:i] + REVERSE_ACCENT_MAP[char] + word[i+1:]
+            if accented != word:
+                similar.append(accented)
+        if char in ACCENT_MAP:
+            unaccented = word[:i] + ACCENT_MAP[char] + word[i+1:]
+            if unaccented != word:
+                similar.append(unaccented)
+
+    return similar
+
+
+def _get_phonetic_similar(word: str) -> list[str]:
+    """Generate phonetically similar words."""
+    similar = []
+
+    # Vowel sound confusions (common for English speakers)
+    vowel_confusions = {
+        'e': ['i', 'a'],
+        'i': ['e'],
+        'o': ['u'],
+        'u': ['o'],
+    }
+
+    for i, char in enumerate(word):
+        lower_char = char.lower()
+        if lower_char in vowel_confusions:
+            for conf in vowel_confusions[lower_char]:
+                new_word = word[:i] + conf + word[i+1:]
+                if new_word != word:
+                    similar.append(new_word)
+
+    # Double letter confusions
+    if len(word) >= 3:
+        # Add double letter
+        for i in range(len(word)):
+            doubled = word[:i+1] + word[i] + word[i+1:]
+            if doubled != word:
+                similar.append(doubled)
+
+        # Remove double letter
+        for i in range(len(word) - 1):
+            if word[i] == word[i+1]:
+                removed = word[:i] + word[i+1:]
+                if removed != word:
+                    similar.append(removed)
+
+    return similar
+
+
+def get_distractors_for_mcq(
+    correct_answer: str,
+    exercise_type: str = "vocabulary",
+    count: int = 3,
+    context: Optional[str] = None
+) -> list[str]:
+    """Generate distractors for multiple-choice questions.
+
+    Args:
+        correct_answer: The correct answer
+        exercise_type: Type of exercise ("vocabulary", "conjugation", "grammar")
+        count: Number of distractors to generate
+        context: Optional context for better distractor generation
+
+    Returns:
+        List of distractor options (incorrect but plausible answers)
+    """
+    distractors = []
+
+    if exercise_type == "vocabulary":
+        # Get similar/confusable words
+        distractors = get_similar_words(correct_answer, count=count * 2)
+
+    elif exercise_type == "conjugation":
+        # Generate wrong conjugations
+        distractors = _generate_conjugation_distractors(correct_answer, context)
+
+    elif exercise_type == "grammar":
+        # Generate grammatically incorrect but plausible options
+        distractors = _generate_grammar_distractors(correct_answer, context)
+
+    # Ensure we have enough distractors
+    if len(distractors) < count:
+        # Fill with orthographic variations
+        distractors.extend(_get_orthographic_similar(correct_answer.lower()))
+
+    # Remove duplicates and correct answer
+    correct_lower = correct_answer.lower()
+    distractors = [d for d in set(distractors) if d.lower() != correct_lower]
+
+    return distractors[:count]
+
+
+def _generate_conjugation_distractors(correct_form: str, context: Optional[str]) -> list[str]:
+    """Generate incorrect conjugation forms as distractors."""
+    distractors = []
+    form_lower = correct_form.lower()
+
+    # Common conjugation mistakes
+    endings_ar = ["o", "as", "a", "amos", "áis", "an"]
+    endings_er = ["o", "es", "e", "emos", "éis", "en"]
+    endings_ir = ["o", "es", "e", "imos", "ís", "en"]
+
+    # Try to identify the verb type and generate wrong endings
+    for endings in [endings_ar, endings_er, endings_ir]:
+        for ending in endings:
+            if form_lower.endswith(ending):
+                base = form_lower[:-len(ending)]
+                for wrong_ending in endings:
+                    if wrong_ending != ending:
+                        distractors.append(base + wrong_ending)
+                break
+
+    # Add infinitive-like form (common beginner mistake)
+    if form_lower.endswith(('o', 'a', 'e')):
+        distractors.append(form_lower + 'r')
+        distractors.append(form_lower[:-1] + 'ar')
+        distractors.append(form_lower[:-1] + 'er')
+
+    return distractors
+
+
+def _generate_grammar_distractors(correct_form: str, context: Optional[str]) -> list[str]:
+    """Generate grammatically incorrect forms as distractors."""
+    distractors = []
+    form_lower = correct_form.lower()
+
+    # Gender swap
+    if form_lower.endswith('o'):
+        distractors.append(form_lower[:-1] + 'a')
+    elif form_lower.endswith('a'):
+        distractors.append(form_lower[:-1] + 'o')
+
+    # Number swap
+    if form_lower.endswith('s'):
+        distractors.append(form_lower[:-1])
+    else:
+        distractors.append(form_lower + 's')
+
+    # Article confusion
+    article_swaps = {'el': 'la', 'la': 'el', 'los': 'las', 'las': 'los',
+                     'un': 'una', 'una': 'un'}
+    words = form_lower.split()
+    if words and words[0] in article_swaps:
+        wrong = [article_swaps[words[0]]] + words[1:]
+        distractors.append(' '.join(wrong))
+
+    return distractors
 
 
 def check_false_friends(text: str) -> list:
@@ -511,6 +1363,386 @@ def check_text_for_mistakes(text: str) -> list[dict]:
             "position": 0,
         })
 
+    # === ADDITIONAL ERROR PATTERNS (10+ new patterns) ===
+
+    # 1. Verb tense confusion patterns
+    tense_patterns = [
+        (r"\bayer (?:yo )?(?:como|voy|hago|tengo|estoy)\b", "usé pretérito", "tense",
+         "Con 'ayer' se usa el pretérito indefinido, no el presente. Ej: 'Ayer comí' no 'Ayer como'",
+         ["Ayer fui al cine", "Ayer comí paella"]),
+        (r"\bmañana (?:yo )?(?:fui|comí|hice|tuve|estuve)\b", "usa futuro", "tense",
+         "Con 'mañana' se usa el futuro o 'ir a + infinitivo', no el pretérito. Ej: 'Mañana iré' o 'Mañana voy a ir'",
+         ["Mañana iré al médico", "Mañana voy a estudiar"]),
+        (r"\bsiempre (?:yo )?(?:fui|comí|hice)\b", "usa presente", "tense",
+         "Con 'siempre' (hábito) se usa el presente. Ej: 'Siempre como' no 'Siempre comí'",
+         ["Siempre desayuno a las 8", "Siempre voy en metro"]),
+        (r"\bcuando era niño,? (?:yo )?(?:fui|comí|hice|tuve)\b", "usa imperfecto", "tense",
+         "Para acciones habituales en el pasado se usa el imperfecto. Ej: 'Cuando era niño, iba...'",
+         ["Cuando era niño, jugaba al fútbol", "Cuando era niño, vivía en Madrid"]),
+    ]
+
+    for pattern, correction, tag, explanation, examples in tense_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": examples,
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # 2. Subjunctive errors (very common for learners)
+    subjunctive_patterns = [
+        (r"\bespero que (?:tú |él |ella )?\w+(?:as|es|a|e|o)\b(?! (?:puedas|vengas|tengas|hagas|seas|estés))",
+         "usa subjuntivo", "subjunctive",
+         "'Esperar que' requiere subjuntivo. Ej: 'Espero que vengas' no 'Espero que vienes'",
+         ["Espero que tengas un buen día", "Espero que puedas venir"]),
+        (r"\bquiero que (?:tú |él |ella )?\w+(?:as|es|a|e|o)\b(?! (?:puedas|vengas|tengas|hagas|seas|estés))",
+         "usa subjuntivo", "subjunctive",
+         "'Querer que' requiere subjuntivo. Ej: 'Quiero que vengas' no 'Quiero que vienes'",
+         ["Quiero que me ayudes", "Quiero que seas feliz"]),
+        (r"\bes necesario que (?:tú |él |ella )?\w+(?:as|es|a|e|o)\b",
+         "usa subjuntivo", "subjunctive",
+         "'Es necesario que' requiere subjuntivo.",
+         ["Es necesario que estudies", "Es necesario que llegues temprano"]),
+        (r"\bno creo que (?:tú |él |ella )?(?:es|está|tiene|puede|va)\b",
+         "usa subjuntivo", "subjunctive",
+         "'No creer que' (negativo) requiere subjuntivo. Ej: 'No creo que sea' no 'No creo que es'",
+         ["No creo que sea posible", "No creo que tenga razón"]),
+        (r"\bojalá (?:tú |él |ella )?(?:tienes|puedes|vienes|es|está)\b",
+         "usa subjuntivo", "subjunctive",
+         "'Ojalá' siempre requiere subjuntivo. Ej: 'Ojalá puedas' no 'Ojalá puedes'",
+         ["Ojalá tengas suerte", "Ojalá llueva mañana"]),
+    ]
+
+    for pattern, correction, tag, explanation, examples in subjunctive_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": examples,
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # 3. Reflexive verb errors
+    reflexive_patterns = [
+        (r"\b(?:yo )?levanto\b(?! (?:la|el|los|las|mi|tu|su))", "me levanto", "reflexive",
+         "'Levantarse' es reflexivo cuando significa 'to get up'. Ej: 'Me levanto a las 7'",
+         ["Me levanto temprano", "¿A qué hora te levantas?"]),
+        (r"\b(?:yo )?acuesto\b(?! (?:la|el|los|las|al))", "me acuesto", "reflexive",
+         "'Acostarse' es reflexivo cuando significa 'to go to bed'. Ej: 'Me acuesto tarde'",
+         ["Me acuesto a las 11", "Los niños se acuestan temprano"]),
+        (r"\b(?:yo )?llamo\b\s+(?!a\s|por\s|la\s|el\s)", "me llamo", "reflexive",
+         "'Llamarse' es reflexivo para decir tu nombre. Ej: 'Me llamo Juan'",
+         ["¿Cómo te llamas?", "Me llamo María"]),
+        (r"\b(?:yo )?siento\b(?! (?:que|el|la|un|una|mucho|nada))", "me siento", "reflexive",
+         "'Sentirse' es reflexivo para estados emocionales. 'Sentarse' para la acción física.",
+         ["Me siento bien", "Me siento cansado"]),
+        (r"\birse\s+a\s+casa\b", "ir a casa / irse de", "reflexive",
+         "'Irse' significa 'to leave'. Para 'go home' usa 'ir a casa' sin reflexivo.",
+         ["Voy a casa", "Me voy del trabajo (leaving work)"]),
+    ]
+
+    for pattern, correction, tag, explanation, examples in reflexive_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": examples,
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # 4. Word order errors
+    word_order_patterns = [
+        (r"\b(?:un|una|el|la)\s+(?:muy|más|bastante|poco)\s+\w+\b", "adjetivo después", "word_order",
+         "En español, los adjetivos generalmente van después del sustantivo. 'Un coche rojo' no 'Un rojo coche'",
+         ["Una casa grande", "Un libro interesante"]),
+        (r"\btambién\s+no\b", "tampoco", "word_order",
+         "'También no' no es correcto. Usa 'tampoco' para negaciones. Ej: 'Yo tampoco'",
+         ["Yo tampoco quiero", "Ella tampoco fue"]),
+        (r"\bno\s+(?:nada|nadie|nunca|ninguno)\b", "doble negación OK", "word_order", None),  # This is correct in Spanish
+        (r"\bnunca\s+no\b", "nunca", "word_order",
+         "Doble negación incorrecta. Usa solo 'nunca' o 'no... nunca'",
+         ["Nunca voy allí", "No voy nunca allí"]),
+    ]
+
+    for pattern, correction, tag, explanation, examples in word_order_patterns:
+        if explanation is None:
+            continue
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": examples if examples else [],
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # 5. Por/Para confusion (very common error)
+    por_para_patterns = [
+        (r"\bpor\s+(?:ir|venir|llegar|viajar)\s+a\b", "para ir a", "por_para",
+         "Para destino/propósito, usa 'para'. 'Por' indica causa/razón/medio.",
+         ["Voy para Madrid", "Estudio para aprender"]),
+        (r"\bgracias\s+para\b", "gracias por", "por_para",
+         "'Gracias' siempre va con 'por'. Ej: 'Gracias por todo'",
+         ["Gracias por tu ayuda", "Gracias por venir"]),
+        (r"\bpagar\s+para\b", "pagar por", "por_para",
+         "'Pagar' va con 'por' cuando indica el objeto de la compra.",
+         ["Pagué por el libro", "¿Cuánto pagaste por eso?"]),
+        (r"\bpara\s+(?:la\s+)?mañana\b(?!\s+estaré)", "por la mañana", "por_para",
+         "'Por la mañana' para partes del día. 'Para mañana' significa 'due tomorrow'",
+         ["Trabajo por la mañana", "El informe es para mañana"]),
+        (r"\bestudiar\s+por\b(?!\s+(?:la\s+)?(?:mañana|tarde|noche))", "estudiar para", "por_para",
+         "'Estudiar para' indica propósito (examen, carrera). 'Estudiar por' indica causa.",
+         ["Estudio para el examen", "Estudio para ser médico"]),
+    ]
+
+    for pattern, correction, tag, explanation, examples in por_para_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": examples,
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # 6. Saber/Conocer confusion
+    saber_conocer_patterns = [
+        (r"\bsé\s+(?:a\s+)?(?:maría|juan|pedro|ella|él|ellos|madrid|españa|paris)\b", "conozco", "saber_conocer",
+         "'Conocer' para personas y lugares. 'Saber' para información y habilidades.",
+         ["Conozco a María", "Conozco Madrid", "Sé hablar español"]),
+        (r"\bconozco\s+(?:que|cómo|dónde|cuándo|por qué)\b", "sé que/cómo", "saber_conocer",
+         "'Saber' para información (saber que/cómo/dónde). 'Conocer' para familiaridad.",
+         ["Sé dónde vive", "Sé cómo hacerlo"]),
+        (r"\bconozco\s+(?:nadar|bailar|cocinar|conducir|hablar)\b", "sé nadar", "saber_conocer",
+         "'Saber + infinitivo' para habilidades. 'Conocer' no se usa así.",
+         ["Sé nadar", "Sabe tocar la guitarra"]),
+    ]
+
+    for pattern, correction, tag, explanation, examples in saber_conocer_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": examples,
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # 7. Gustar-type verb errors
+    gustar_patterns = [
+        (r"\byo\s+gusto\b", "me gusta", "gustar",
+         "'Gustar' funciona diferente: 'Me gusta' (a mí me gusta), no 'Yo gusto'",
+         ["Me gusta el café", "Me gustan los libros"]),
+        (r"\bme\s+gusta\s+(?:los|las|ellos|ellas)\b", "me gustan", "gustar",
+         "'Gustar' concuerda con lo que gusta: 'Me gustan los libros' (plural)",
+         ["Me gustan las películas", "Me gustan los deportes"]),
+        (r"\bme\s+gustan\s+(?:el|la|esto|eso|bailar|cantar|comer)\b", "me gusta", "gustar",
+         "'Gustar' en singular para sustantivos singulares e infinitivos.",
+         ["Me gusta el libro", "Me gusta bailar"]),
+        (r"\b(?:yo|tú|él)\s+(?:intereso|falto|importo|encanto)\b", "me/te/le interesa", "gustar",
+         "Los verbos tipo 'gustar' (interesar, faltar, importar, encantar) funcionan igual.",
+         ["Me interesa la historia", "Le encantan los gatos"]),
+    ]
+
+    for pattern, correction, tag, explanation, examples in gustar_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": examples,
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # 8. Personal 'a' omission
+    personal_a_patterns = [
+        (r"\bveo\s+(?:mi|tu|su)\s+(?:madre|padre|hermano|hermana|amigo|amiga)\b", "veo a mi...", "personal_a",
+         "La 'a personal' es obligatoria antes de personas. 'Veo a mi madre'",
+         ["Veo a mi madre", "Llamo a mi amigo", "Visito a mis abuelos"]),
+        (r"\bconozco\s+(?:un|una)\s+(?:chico|chica|hombre|mujer|persona)\b", "conozco a un/a...", "personal_a",
+         "La 'a personal' es necesaria con 'conocer' + persona.",
+         ["Conozco a una chica muy simpática", "Conocí a un hombre interesante"]),
+        (r"\bbusco\s+(?:un|una)\s+(?:secretario|secretaria|profesor|profesora|médico|abogado)\b", "busco a un/a... o busco un/a...", "personal_a",
+         "Sin 'a' = buscas el puesto. Con 'a' = buscas una persona específica.",
+         ["Busco un médico (any doctor)", "Busco a un médico (specific doctor)"]),
+    ]
+
+    for pattern, correction, tag, explanation, examples in personal_a_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": examples,
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # 9. Adjective agreement errors
+    agreement_patterns = [
+        (r"\b(?:los|unos)\s+\w+(?<!s)\b(?:\s+(?:grande|pequeño|bonito|nuevo|viejo|bueno|malo))\b",
+         "adjetivo plural", "agreement",
+         "Los adjetivos deben concordar en número con el sustantivo.",
+         ["Los libros nuevos", "Unos coches grandes"]),
+        (r"\b(?:la|una)\s+\w+(?:o)\b\s+(?!que|de|en|a|y|con)", "femenino", "agreement",
+         "Muchos sustantivos femeninos terminan en -a, no en -o.",
+         ["La casa bonita", "Una mesa grande"]),
+        (r"\bmuy\s+(?:bueno|malo)\b", "muy bien/mal (adverbio)", "agreement",
+         "Con verbos, usa adverbios: 'muy bien', 'muy mal'. Con sustantivos: 'muy bueno/a'",
+         ["Estoy muy bien", "Es muy bueno (para personas/cosas)"]),
+    ]
+
+    for pattern, correction, tag, explanation, examples in agreement_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": examples,
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # 10. Common spelling errors
+    spelling_patterns = [
+        (r"\bhaver\b", "haber", "spelling",
+         "'Haber' se escribe con 'b', no con 'v'.",
+         ["Puede haber problemas", "Debe haber llegado"]),
+        (r"\bhalla\b(?!\s+(?:encontrado|descubierto))", "haya (subjuntivo de haber)", "spelling",
+         "'Haya' (subjuntivo de haber) vs 'halla' (encontrar). Contexto diferente.",
+         ["Espero que haya llegado", "Él halla (encuentra) la respuesta"]),
+        (r"\bayá\b", "allá", "spelling",
+         "'Allá' (lugar lejano) se escribe con 'll', no con 'y'.",
+         ["Vamos allá", "Está allá lejos"]),
+        (r"\ba sido\b", "ha sido", "spelling",
+         "'Ha' (del verbo haber) se escribe con 'h'. 'A' es preposición.",
+         ["Ha sido difícil", "Ha llegado tarde"]),
+        (r"\bvalla\b(?!\s+(?:publicitaria|de|del))", "vaya (subjuntivo de ir)", "spelling",
+         "'Vaya' (subjuntivo de ir) vs 'valla' (cerca/barrera).",
+         ["Espero que vaya bien", "La valla del jardín"]),
+        (r"\bhecho\b(?=\s+de\s+menos)", "echo de menos", "spelling",
+         "'Echar de menos' (to miss) se escribe sin 'h'. 'Hecho' es participio de 'hacer'.",
+         ["Te echo de menos", "Está hecho (it's done)"]),
+        (r"\bhaber\s+(?:echo|ido|tenido)\b", "haber hecho/ido", "spelling",
+         "El participio de 'hacer' es 'hecho' con 'h'.",
+         ["Debería haber hecho eso", "Podría haber ido"]),
+        (r"\bporque\b(?=\s*\?)", "por qué", "spelling",
+         "'Por qué' (separado, con tilde) para preguntas. 'Porque' para respuestas.",
+         ["¿Por qué no vienes?", "Porque estoy ocupado"]),
+        (r"(?<!\¿)(?<!\?)\bpor qué\b(?!\s*\?)", "porque/porqué", "spelling",
+         "'Porque' (junto, sin tilde) para explicaciones. '¿Por qué?' para preguntas.",
+         ["No voy porque llueve", "¿Por qué no vienes?"]),
+        (r"\bsi no\b(?=\s+(?:es|era|fue|será|sería|fuera))", "sino", "spelling",
+         "'Sino' (but rather) vs 'si no' (if not). Diferentes usos.",
+         ["No es rojo, sino azul", "Si no llueve, iremos"]),
+    ]
+
+    for pattern, correction, tag, explanation, examples in spelling_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": examples,
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # 11. Accent mark errors (common words)
+    accent_patterns = [
+        (r"\bmas\b(?!\s+(?:o\s+)?menos)", "más (adverb) or mas (but)", "accent",
+         "'Más' (more) lleva tilde. 'Mas' (pero) es arcaico/literario.",
+         ["Quiero más", "Más rápido"]),
+        (r"\btu\b(?=\s+(?:eres|tienes|vas|puedes|quieres))", "tú (pronombre)", "accent",
+         "'Tú' (pronombre) lleva tilde. 'Tu' (posesivo) no.",
+         ["Tú eres mi amigo", "Tu casa es bonita"]),
+        (r"\bel\b(?=\s+(?:es|fue|era|soy|eres|será|tiene|quiere|puede))", "él (pronombre)", "accent",
+         "'Él' (pronombre) lleva tilde. 'El' (artículo) no.",
+         ["Él es mi hermano", "El libro está aquí"]),
+        (r"\bsi\b(?=\s*,?\s*(?:yo|tú|él|ella|nosotros|ellos))", "sí (afirmación)", "accent",
+         "'Sí' (yes/afirmación) lleva tilde. 'Si' (condicional) no.",
+         ["Sí, quiero", "Si llueve, no voy"]),
+        (r"\bque\s+bueno\b", "¡qué bueno!", "accent",
+         "'Qué' exclamativo/interrogativo lleva tilde.",
+         ["¡Qué bueno!", "¿Qué quieres?"]),
+        (r"\bcomo\b(?=\s+(?:hago|puedo|debo|consigo))", "cómo (interrogativo)", "accent",
+         "'Cómo' interrogativo lleva tilde.",
+         ["¿Cómo puedo ayudarte?", "No sé cómo hacerlo"]),
+        (r"\bdonde\b(?=\s+(?:está|están|vives|queda|es))", "dónde (interrogativo)", "accent",
+         "'Dónde' interrogativo lleva tilde.",
+         ["¿Dónde está?", "No sé dónde vive"]),
+        (r"\bcuanto\b(?=\s+(?:cuesta|vale|tiempo|dinero))", "cuánto (interrogativo)", "accent",
+         "'Cuánto' interrogativo lleva tilde.",
+         ["¿Cuánto cuesta?", "¿Cuánto tiempo?"]),
+    ]
+
+    for pattern, correction, tag, explanation, examples in accent_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": examples,
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # 12. Redundancy errors
+    redundancy_patterns = [
+        (r"\bsubir\s+(?:para\s+)?arriba\b", "subir", "redundancy",
+         "'Subir' ya implica 'arriba'. Es redundante decir 'subir arriba'.",
+         ["Voy a subir", "Sube las escaleras"]),
+        (r"\bbajar\s+(?:para\s+)?abajo\b", "bajar", "redundancy",
+         "'Bajar' ya implica 'abajo'. Es redundante decir 'bajar abajo'.",
+         ["Voy a bajar", "Baja al sótano"]),
+        (r"\bsalir\s+(?:para\s+)?afuera\b", "salir", "redundancy",
+         "'Salir' ya implica 'afuera'. Es redundante decir 'salir afuera'.",
+         ["Voy a salir", "Sal de aquí"]),
+        (r"\bentrar\s+(?:para\s+)?adentro\b", "entrar", "redundancy",
+         "'Entrar' ya implica 'adentro'. Es redundante decir 'entrar adentro'.",
+         ["Voy a entrar", "Entra en la casa"]),
+        (r"\bvolver\s+(?:a\s+)?(?:otra\s+vez|de\s+nuevo)\b", "volver / otra vez", "redundancy",
+         "'Volver' ya implica repetición. Elige uno u otro.",
+         ["Voy a volver", "Lo haré otra vez"]),
+        (r"\brepetir\s+(?:otra\s+vez|de\s+nuevo)\b", "repetir", "redundancy",
+         "'Repetir' ya implica 'otra vez'. Es redundante.",
+         ["¿Puedes repetir?", "No lo repitas"]),
+    ]
+
+    for pattern, correction, tag, explanation, examples in redundancy_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": examples,
+                "tag": tag,
+                "position": match.start(),
+            })
+
     return mistakes_found
 
 
@@ -823,3 +2055,417 @@ def get_streak_days(history: Optional[list[dict]] = None) -> int:
             continue
 
     return streak
+
+
+def generate_hint(
+    exercise_type: str,
+    correct_answer: str,
+    user_answer: str,
+    context: Optional[dict] = None
+) -> dict:
+    """Generate a helpful hint for a wrong answer without giving the answer away.
+
+    Analyzes the user's incorrect answer and provides targeted hints based on
+    the type of error detected.
+
+    Args:
+        exercise_type: Type of exercise:
+            - "vocabulary": Word translation/meaning
+            - "conjugation": Verb conjugation
+            - "fill_blank": Fill in the blank
+            - "translation": Sentence translation
+            - "grammar": Grammar exercise
+            - "listening": Listening comprehension
+        correct_answer: The correct answer
+        user_answer: The user's incorrect answer
+        context: Optional additional context:
+            - "verb_infinitive": For conjugation exercises
+            - "tense": Target tense
+            - "person": Target person (yo, tú, etc.)
+            - "english_meaning": English translation
+            - "sentence": Full sentence context
+            - "topic": Grammar topic being tested
+
+    Returns:
+        Dictionary with:
+            - hint: str - The hint text
+            - hint_type: str - Category of hint provided
+            - severity: str - How close the answer was ("close", "partial", "far")
+            - suggestion: Optional[str] - Additional learning suggestion
+    """
+    user_normalized = user_answer.lower().strip()
+    correct_normalized = correct_answer.lower().strip()
+
+    # Determine how close the answer is
+    distance = levenshtein_distance(
+        normalize_accents(user_normalized),
+        normalize_accents(correct_normalized)
+    )
+
+    if distance <= 2:
+        severity = "close"
+    elif distance <= 5:
+        severity = "partial"
+    else:
+        severity = "far"
+
+    # Generate hints based on exercise type
+    if exercise_type == "vocabulary":
+        return _generate_vocabulary_hint(
+            correct_answer, user_answer, context, severity
+        )
+
+    elif exercise_type == "conjugation":
+        return _generate_conjugation_hint(
+            correct_answer, user_answer, context, severity
+        )
+
+    elif exercise_type == "fill_blank":
+        return _generate_fill_blank_hint(
+            correct_answer, user_answer, context, severity
+        )
+
+    elif exercise_type == "translation":
+        return _generate_translation_hint(
+            correct_answer, user_answer, context, severity
+        )
+
+    elif exercise_type == "grammar":
+        return _generate_grammar_hint(
+            correct_answer, user_answer, context, severity
+        )
+
+    else:
+        # Generic hint
+        return _generate_generic_hint(correct_answer, user_answer, severity)
+
+
+def _generate_vocabulary_hint(
+    correct: str, user: str, context: Optional[dict], severity: str
+) -> dict:
+    """Generate hint for vocabulary exercises."""
+    correct_normalized = correct.lower().strip()
+    user_normalized = user.lower().strip()
+
+    # Check if it's an accent issue
+    if normalize_accents(user_normalized) == normalize_accents(correct_normalized):
+        accent_hint = get_accent_feedback(user, correct)
+        return {
+            "hint": accent_hint or "Pay attention to the accent marks (tildes).",
+            "hint_type": "accent",
+            "severity": "close",
+            "suggestion": "Spanish accent marks change meaning. Practice: si/sí, mas/más, tu/tú."
+        }
+
+    # Check if it's a gender/article issue
+    if are_articles_equivalent(user_normalized, correct_normalized):
+        return {
+            "hint": "The word is correct but check the article (el/la/los/las).",
+            "hint_type": "gender",
+            "severity": "close",
+            "suggestion": "Remember: words ending in -o are usually masculine, -a usually feminine."
+        }
+
+    # Check for alternative spellings
+    if check_alternative_spelling(user, correct):
+        return {
+            "hint": "Your answer is a valid regional variation! The expected answer uses different spelling.",
+            "hint_type": "regional",
+            "severity": "close",
+            "suggestion": None
+        }
+
+    # Check first letter match
+    if user_normalized and correct_normalized and user_normalized[0] == correct_normalized[0]:
+        return {
+            "hint": f"Good start! The word begins with '{correct_normalized[0]}'. Think about what comes next.",
+            "hint_type": "partial_match",
+            "severity": severity,
+            "suggestion": "Try to visualize the word or think of related words."
+        }
+
+    # Similar word confusion
+    similar = get_similar_words(correct, count=3)
+    if user_normalized in [s.lower() for s in similar]:
+        return {
+            "hint": "You've chosen a similar word. Think carefully about the exact meaning required.",
+            "hint_type": "confusable",
+            "severity": "partial",
+            "suggestion": "These words are often confused. Make a note to review the differences."
+        }
+
+    # Give a structural hint
+    word_len = len(correct_normalized)
+    return {
+        "hint": f"The word has {word_len} letters and starts with '{correct_normalized[0]}'.",
+        "hint_type": "structure",
+        "severity": severity,
+        "suggestion": "Try breaking down the word by syllables."
+    }
+
+
+def _generate_conjugation_hint(
+    correct: str, user: str, context: Optional[dict], severity: str
+) -> dict:
+    """Generate hint for verb conjugation exercises."""
+    correct_normalized = correct.lower().strip()
+    user_normalized = user.lower().strip()
+    verb = (context or {}).get("verb_infinitive", "")
+    person = (context or {}).get("person", "")
+    tense = (context or {}).get("tense", "presente")
+
+    # Check accent issues
+    if normalize_accents(user_normalized) == normalize_accents(correct_normalized):
+        accent_positions = []
+        for i, (u, c) in enumerate(zip(user_normalized, correct_normalized)):
+            if u != c:
+                accent_positions.append(c)
+        return {
+            "hint": f"Almost! The conjugation is right but needs an accent mark.",
+            "hint_type": "accent",
+            "severity": "close",
+            "suggestion": f"In {tense} tense, pay attention to accent marks on certain forms."
+        }
+
+    # Check if user wrote infinitive
+    if verb and user_normalized == verb.lower():
+        return {
+            "hint": "You wrote the infinitive form. Remember to conjugate the verb!",
+            "hint_type": "infinitive",
+            "severity": "partial",
+            "suggestion": f"For '{person}' in {tense}, what ending should you add?"
+        }
+
+    # Check if wrong person
+    if verb and verb.lower() in IRREGULAR_VERBS:
+        verb_forms = IRREGULAR_VERBS[verb.lower()].get(tense, {})
+        for p, form in verb_forms.items():
+            if normalize_accents(user_normalized) == normalize_accents(form.lower()):
+                if p != person:
+                    return {
+                        "hint": f"That's the form for '{p}', not '{person}'.",
+                        "hint_type": "wrong_person",
+                        "severity": "partial",
+                        "suggestion": "Each person has a specific ending. Review the conjugation table."
+                    }
+
+    # Check ending patterns
+    if verb:
+        verb_type = verb[-2:] if verb.endswith(("ar", "er", "ir")) else None
+        if verb_type:
+            expected_endings = VERB_PATTERNS.get(verb_type, {})
+            return {
+                "hint": f"For -{verb_type} verbs in {tense}, think about the correct ending for '{person}'.",
+                "hint_type": "ending",
+                "severity": severity,
+                "suggestion": f"Regular -{verb_type} verbs follow a pattern. What's the ending for '{person}'?"
+            }
+
+    # Check for stem-changing verb
+    if verb and _is_stem_changing_verb(verb.lower()):
+        stem_hint = _get_stem_change_hint(verb.lower())
+        return {
+            "hint": f"'{verb}' is a stem-changing verb.",
+            "hint_type": "stem_change",
+            "severity": severity,
+            "suggestion": stem_hint
+        }
+
+    # Generic conjugation hint
+    return {
+        "hint": f"Review the {tense} conjugation for '{person}'.",
+        "hint_type": "general",
+        "severity": severity,
+        "suggestion": "Practice conjugation tables regularly."
+    }
+
+
+def _generate_fill_blank_hint(
+    correct: str, user: str, context: Optional[dict], severity: str
+) -> dict:
+    """Generate hint for fill-in-the-blank exercises."""
+    sentence = (context or {}).get("sentence", "")
+    topic = (context or {}).get("topic", "")
+
+    # Check for preposition errors
+    prepositions = {"a", "de", "en", "con", "por", "para", "sin", "sobre", "entre", "hacia"}
+    if correct.lower() in prepositions:
+        if topic:
+            return {
+                "hint": f"This blank requires a preposition related to '{topic}'.",
+                "hint_type": "preposition",
+                "severity": severity,
+                "suggestion": "Spanish prepositions often differ from English. Think about the verb's requirements."
+            }
+        return {
+            "hint": "Think about which preposition fits the context.",
+            "hint_type": "preposition",
+            "severity": severity,
+            "suggestion": "Some verbs require specific prepositions. Review 'pensar en', 'soñar con', etc."
+        }
+
+    # Check for article errors
+    if correct.lower() in SPANISH_ARTICLES["all"]:
+        return {
+            "hint": "This blank needs an article. Consider the gender and number of the noun.",
+            "hint_type": "article",
+            "severity": severity,
+            "suggestion": "Look at the noun following the blank - is it masculine/feminine, singular/plural?"
+        }
+
+    # Check for ser/estar
+    if correct.lower() in {"es", "está", "son", "están", "ser", "estar", "soy", "estoy"}:
+        return {
+            "hint": "Choose between 'ser' and 'estar'. Think about whether it's a permanent or temporary state.",
+            "hint_type": "copula",
+            "severity": severity,
+            "suggestion": "Ser: identity, characteristics, origin, time. Estar: location, emotions, conditions."
+        }
+
+    # Generic context-based hint
+    return {
+        "hint": "Re-read the sentence carefully. What type of word makes sense in this position?",
+        "hint_type": "context",
+        "severity": severity,
+        "suggestion": "Consider the grammar role: verb, noun, adjective, adverb, or preposition?"
+    }
+
+
+def _generate_translation_hint(
+    correct: str, user: str, context: Optional[dict], severity: str
+) -> dict:
+    """Generate hint for translation exercises."""
+    english = (context or {}).get("english_meaning", "")
+
+    # Check word order
+    correct_words = correct.lower().split()
+    user_words = user.lower().split()
+
+    if set(normalize_accents(w) for w in correct_words) == set(normalize_accents(w) for w in user_words):
+        return {
+            "hint": "You have the right words, but check the word order!",
+            "hint_type": "word_order",
+            "severity": "close",
+            "suggestion": "Spanish word order can differ from English. Adjectives usually follow nouns."
+        }
+
+    # Check for missing words
+    if len(user_words) < len(correct_words):
+        missing_count = len(correct_words) - len(user_words)
+        return {
+            "hint": f"Your translation is missing approximately {missing_count} word(s).",
+            "hint_type": "incomplete",
+            "severity": "partial",
+            "suggestion": "Make sure to translate all parts of the sentence including articles and prepositions."
+        }
+
+    # Check for extra words
+    if len(user_words) > len(correct_words):
+        return {
+            "hint": "Your translation has extra words. Spanish is often more concise than English.",
+            "hint_type": "too_long",
+            "severity": "partial",
+            "suggestion": "Spanish omits subject pronouns and uses shorter constructions."
+        }
+
+    # Generic translation hint
+    return {
+        "hint": "Review your translation carefully. Check verb forms and gender agreement.",
+        "hint_type": "general",
+        "severity": severity,
+        "suggestion": "Translate meaning, not word-for-word. Think about how a native speaker would say it."
+    }
+
+
+def _generate_grammar_hint(
+    correct: str, user: str, context: Optional[dict], severity: str
+) -> dict:
+    """Generate hint for grammar exercises."""
+    topic = (context or {}).get("topic", "")
+
+    topic_hints = {
+        "subjunctive": {
+            "hint": "This exercise tests the subjunctive mood. Does the trigger require subjunctive?",
+            "suggestion": "Expressions of desire, doubt, emotion, and impersonal judgments trigger subjunctive."
+        },
+        "por_para": {
+            "hint": "Think about the reason for choosing 'por' vs 'para'.",
+            "suggestion": "Por: cause, exchange, duration. Para: purpose, destination, recipient."
+        },
+        "ser_estar": {
+            "hint": "Consider whether the state is inherent (ser) or circumstantial (estar).",
+            "suggestion": "Ser for 'what it is', estar for 'how it is' or 'where it is'."
+        },
+        "preterite_imperfect": {
+            "hint": "Is this a completed action (preterite) or ongoing/habitual (imperfect)?",
+            "suggestion": "Preterite: specific events. Imperfect: descriptions, habits, interrupted actions."
+        },
+        "direct_indirect_objects": {
+            "hint": "Identify whether the pronoun replaces a direct or indirect object.",
+            "suggestion": "Direct: receives action. Indirect: to/for whom the action is done."
+        },
+        "reflexive": {
+            "hint": "Does this verb act on the subject itself? Consider if reflexive is needed.",
+            "suggestion": "Reflexive verbs: action reflects back on subject (levantarse, vestirse)."
+        },
+        "gustar": {
+            "hint": "Remember: 'gustar' agrees with what is liked, not who likes it.",
+            "suggestion": "The thing liked is the subject: Me gusta el libro. Me gustan los libros."
+        },
+    }
+
+    if topic.lower() in topic_hints:
+        return {
+            "hint": topic_hints[topic.lower()]["hint"],
+            "hint_type": "topic_specific",
+            "severity": severity,
+            "suggestion": topic_hints[topic.lower()]["suggestion"]
+        }
+
+    return {
+        "hint": "Review the grammar rule being tested. Look for patterns in the sentence.",
+        "hint_type": "general",
+        "severity": severity,
+        "suggestion": "Take your time to identify the grammatical structure required."
+    }
+
+
+def _generate_generic_hint(correct: str, user: str, severity: str) -> dict:
+    """Generate a generic hint when no specific exercise type is known."""
+    correct_normalized = correct.lower().strip()
+    user_normalized = user.lower().strip()
+
+    # Check for accent issues first
+    if normalize_accents(user_normalized) == normalize_accents(correct_normalized):
+        return {
+            "hint": "Your answer is almost correct! Check the accent marks.",
+            "hint_type": "accent",
+            "severity": "close",
+            "suggestion": "Practice Spanish accents: á, é, í, ó, ú change pronunciation and sometimes meaning."
+        }
+
+    # Check length difference
+    len_diff = abs(len(correct_normalized) - len(user_normalized))
+    if len_diff > 3:
+        return {
+            "hint": f"Your answer length differs significantly from the expected answer.",
+            "hint_type": "length",
+            "severity": "far",
+            "suggestion": "Re-read the question and think about what's being asked."
+        }
+
+    # First letter hint
+    if correct_normalized:
+        return {
+            "hint": f"The answer starts with '{correct_normalized[0].upper()}' and has {len(correct_normalized)} characters.",
+            "hint_type": "structure",
+            "severity": severity,
+            "suggestion": "Try to recall the word or phrase from your studies."
+        }
+
+    return {
+        "hint": "Think carefully about the question and try again.",
+        "hint_type": "generic",
+        "severity": severity,
+        "suggestion": None
+    }
