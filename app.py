@@ -43,6 +43,7 @@ try:
     init_db()
 except Exception as e:
     st.error(f"Database error: {str(e)}")
+    st.stop()
 
 
 # ============================================
@@ -58,7 +59,7 @@ def init_session_state():
         "active_profile_id": None,
         "show_onboarding": False,
         "onboarding_step": 0,
-        "last_session": None,
+        "last_session": "Topic Diversity",
         "quick_session_mode": False,
     }
 
@@ -169,20 +170,18 @@ def render_sidebar():
                 st.session_state.current_page = item["page"]
                 st.rerun()
 
-        # Admin tools
-        profile = get_user_profile()
-        if profile.get("is_admin"):
-            render_html('<hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--border);">')
-            render_html('<div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 0.5rem; padding-left: 0.25rem;">Developer</div>')
-            admin_pages = [
-                ("📥 Content Ingest", "Content Ingest"),
-                ("📓 Error Notebook", "Error Notebook"),
-                ("🔍 Fingerprint", "Fingerprint"),
-            ]
-            for label, page in admin_pages:
-                if st.button(label, key=f"admin_{page}", use_container_width=True):
-                    st.session_state.current_page = page
-                    st.rerun()
+        # Tools section
+        render_html('<hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--border);">')
+        render_html('<div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 0.5rem; padding-left: 0.25rem;">Tools</div>')
+        tool_pages = [
+            ("📥 Content Ingest", "Content Ingest"),
+            ("📓 Error Notebook", "Error Notebook"),
+            ("🔍 Fingerprint", "Fingerprint"),
+        ]
+        for label, page in tool_pages:
+            if st.button(label, key=f"tool_{page}", use_container_width=True):
+                st.session_state.current_page = page
+                st.rerun()
 
 
 # ============================================
@@ -574,7 +573,7 @@ def render_home_page():
         ("🔥", str(streak), "Day Streak", "#F59E0B"),
         ("📚", str(stats.get('total_vocab', 0)), "Words", "#10B981"),
         ("🎯", f"{get_sessions_this_week()}/{profile.get('weekly_goal', 5)}", "Weekly Goal", "#3B82F6"),
-        ("⭐", str(stats.get('total_xp', 0)), "Total XP", "#F59E0B"),
+        ("⭐", str(stats.get('total_missions', 0)), "Missions", "#F59E0B"),
     ]
 
     for col, (icon, value, label, color) in zip(stat_cols, stats_data):
@@ -589,7 +588,7 @@ def render_home_page():
     with main_col:
         # Continue Learning
         render_action_card("Continue Learning", "Pick up where you left off", icon="▶️", primary=True)
-        last_page = st.session_state.get("last_session", "Topic Diversity")
+        last_page = st.session_state.get("last_session") or "Topic Diversity"
         if st.button("CONTINUE", type="primary", use_container_width=True, key="btn_continue"):
             st.session_state.current_page = last_page
             st.session_state.last_session = last_page
@@ -679,7 +678,7 @@ def render_home_page():
                                 font-size: 0.8rem; color: var(--text-secondary);">{area}</div>
                 """)
 
-        # Tip of the Day
+        # Tip of the Day (stable per day)
         tips = [
             "Practice for just 5 minutes a day to build a habit!",
             "Review mistakes right after making them for better retention.",
@@ -687,7 +686,11 @@ def render_home_page():
             "Try thinking in Spanish during everyday activities.",
             "Write short journal entries to practice writing.",
         ]
-        tip = random.choice(tips)
+        today_str = date.today().isoformat()
+        if st.session_state.get("_tip_date") != today_str:
+            st.session_state._tip_date = today_str
+            st.session_state._tip = random.choice(tips)
+        tip = st.session_state._tip
 
         render_html(f"""
             <div class="vl-tip" style="margin-top: 0.75rem;">
@@ -1017,7 +1020,7 @@ def render_progress_page():
             render_html('<div class="vl-card">')
             for error_type, data in sorted_errors:
                 count = data.get('count', 0)
-                avg_ease = data.get('avg_ease', 2.5)
+                avg_ease = data.get('avg_ease') or 2.5
                 bar_width = (count / max_count * 100) if max_count > 0 else 0
 
                 if avg_ease >= 2.8:

@@ -5,6 +5,12 @@ Consistent light theme with vibrant accent colors.
 """
 import re
 import streamlit as st
+from html import escape as _html_escape
+
+
+def _esc(text) -> str:
+    """HTML-escape a string for safe interpolation."""
+    return _html_escape(str(text)) if text is not None else ""
 
 # =============================================================================
 # DESIGN TOKENS
@@ -977,6 +983,8 @@ def render_metric_card(value: str, label: str, icon: str = "", color: str = "") 
 
 def render_metric_grid(metrics: list) -> None:
     """Render a grid of metric cards."""
+    if not metrics:
+        return
     cols = st.columns(len(metrics))
     for col, m in zip(cols, metrics):
         with col:
@@ -1075,7 +1083,7 @@ def render_progress_bar(value=0, max_value=100, label: str = "",
         label_html = f"""
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.375rem;">
                 <span style="font-size: 0.8rem; font-weight: 500; color: var(--text);">{label}</span>
-                <span style="font-size: 0.8rem; color: var(--text-muted);">{value}/{max_value}</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">{int(value) if value == int(value) else value}/{int(max_value) if max_value == int(max_value) else max_value}</span>
             </div>
         """
     render_html(f"""
@@ -1176,11 +1184,17 @@ def render_exercise_feedback(correct: bool, correct_answer: str, explanation: st
 def render_domain_coverage(domains: dict) -> None:
     """Render domain coverage bars."""
     for domain, coverage in domains.items():
-        render_progress_bar(int(coverage), 100, domain)
+        try:
+            coverage_val = int(coverage)
+        except (TypeError, ValueError):
+            coverage_val = 0
+        render_progress_bar(coverage_val, 100, domain)
 
 
 def render_quick_actions(actions: list) -> None:
     """Render quick action buttons in a grid."""
+    if not actions:
+        return
     cols = st.columns(len(actions))
     for col, action in zip(cols, actions):
         with col:
@@ -1245,7 +1259,8 @@ def normalize_spanish_answer(text: str, strict_accents: bool = False) -> str:
 
     if not strict_accents:
         for src, dst in [('\u00e1', 'a'), ('\u00e9', 'e'), ('\u00ed', 'i'),
-                         ('\u00f3', 'o'), ('\u00fa', 'u'), ('\u00fc', 'u')]:
+                         ('\u00f3', 'o'), ('\u00fa', 'u'), ('\u00fc', 'u'),
+                         ('\u00f1', 'n')]:
             text = text.replace(src, dst)
 
     return text
@@ -1263,9 +1278,10 @@ def check_answer(user_answer: str, correct_answers: list, strict_accents: bool =
         if user_norm == ans_norm:
             return {"result": "correct", "matched": answer, "feedback": ""}
         if user_fold == ans_fold:
-            return {"result": "almost", "matched": answer, "feedback": f"Watch the accents: {answer}"}
+            if not strict_accents:
+                return {"result": "almost", "matched": answer, "feedback": f"Watch the accents: {answer}"}
 
-    return {"result": "incorrect", "matched": None, "feedback": f"Correct answer: {correct_answers[0]}"}
+    return {"result": "incorrect", "matched": None, "feedback": f"Correct answer: {correct_answers[0] if correct_answers else 'N/A'}"}
 
 
 def validate_exercise(exercise: dict) -> dict:
@@ -1281,6 +1297,8 @@ def validate_exercise(exercise: dict) -> dict:
     elif ex_type == "mcq":
         if not exercise.get("choices") or len(exercise.get("choices", [])) < 2:
             errors.append("MCQ must have at least 2 choices")
+        if not exercise.get("answer"):
+            errors.append("MCQ must have an answer")
 
     if not exercise.get("type"):
         errors.append("Exercise must have a type")

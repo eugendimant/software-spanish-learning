@@ -71,9 +71,13 @@ def save_phrase(phrase: str, translation: str = "", context: str = "",
     try:
         with get_connection() as conn:
             conn.execute("""
-                INSERT OR REPLACE INTO phrasebook
+                INSERT INTO phrasebook
                 (profile_id, phrase, translation, context, category, source, last_practiced)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(profile_id, phrase)
+                DO UPDATE SET translation=excluded.translation, context=excluded.context,
+                             category=excluded.category, source=excluded.source,
+                             last_practiced=excluded.last_practiced
             """, (profile_id, phrase, translation, context, category, source, datetime.now().isoformat()))
             conn.commit()
             return True

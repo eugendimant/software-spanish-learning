@@ -310,7 +310,10 @@ def render_grammar_exercise(card: dict):
 
         if result["is_correct"]:
             render_feedback("success", "✅ Correct!")
-            record_progress({"grammar_reviewed": 1})
+            recorded_key = f"recorded_{st.session_state.review_index}"
+            if recorded_key not in st.session_state:
+                record_progress({"grammar_reviewed": 1})
+                st.session_state[recorded_key] = True
         else:
             render_feedback("error", f"❌ Not quite. The correct answer is: **{result['correct']}**")
 
@@ -367,7 +370,7 @@ def render_error_exercise(card: dict):
                     profile = get_user_profile()
                     accent_tolerant = bool(profile.get("accent_tolerance", 0))
 
-                    is_correct, _ = compare_answers(
+                    is_correct, _, _ = compare_answers(
                         user_input, correct, accent_tolerant=accent_tolerant
                     )
 
@@ -386,19 +389,22 @@ def render_error_exercise(card: dict):
         # Show result
         result = st.session_state[result_key]
 
+        recorded_key = f"recorded_{st.session_state.review_index}"
         if result["is_correct"]:
             render_feedback("success", "✅ Correct!")
-            record_progress({"errors_fixed": 1})
-
-            item = card["item"]
-            if item.get("id"):
-                update_mistake_review(item["id"], 4)
+            if recorded_key not in st.session_state:
+                record_progress({"errors_fixed": 1})
+                item = card["item"]
+                if item.get("id"):
+                    update_mistake_review(item["id"], 4)
+                st.session_state[recorded_key] = True
         else:
             render_feedback("error", f"❌ Not quite. The correct answer is: **{result['correct']}**")
-
-            item = card["item"]
-            if item.get("id"):
-                update_mistake_review(item["id"], 1)
+            if recorded_key not in st.session_state:
+                item = card["item"]
+                if item.get("id"):
+                    update_mistake_review(item["id"], 1)
+                st.session_state[recorded_key] = True
 
         # Show explanation
         if card.get("explanation"):

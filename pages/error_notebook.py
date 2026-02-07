@@ -257,10 +257,10 @@ def render_error_practice():
             st.info("Add some errors using the Mistake Catcher first!")
             return
 
-    # Initialize session state
+    # Initialize or refresh session state
     if "error_practice_index" not in st.session_state:
         st.session_state.error_practice_index = 0
-    if "error_practice_queue" not in st.session_state:
+    if "error_practice_queue" not in st.session_state or st.session_state.error_practice_index == 0:
         st.session_state.error_practice_queue = errors
 
     queue = st.session_state.error_practice_queue

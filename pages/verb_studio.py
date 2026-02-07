@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 from typing import Optional
 
 from utils.theme import render_hero, render_section_header, render_html
-from utils.database import record_progress, save_vocab_item
+from utils.database import record_progress, save_vocab_item, get_connection, get_active_profile_id, log_activity
 from utils.content import VERB_CHOICE_STUDIO
 from utils.helpers import seed_for_day, detect_language, normalize_accents
 

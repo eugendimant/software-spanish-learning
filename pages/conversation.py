@@ -1482,15 +1482,17 @@ def render_conversation_summary():
     else:
         st.markdown("🎯 **Challenge:** Try a more difficult scenario!")
 
-    # Save conversation
-    save_conversation({
-        "title": scenario["title"],
-        "hidden_targets": targets,
-        "messages": st.session_state.conv_messages,
-        "achieved_targets": achieved,
-        "completed": 1,
-    })
-    record_progress({"missions_completed": 1})
+    # Save conversation (only once per completion)
+    if "conv_saved" not in st.session_state or not st.session_state.conv_saved:
+        save_conversation({
+            "title": scenario["title"],
+            "hidden_targets": targets,
+            "messages": st.session_state.conv_messages,
+            "achieved_targets": achieved,
+            "completed": 1,
+        })
+        record_progress({"missions_completed": 1})
+        st.session_state.conv_saved = True
 
     # Restart options
     st.divider()
@@ -1504,6 +1506,7 @@ def render_conversation_summary():
             st.session_state.conv_turn = 0
             st.session_state.conv_completed = False
             st.session_state.conv_targets_achieved = []
+            st.session_state.conv_saved = False
             st.rerun()
 
     with col2:
@@ -1513,6 +1516,7 @@ def render_conversation_summary():
             st.session_state.conv_turn = 0
             st.session_state.conv_completed = False
             st.session_state.conv_targets_achieved = []
+            st.session_state.conv_saved = False
             st.rerun()
 
 

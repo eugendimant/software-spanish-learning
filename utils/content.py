@@ -6,14 +6,14 @@ TOPIC_DIVERSITY_DOMAINS = [
     {
         "domain": "Healthcare",
         "register": ["neutral", "formal"],
-        "sample": "Tuve que pedir una segunda opinion para el diagnostico.",
-        "keywords": ["salud", "diagnostico", "sintoma", "consulta", "tratamiento"],
+        "sample": "Tuve que pedir una segunda opinión para el diagnóstico.",
+        "keywords": ["salud", "diagnóstico", "sintoma", "consulta", "tratamiento"],
         "lexicon": [
-            {"term": "diagnostico", "meaning": "medical identification", "register": "formal", "pos": "noun",
+            {"term": "diagnóstico", "meaning": "medical identification", "register": "formal", "pos": "noun",
              "contexts": [
-                 "El medico confirmo el diagnostico despues de los analisis.",
-                 "Mensaje: El diagnostico llego, todo bien.",
-                 "Tras una semana de pruebas, el diagnostico revelo una infeccion menor."
+                 "El médico confirmo el diagnóstico despues de los analisis.",
+                 "Mensaje: El diagnóstico llego, todo bien.",
+                 "Tras una semana de pruebas, el diagnóstico revelo una infeccion menor."
              ]},
             {"term": "sintoma", "meaning": "clinical sign", "register": "neutral", "pos": "noun",
              "contexts": [
@@ -23,13 +23,13 @@ TOPIC_DIVERSITY_DOMAINS = [
              ]},
             {"term": "recetar", "meaning": "to prescribe treatment", "register": "formal", "pos": "verb",
              "contexts": [
-                 "El medico me receto antibioticos.",
+                 "El médico me receto antibióticos.",
                  "Mensaje: Me han recetado reposo.",
                  "Decidio recetar un tratamiento alternativo."
              ]},
             {"term": "consulta", "meaning": "medical appointment", "register": "neutral", "pos": "noun",
              "contexts": [
-                 "Tengo consulta manana a las 10.",
+                 "Tengo consulta mañana a las 10.",
                  "Mensaje: Cancelo la consulta, no puedo ir.",
                  "La consulta duro mas de lo esperado."
              ]},
@@ -38,26 +38,26 @@ TOPIC_DIVERSITY_DOMAINS = [
     {
         "domain": "Housing",
         "register": ["formal", "neutral"],
-        "sample": "El contrato de arrendamiento incluye clausulas de mantenimiento.",
+        "sample": "El contrato de arrendamiento incluye cláusulas de mantenimiento.",
         "keywords": ["alquiler", "contrato", "arrendamiento", "fianza", "piso"],
         "lexicon": [
             {"term": "arrendamiento", "meaning": "rental contract", "register": "formal", "pos": "noun",
              "contexts": [
-                 "El arrendamiento es por un ano.",
+                 "El arrendamiento es por un año.",
                  "Mensaje: El arrendamiento vence en marzo.",
-                 "Firmamos el arrendamiento con todas las clausulas."
+                 "Firmamos el arrendamiento con todas las cláusulas."
              ]},
             {"term": "fianza", "meaning": "security deposit", "register": "neutral", "pos": "noun",
              "contexts": [
                  "La fianza equivale a dos meses de renta.",
                  "Mensaje: Pide que devuelvan la fianza.",
-                 "Perdimos parte de la fianza por danos."
+                 "Perdimos parte de la fianza por daños."
              ]},
-            {"term": "clausula", "meaning": "contractual condition", "register": "formal", "pos": "noun",
+            {"term": "cláusula", "meaning": "contractual condition", "register": "formal", "pos": "noun",
              "contexts": [
-                 "Esa clausula no me parece justa.",
-                 "Mensaje: Revisa la clausula de penalizacion.",
-                 "Anadimos una clausula sobre mascotas."
+                 "Esa cláusula no me parece justa.",
+                 "Mensaje: Revisa la cláusula de penalización.",
+                 "Añadimos una cláusula sobre mascotas."
              ]},
             {"term": "inquilino", "meaning": "tenant", "register": "neutral", "pos": "noun",
              "contexts": [
@@ -93,7 +93,7 @@ TOPIC_DIVERSITY_DOMAINS = [
              ]},
             {"term": "distanciarse", "meaning": "to grow apart", "register": "neutral", "pos": "verb",
              "contexts": [
-                 "Nos hemos distanciado ultimamente.",
+                 "Nos hemos distanciado últimamente.",
                  "Mensaje: Siento que nos estamos distanciando.",
                  "Decidieron distanciarse por un tiempo."
              ]},
@@ -102,8 +102,8 @@ TOPIC_DIVERSITY_DOMAINS = [
     {
         "domain": "Travel problems",
         "register": ["neutral", "casual"],
-        "sample": "El vuelo se retraso y perdimos la conexion.",
-        "keywords": ["vuelo", "retraso", "conexion", "equipaje", "reserva"],
+        "sample": "El vuelo se retraso y perdimos la conexión.",
+        "keywords": ["vuelo", "retraso", "conexión", "equipaje", "reserva"],
         "lexicon": [
             {"term": "retraso", "meaning": "delay in schedule", "register": "neutral", "pos": "noun",
              "contexts": [
@@ -117,11 +117,11 @@ TOPIC_DIVERSITY_DOMAINS = [
                  "Mensaje: Reclama la indemnizacion.",
                  "Reclamamos pero no nos hicieron caso."
              ]},
-            {"term": "conexion", "meaning": "connecting flight/transport", "register": "neutral", "pos": "noun",
+            {"term": "conexión", "meaning": "connecting flight/transport", "register": "neutral", "pos": "noun",
              "contexts": [
-                 "Perdimos la conexion por el retraso.",
-                 "Mensaje: Tenemos conexion en Madrid.",
-                 "La conexion era demasiado ajustada."
+                 "Perdimos la conexión por el retraso.",
+                 "Mensaje: Tenemos conexión en Madrid.",
+                 "La conexión era demasiado ajustada."
              ]},
             {"term": "extraviar", "meaning": "to lose/misplace (luggage)", "register": "formal", "pos": "verb",
              "contexts": [
@@ -135,7 +135,7 @@ TOPIC_DIVERSITY_DOMAINS = [
         "domain": "Workplace conflict",
         "register": ["formal", "neutral"],
         "sample": "Tuvimos que mediar para evitar que el conflicto escalara.",
-        "keywords": ["conflicto", "equipo", "reunion", "responsabilidad", "plazo"],
+        "keywords": ["conflicto", "equipo", "reunión", "responsabilidad", "plazo"],
         "lexicon": [
             {"term": "mediar", "meaning": "to mediate / intervene to resolve", "register": "formal", "pos": "verb",
              "contexts": [
@@ -143,11 +143,11 @@ TOPIC_DIVERSITY_DOMAINS = [
                  "Mensaje: Alguien tiene que mediar.",
                  "Mediamos para encontrar una solucion."
              ]},
-            {"term": "tension", "meaning": "state of friction/stress", "register": "neutral", "pos": "noun",
+            {"term": "tensión", "meaning": "state of friction/stress", "register": "neutral", "pos": "noun",
              "contexts": [
-                 "Hay mucha tension en el equipo.",
-                 "Mensaje: La tension es insostenible.",
-                 "La tension disminuyo tras la reunion."
+                 "Hay mucha tensión en el equipo.",
+                 "Mensaje: La tensión es insostenible.",
+                 "La tensión disminuyo tras la reunión."
              ]},
             {"term": "responsabilidad", "meaning": "assigned obligation", "register": "formal", "pos": "noun",
              "contexts": [
@@ -157,7 +157,7 @@ TOPIC_DIVERSITY_DOMAINS = [
              ]},
             {"term": "escalar", "meaning": "to escalate (a conflict)", "register": "neutral", "pos": "verb",
              "contexts": [
-                 "El problema escalo rapidamente.",
+                 "El problema escalo rápidamente.",
                  "Mensaje: Esto puede escalar si no actuamos.",
                  "Evitamos que el conflicto escalara mas."
              ]},
@@ -183,7 +183,7 @@ TOPIC_DIVERSITY_DOMAINS = [
              ]},
             {"term": "facturar", "meaning": "to invoice / bill", "register": "formal", "pos": "verb",
              "contexts": [
-                 "Voy a facturar el servicio manana.",
+                 "Voy a facturar el servicio mañana.",
                  "Mensaje: No olvides facturar.",
                  "Facturamos mas este trimestre."
              ]},
@@ -231,7 +231,7 @@ TOPIC_DIVERSITY_DOMAINS = [
         "domain": "Emotions",
         "register": ["neutral", "formal"],
         "sample": "Me invadio una mezcla de alivio y cansancio.",
-        "keywords": ["emociones", "alivio", "ansiedad", "frustracion", "calma"],
+        "keywords": ["emociones", "alivio", "ansiedad", "frustración", "calma"],
         "lexicon": [
             {"term": "alivio", "meaning": "sense of relief", "register": "neutral", "pos": "noun",
              "contexts": [
@@ -239,11 +239,11 @@ TOPIC_DIVERSITY_DOMAINS = [
                  "Mensaje: Que alivio, todo salio bien.",
                  "El alivio fue inmediato tras la noticia."
              ]},
-            {"term": "frustracion", "meaning": "frustration from unmet expectations", "register": "formal", "pos": "noun",
+            {"term": "frustración", "meaning": "frustration from unmet expectations", "register": "formal", "pos": "noun",
              "contexts": [
-                 "La frustracion me invadio.",
-                 "Mensaje: Entiendo tu frustracion.",
-                 "Canalizo la frustracion en algo productivo."
+                 "La frustración me invadio.",
+                 "Mensaje: Entiendo tu frustración.",
+                 "Canalizo la frustración en algo productivo."
              ]},
             {"term": "serenar", "meaning": "to calm / soothe", "register": "formal", "pos": "verb",
              "contexts": [
@@ -267,7 +267,7 @@ TOPIC_DIVERSITY_DOMAINS = [
         "lexicon": [
             {"term": "tramitar", "meaning": "to process / handle paperwork", "register": "formal", "pos": "verb",
              "contexts": [
-                 "Voy a tramitar el permiso manana.",
+                 "Voy a tramitar el permiso mañana.",
                  "Mensaje: Tramita la solicitud cuanto antes.",
                  "Tramitamos todo en una semana."
              ]},
@@ -373,10 +373,10 @@ VERB_CHOICE_STUDIO = [
                      "Mirar es demasiado informal para contextos profesionales."],
     },
     {
-        "scenario": "Quieres expresar que bajaste la tension en una reunion.",
+        "scenario": "Quieres expresar que bajaste la tensión en una reunión.",
         "options": [
             {"verb": "desactivar", "register": "neutral", "intensity": "alta",
-             "implication": "neutralizar tension o conflicto de forma tactica", "objects": "tension, conflicto, discusion"},
+             "implication": "neutralizar tensión o conflicto de forma tactica", "objects": "tensión, conflicto, discusion"},
             {"verb": "calmar", "register": "neutral", "intensity": "media",
              "implication": "reducir intensidad emocional", "objects": "ambiente, equipo"},
             {"verb": "parar", "register": "casual", "intensity": "alta",
@@ -385,7 +385,7 @@ VERB_CHOICE_STUDIO = [
         "best": "desactivar",
         "also": ["calmar"],
         "contrast": ["Desactivar es mas tactico que calmar.",
-                     "Parar suena brusco y puede generar mas tension."],
+                     "Parar suena brusco y puede generar mas tensión."],
     },
     {
         "scenario": "Necesitas afirmar que insististe en cumplir una norma.",
@@ -484,7 +484,7 @@ VERB_CHOICE_STUDIO = [
 GRAMMAR_MICRODRILLS = [
     {
         "focus": "Gender agreement",
-        "prompt": "Selecciona la opcion correcta: La reunion fue ___ y productiva.",
+        "prompt": "Selecciona la opcion correcta: La reunión fue ___ y productiva.",
         "options": ["intenso", "intensa", "intensas"],
         "answer": "intensa",
         "explanation": "Reunion es femenino singular, por eso requiere intensa.",
@@ -503,10 +503,10 @@ GRAMMAR_MICRODRILLS = [
     {
         "focus": "Ser vs estar",
         "prompt": "El plan ___ listo, pero los recursos aun no.",
-        "options": ["esta", "es", "son"],
-        "answer": "esta",
+        "options": ["está", "es", "son"],
+        "answer": "está",
         "explanation": "Estados temporales usan estar.",
-        "examples": ["El equipo esta listo.", "La sala esta ocupada."],
+        "examples": ["El equipo está listo.", "La sala está ocupada."],
         "category": "copula",
     },
     {
@@ -533,7 +533,7 @@ GRAMMAR_MICRODRILLS = [
         "options": ["Se lo", "Le lo", "Lo le"],
         "answer": "Se lo",
         "explanation": "Le + lo se transforma en se lo.",
-        "examples": ["Se lo explique.", "Se lo dare manana."],
+        "examples": ["Se lo explique.", "Se lo dare mañana."],
         "category": "clitic",
     },
     {
@@ -570,7 +570,7 @@ COMMON_MISTAKES = [
         "pattern": "tomar una decision en",
         "correction": "tomar una decision sobre",
         "tag": "preposition",
-        "explanation": "En espanol, tomar una decision sobre un tema es mas natural.",
+        "explanation": "En español, tomar una decision sobre un tema es mas natural.",
         "examples": ["Tomamos una decision sobre el presupuesto.", "Tomo una decision sobre el contrato."],
     },
     {
@@ -584,32 +584,32 @@ COMMON_MISTAKES = [
         "pattern": "aplicar para",
         "correction": "solicitar / presentarse a",
         "tag": "calque",
-        "explanation": "Aplicar para es un calco del ingles apply for.",
+        "explanation": "Aplicar para es un calco del inglés apply for.",
         "examples": ["Solicite el puesto.", "Me presente a la convocatoria."],
     },
     {
         "pattern": "estoy excitado",
         "correction": "estoy emocionado / entusiasmado",
         "tag": "false_friend",
-        "explanation": "Excitado tiene connotacion sexual en espanol.",
+        "explanation": "Excitado tiene connotacion sexual en español.",
         "examples": ["Estoy muy emocionado.", "Me entusiasma la idea."],
     },
     {
-        "pattern": "soportar (tolerar)",
+        "pattern": "soportar",
         "correction": "aguantar / tolerar",
         "tag": "false_friend",
         "explanation": "Soportar significa tolerar, no apoyar (support).",
         "examples": ["No aguanto el ruido.", "Tolera bien la presion."],
     },
     {
-        "pattern": "realizar (darse cuenta)",
+        "pattern": "realizar que",
         "correction": "darse cuenta de",
         "tag": "false_friend",
         "explanation": "Realizar significa llevar a cabo, no darse cuenta.",
         "examples": ["Me di cuenta del error.", "Realizamos el proyecto."],
     },
     {
-        "pattern": "actualmente (en realidad)",
+        "pattern": "actualmente",
         "correction": "en realidad / de hecho",
         "tag": "false_friend",
         "explanation": "Actualmente significa ahora mismo, no actually.",
@@ -624,7 +624,7 @@ VOCAB_CONTEXT_UNITS = [
         "term": "tomar una decision",
         "collocations": ["tomar una decision", "tomar una postura", "tomar medidas"],
         "contexts": [
-            "Dialogo: —Ya resolviste lo del cambio de proveedor? —Si, tomamos una decision anoche.",
+            "Dialogo: —Ya resolviste lo del cambio de proveedor? —Si, tomamos una decision añoche.",
             "Mensaje: Tomamos una decision: renegociar el contrato esta semana.",
             "Parrafo: Tras revisar los datos, el comite tomo una decision estrategica para proteger el margen.",
         ],
@@ -633,35 +633,35 @@ VOCAB_CONTEXT_UNITS = [
             "sentence": "Despues de analizarlo, ___ una decision rapida.",
             "options": ["tomamos", "hicimos", "dimos"],
             "answer": "tomamos",
-            "explanation": "Tomar es el verbo natural para decisiones en espanol.",
+            "explanation": "Tomar es el verbo natural para decisiones en español.",
         },
         "scenario": "Escribe una frase en la que decidas algo en un contexto laboral.",
         "swap": {"base": "Tomamos una decision prudente para evitar el riesgo.", "choices": ["medida", "postura", "ruta"]},
     },
     {
-        "term": "me da la sensacion de que",
-        "collocations": ["me da la sensacion de que", "me da la impresion de que", "tengo la sensacion de que"],
+        "term": "me da la sensación de que",
+        "collocations": ["me da la sensación de que", "me da la impresion de que", "tengo la sensación de que"],
         "contexts": [
-            "Dialogo: Me da la sensacion de que el cliente esta dudando.",
-            "Mensaje: Me da la sensacion de que llegaremos tarde si no salimos ya.",
-            "Parrafo: Me da la sensacion de que el equipo necesita mas claridad en los objetivos.",
+            "Dialogo: Me da la sensación de que el cliente esta dudando.",
+            "Mensaje: Me da la sensación de que llegaremos tarde si no salimos ya.",
+            "Parrafo: Me da la sensación de que el equipo necesita mas claridad en los objetivos.",
         ],
         "question": "Que indica la frase: certeza o percepcion?",
         "cloze": {
             "sentence": "___ no estan totalmente convencidos de la propuesta.",
-            "options": ["Me da la sensacion de que", "Estoy seguro de que", "Confirmo que"],
-            "answer": "Me da la sensacion de que",
+            "options": ["Me da la sensación de que", "Estoy seguro de que", "Confirmo que"],
+            "answer": "Me da la sensación de que",
             "explanation": "La frase indica percepcion, no certeza absoluta.",
         },
         "scenario": "Escribe una frase que exprese intuicion sobre un proyecto.",
-        "swap": {"base": "Me da la sensacion de que el plan es viable.", "choices": ["posible", "arriesgado", "inviable"]},
+        "swap": {"base": "Me da la sensación de que el plan es viable.", "choices": ["posible", "arriesgado", "inviable"]},
     },
     {
         "term": "llevar a cabo",
         "collocations": ["llevar a cabo", "llevar adelante", "llevar a termino"],
         "contexts": [
             "Dialogo: —Pudieron llevar a cabo el proyecto? —Si, terminamos la semana pasada.",
-            "Mensaje: Vamos a llevar a cabo la reunion manana a las 10.",
+            "Mensaje: Vamos a llevar a cabo la reunión mañana a las 10.",
             "Parrafo: El equipo logro llevar a cabo todas las fases del plan sin contratiempos.",
         ],
         "question": "Que tipo de acciones se llevan a cabo?",
@@ -687,7 +687,7 @@ CONVERSATION_SCENARIOS = [
         "relationship_label": "Stranger (Customer Service)",
         "register_tips": "Use 'usted'. Be polite but firm. Avoid overly casual expressions.",
         "hidden_targets": [
-            "Usa 2 mitigadores (quiza, tal vez, me parece).",
+            "Usa 2 mitigadores (quizá, tal vez, me parece).",
             "Incluye una concesion (aunque, si bien).",
             "Evita 'aplicar para' como calco.",
         ],
@@ -703,7 +703,7 @@ CONVERSATION_SCENARIOS = [
         "register_tips": "Use 'tu'. Balance directness with collegiality. Stay professional but not stiff.",
         "hidden_targets": [
             "Usa 1 verbo preciso (afrontar, plantear, desactivar).",
-            "Incluye una peticion indirecta (seria posible...?).",
+            "Incluye una peticion indirecta (sería posible...?).",
             "Manten registro neutral-formal.",
         ],
         "opening": "Oye, queria hablar contigo sobre el proyecto...",
@@ -725,7 +725,7 @@ CONVERSATION_SCENARIOS = [
         "system_role": "landlord",
     },
     {
-        "title": "Pedir una extension de plazo",
+        "title": "Pedir una extensión de plazo",
         "brief": "Necesitas mas tiempo para un entregable sin parecer poco profesional.",
         "formality": "formal",
         "relationship": "authority",
@@ -774,19 +774,19 @@ DAILY_MISSION_TEMPLATES = [
         "title": "Email de negociacion",
         "prompt": "Escribe un email de 4-6 oraciones respondiendo a un cliente que pide mas alcance sin ampliar plazos.",
         "constraints": ["Usa 1 verbo de negociacion (pactar, ceder, plantear)",
-                       "Incluye una frase de mitigacion (quiza, tal vez, me parece)",
-                       "Evita calcos del ingles"],
+                       "Incluye una frase de mitigacion (quizá, tal vez, me parece)",
+                       "Evita calcos del inglés"],
         "vocab_focus": ["pactar", "plantear", "mitigacion"],
         "grammar_focus": "condicionales para cortesia",
     },
     {
         "type": "speaking",
-        "title": "Explicar un problema medico",
-        "prompt": "Graba 60-90 segundos explicando sintomas a un medico de forma clara y organizada.",
+        "title": "Explicar un problema médico",
+        "prompt": "Graba 60-90 segundos explicando sintomas a un médico de forma clara y organizada.",
         "constraints": ["Usa vocabulario del dominio salud",
                        "Organiza cronologicamente",
                        "Incluye un subjuntivo con recomendacion"],
-        "vocab_focus": ["sintoma", "diagnostico", "consulta"],
+        "vocab_focus": ["sintoma", "diagnóstico", "consulta"],
         "grammar_focus": "subjuntivo con expresiones de consejo",
     },
     {
@@ -802,8 +802,8 @@ DAILY_MISSION_TEMPLATES = [
     {
         "type": "speaking",
         "title": "Desacuerdo diplomatico",
-        "prompt": "Graba 60-90 segundos expresando desacuerdo con una propuesta de un colega sin crear tension.",
-        "constraints": ["Usa 2 suavizadores (quiza, me parece, tal vez)",
+        "prompt": "Graba 60-90 segundos expresando desacuerdo con una propuesta de un colega sin crear tensión.",
+        "constraints": ["Usa 2 suavizadores (quizá, me parece, tal vez)",
                        "Incluye una concesion antes del desacuerdo",
                        "Propón una alternativa"],
         "vocab_focus": ["plantear", "considerar", "alternativa"],
@@ -814,11 +814,11 @@ DAILY_MISSION_TEMPLATES = [
 # ============== REGISTER MARKERS ==============
 
 REGISTER_MARKERS = {
-    "politeness": ["por favor", "le agradeceria", "quisiera", "seria posible", "disculpe", "perdone"],
-    "hedging": ["quiza", "tal vez", "podria", "seria", "me parece", "a mi modo de ver", "diria que"],
+    "politeness": ["por favor", "le agradecería", "quisiera", "sería posible", "disculpe", "perdone"],
+    "hedging": ["quizá", "tal vez", "podría", "sería", "me parece", "a mi modo de ver", "diría que"],
     "direct": ["necesito", "exijo", "debe", "quiero", "hay que", "tiene que"],
     "idiomatic": ["me da la impresion", "en pocas palabras", "a fin de cuentas", "de hecho", "por cierto"],
-    "academic": ["objetivo", "metodologia", "resultados", "conclusion", "se analiza", "cabe destacar"],
+    "academic": ["objetivo", "metodología", "resultados", "conclusión", "se analiza", "cabe destacar"],
     "whatsapp": ["jaja", "que tal", "oye", "vale", "ok", "genial", "bueno"],
     "pitch": ["propuesta", "impacto", "beneficio", "valor", "oportunidad", "solucion"],
 }
@@ -838,12 +838,12 @@ DIALECT_MODULES = {
         "lexicon": {"computadora": "computer", "platicar": "to chat", "ahorita": "right now (flexible)", "padre": "cool"},
         "sample": "Ahorita lo revisamos y te aviso.",
         "trap": {"question": "Que implica 'ahorita' en este contexto?",
-                 "options": ["inmediatamente", "pronto pero flexible", "manana"], "answer": "pronto pero flexible"},
+                 "options": ["inmediatamente", "pronto pero flexible", "mañana"], "answer": "pronto pero flexible"},
     },
     "Argentina": {
         "features": ["voseo", "yeismo rehilado", "entonacion italiana"],
         "lexicon": {"vos": "you (informal)", "laburo": "work", "che": "hey", "boludo": "dude"},
-        "sample": "Che, vos venis a la reunion o laburas desde casa?",
+        "sample": "Che, vos venís a la reunión o laburás desde casa?",
         "trap": {"question": "Que marca el uso de 'vos'?",
                  "options": ["voseo", "formalidad", "plural"], "answer": "voseo"},
     },
@@ -869,9 +869,9 @@ PLACEMENT_QUESTIONS = [
     {
         "level": "B2",
         "type": "grammar",
-        "question": "Si ___ antes, habriamos llegado a tiempo.",
-        "options": ["salimos", "salieramos", "hubieramos salido", "habiamos salido"],
-        "answer": "hubieramos salido",
+        "question": "Si ___ antes, habríamos llegado a tiempo.",
+        "options": ["salimos", "salieramos", "hubiéramos salido", "habiamos salido"],
+        "answer": "hubiéramos salido",
         "skill": "conditional_perfect",
     },
     {
@@ -894,14 +894,14 @@ PLACEMENT_QUESTIONS = [
         "level": "C1",
         "type": "register",
         "question": "Cual es mas apropiado en un email formal?",
-        "options": ["Oye, necesito que...", "Le agradeceria que...", "Tienes que...", "Quiero que..."],
-        "answer": "Le agradeceria que...",
+        "options": ["Oye, necesito que...", "Le agradecería que...", "Tienes que...", "Quiero que..."],
+        "answer": "Le agradecería que...",
         "skill": "register",
     },
     {
         "level": "C2",
         "type": "nuance",
-        "question": "'Me da la sensacion de que' expresa:",
+        "question": "'Me da la sensación de que' expresa:",
         "options": ["certeza absoluta", "percepcion subjetiva", "orden directa", "pregunta retorica"],
         "answer": "percepcion subjetiva",
         "skill": "pragmatics",
@@ -925,7 +925,7 @@ PLACEMENT_QUESTIONS = [
     {
         "level": "B2",
         "type": "grammar",
-        "question": "Quiero que ___ a la reunion.",
+        "question": "Quiero que ___ a la reunión.",
         "options": ["vienes", "vengas", "venias", "vendras"],
         "answer": "vengas",
         "skill": "subjunctive",
@@ -951,7 +951,7 @@ PRAGMATICS_PATTERNS = {
     },
     "softeners": {
         "hedging": [
-            {"phrase": "Me parece que...", "use": "expressing opinion tentatively", "intensity": "medium"},
+            {"phrase": "Me parece que...", "use": "expressing opinión tentatively", "intensity": "medium"},
             {"phrase": "Quizá/Tal vez...", "use": "suggesting possibility", "intensity": "low"},
             {"phrase": "Podría ser que...", "use": "conditional possibility", "intensity": "low"},
             {"phrase": "A mi modo de ver...", "use": "personal perspective", "intensity": "medium"},
@@ -1193,7 +1193,7 @@ WRITING_COACH_TEMPLATES = {
     },
     "tone_rewrites": {
         "formal_to_informal": {
-            "instruction": "Reescribe el mensaje para un colega cercano.",
+            "instruction": "Reescribe el mensaje para un colega cercaño.",
             "example_formal": "Le agradecería que me enviara los documentos a la mayor brevedad posible.",
             "example_informal": "Oye, ¿me puedes pasar los documentos cuando puedas?",
         },
@@ -1279,7 +1279,7 @@ RULE_BOUNDARIES = {
             {
                 "case": "Working for someone",
                 "explanation": "'Para' = employed by. 'Por' = on behalf of/in place of.",
-                "example": "Trabajo para Google (employer) vs. Trabajo por mi hermano hoy (replacing him).",
+                "example": "Trabajo para Google (employer) vs. Trabajo por mi hermaño hoy (replacing him).",
             },
         ],
     },
@@ -1307,7 +1307,7 @@ DIALECT_CONVERTER = {
         "Spain": "Eso mola mucho. / ¡Qué guay!",
         "Mexico": "¡Qué padre! / ¡Está chido!",
         "Argentina": "¡Qué copado! / ¡Es genial!",
-        "Colombia": "¡Qué chévere! / ¡Bacano!",
+        "Colombia": "¡Qué chévere! / ¡Bacaño!",
     },
     "work_casual": {
         "neutral": "Tengo mucho trabajo.",
@@ -1458,7 +1458,7 @@ COLLOCATIONS = {
         {"chunk": "echar de menos", "meaning": "to miss (someone/something)", "context": "Te echo de menos mucho."},
         {"chunk": "echar una siesta", "meaning": "take a nap", "context": "Voy a echar una siesta después de comer."},
         {"chunk": "echar un vistazo", "meaning": "take a look", "context": "Déjame echar un vistazo al documento."},
-        {"chunk": "echar una mano", "meaning": "lend a hand", "context": "¿Me puedes echar una mano?"},
+        {"chunk": "echar una maño", "meaning": "lend a hand", "context": "¿Me puedes echar una maño?"},
         {"chunk": "echarse a reír", "meaning": "burst out laughing", "context": "Se echó a reír cuando lo escuchó."},
     ],
     "hacer": [
@@ -1507,7 +1507,7 @@ SMALL_WORDS_DRILLS = {
     "se_uses": {
         "description": "Multiple uses of 'se'",
         "exercises": [
-            {"prompt": "María __ lava las manos.", "answer": "se", "explanation": "Reflexive: she washes (herself)"},
+            {"prompt": "María __ lava las maños.", "answer": "se", "explanation": "Reflexive: she washes (herself)"},
             {"prompt": "__ venden casas aquí.", "answer": "Se", "explanation": "Impersonal/passive: 'Houses are sold here'"},
             {"prompt": "__ lo di a él.", "answer": "Se", "explanation": "'Le' becomes 'se' before 'lo'"},
             {"prompt": "Juan __ fue sin despedirse.", "answer": "se", "explanation": "Pronominal verb: 'irse' (to leave)"},

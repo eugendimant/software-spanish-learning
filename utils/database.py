@@ -10,7 +10,7 @@ import json
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-DATA_DIR = Path("data")
+DATA_DIR = Path(__file__).parent.parent / "data"
 DB_PATH = DATA_DIR / "vivalingo.db"
 PORTFOLIO_PATH = DATA_DIR / "portfolio.json"
 
@@ -26,6 +26,9 @@ def get_active_profile_id() -> int:
 def set_active_profile_id(profile_id: int) -> None:
     """Set the active profile ID."""
     global _active_profile_id
+    if profile_id is None or profile_id < 1:
+        logger.warning(f"Invalid profile_id: {profile_id}, keeping current: {_active_profile_id}")
+        return
     _active_profile_id = profile_id
 
 
@@ -166,7 +169,8 @@ def init_db() -> None:
                 ease_factor REAL DEFAULT 2.5,
                 interval_days INTEGER DEFAULT 1,
                 status TEXT DEFAULT 'new',
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(profile_id, pattern_name)
             )
         """)
 
@@ -282,6 +286,14 @@ def init_db() -> None:
             INSERT OR IGNORE INTO user_profile (id) VALUES (1)
         """)
 
+        # Performance indexes for frequently queried columns
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_vocab_profile_status ON vocab_items(profile_id, status)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_vocab_next_review ON vocab_items(profile_id, next_review)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_mistakes_next_review ON mistakes(profile_id, next_review)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_activity_profile_date ON activity_log(profile_id, created_at)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_progress_profile_date ON progress_metrics(profile_id, metric_date)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_grammar_next_review ON grammar_patterns(profile_id, next_review)")
+
         conn.commit()
 
     # Ensure all tables exist after init
@@ -341,7 +353,7 @@ def get_all_profiles() -> list:
 
 
 def create_profile(name: str, level: str = "C1", dialect_preference: str = "Spain",
-                   weekly_goal: int = 5, focus_areas: list = None) -> Optional[int]:
+                   weekly_goal: int = 6, focus_areas: Optional[list] = None) -> Optional[int]:
     """Create a new profile and return its ID.
 
     Args:
@@ -462,7 +474,16 @@ def delete_profile(profile_id: int) -> None:
     """Delete a profile and all associated data."""
     try:
         with get_connection() as conn:
-            # Delete all associated data
+            # Delete child tables first to respect foreign key constraints
+            # near_misses and personal_syllabus reference error_fingerprints
+            conn.execute("DELETE FROM near_misses WHERE profile_id = ?", (profile_id,))
+            conn.execute("DELETE FROM personal_syllabus WHERE profile_id = ?", (profile_id,))
+            conn.execute("DELETE FROM error_fingerprints WHERE profile_id = ?", (profile_id,))
+            # transcripts references daily_missions
+            conn.execute("DELETE FROM transcripts WHERE profile_id = ?", (profile_id,))
+            # conversation_outcomes references conversations
+            conn.execute("DELETE FROM conversation_outcomes WHERE profile_id = ?", (profile_id,))
+            # Now delete remaining tables
             conn.execute("DELETE FROM vocab_items WHERE profile_id = ?", (profile_id,))
             conn.execute("DELETE FROM mistakes WHERE profile_id = ?", (profile_id,))
             conn.execute("DELETE FROM domain_exposure WHERE profile_id = ?", (profile_id,))
@@ -471,6 +492,8 @@ def delete_profile(profile_id: int) -> None:
             conn.execute("DELETE FROM conversations WHERE profile_id = ?", (profile_id,))
             conn.execute("DELETE FROM progress_metrics WHERE profile_id = ?", (profile_id,))
             conn.execute("DELETE FROM activity_log WHERE profile_id = ?", (profile_id,))
+            conn.execute("DELETE FROM issue_reports WHERE profile_id = ?", (profile_id,))
+            conn.execute("DELETE FROM pragmatics_exposure WHERE profile_id = ?", (profile_id,))
             conn.execute("DELETE FROM profiles WHERE id = ?", (profile_id,))
             conn.commit()
     except Exception as e:
@@ -616,6 +639,7 @@ def get_vocab_for_review() -> list:
 
 def update_vocab_review(term: str, quality: int) -> None:
     """Update vocabulary item after review using SM-2 algorithm."""
+    quality = max(0, min(5, quality))  # Clamp to valid range
     profile_id = get_active_profile_id()
     try:
         with get_connection() as conn:
@@ -627,10 +651,13 @@ def update_vocab_review(term: str, quality: int) -> None:
 
             ease_factor = row["ease_factor"]
             interval = row["interval_days"]
+            exposure = row["exposure_count"] or 0
 
-            # SM-2 algorithm
+            # SM-2 algorithm with proper initial steps
             if quality >= 3:
-                if interval == 1:
+                if exposure == 0 or interval <= 1:
+                    interval = 1
+                elif interval < 6:
                     interval = 6
                 else:
                     interval = int(interval * ease_factor)
@@ -722,19 +749,24 @@ def get_mistake_stats() -> dict:
 
 def update_mistake_review(mistake_id: int, quality: int) -> None:
     """Update mistake after review using SM-2 algorithm."""
+    quality = max(0, min(5, quality))  # Clamp to valid range
+    profile_id = get_active_profile_id()
     try:
         with get_connection() as conn:
             row = conn.execute(
-                "SELECT * FROM mistakes WHERE id = ?", (mistake_id,)
+                "SELECT * FROM mistakes WHERE id = ? AND profile_id = ?", (mistake_id, profile_id)
             ).fetchone()
             if not row:
                 return
 
             ease_factor = row["ease_factor"]
             interval = row["interval_days"]
+            review_count = row["review_count"] or 0
 
             if quality >= 3:
-                if interval == 1:
+                if review_count == 0 or interval <= 1:
+                    interval = 1
+                elif interval < 6:
                     interval = 6
                 else:
                     interval = int(interval * ease_factor)
@@ -752,8 +784,8 @@ def update_mistake_review(mistake_id: int, quality: int) -> None:
                     next_review = ?,
                     ease_factor = ?,
                     interval_days = ?
-                WHERE id = ?
-            """, (date.today().isoformat(), next_review, ease_factor, interval, mistake_id))
+                WHERE id = ? AND profile_id = ?
+            """, (date.today().isoformat(), next_review, ease_factor, interval, mistake_id, profile_id))
             conn.commit()
     except Exception as e:
         logger.warning(f"Mistake review update failed for ID {mistake_id}: {e}")
@@ -770,11 +802,10 @@ def record_domain_exposure(domain: str, items_count: int = 1) -> None:
                 INSERT INTO domain_exposure (profile_id, domain, exposure_count, last_exposure, total_items)
                 VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(profile_id, domain) DO UPDATE SET
-                    exposure_count = exposure_count + ?,
-                    last_exposure = ?,
-                    total_items = total_items + ?
-            """, (profile_id, domain, items_count, date.today().isoformat(), items_count,
-                  items_count, date.today().isoformat(), items_count))
+                    exposure_count = domain_exposure.exposure_count + excluded.exposure_count,
+                    last_exposure = excluded.last_exposure,
+                    total_items = domain_exposure.total_items + excluded.total_items
+            """, (profile_id, domain, items_count, date.today().isoformat(), items_count))
             conn.commit()
     except Exception as e:
         logger.warning(f"Domain exposure recording failed for '{domain}': {e}")
@@ -818,13 +849,17 @@ def save_grammar_pattern(pattern: dict) -> None:
     try:
         with get_connection() as conn:
             conn.execute("""
-                INSERT OR REPLACE INTO grammar_patterns
+                INSERT INTO grammar_patterns
                 (profile_id, pattern_name, category, description, examples)
                 VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(profile_id, pattern_name) DO UPDATE SET
+                    category = excluded.category,
+                    description = excluded.description,
+                    examples = excluded.examples
             """, (
                 profile_id,
-                pattern["name"],
-                pattern["category"],
+                pattern.get("name", ""),
+                pattern.get("category", ""),
                 pattern.get("description"),
                 json.dumps(pattern.get("examples", []))
             ))
@@ -894,6 +929,7 @@ def get_today_mission() -> Optional[dict]:
 
 def update_mission_response(mission_id: int, response: str, feedback: str, score: float) -> None:
     """Update mission with user's response."""
+    profile_id = get_active_profile_id()
     try:
         with get_connection() as conn:
             conn.execute("""
@@ -902,8 +938,8 @@ def update_mission_response(mission_id: int, response: str, feedback: str, score
                     feedback = ?,
                     score = ?,
                     completed = 1
-                WHERE id = ?
-            """, (response, feedback, score, mission_id))
+                WHERE id = ? AND profile_id = ?
+            """, (response, feedback, score, mission_id, profile_id))
             conn.commit()
     except Exception as e:
         logger.warning(f"Mission response update failed for ID {mission_id}: {e}")
@@ -1186,7 +1222,7 @@ def get_active_vocab_count() -> int:
 
 def save_transcript(text: str, duration: int = 0, mission_id: Optional[int] = None) -> None:
     """Save a transcript for the active profile."""
-    if not text.strip():
+    if not text or not text.strip():
         return
     profile_id = get_active_profile_id()
     try:
@@ -1466,7 +1502,6 @@ def generate_personal_syllabus() -> list:
                         (profile_id, fingerprint_id, week_start, priority_rank, target_practice_count)
                         VALUES (?, ?, ?, ?, ?)
                     """, (profile_id, fp["id"], week_start, i + 1, 5 + (5 - i)))
-                    conn.commit()
 
                 syllabus.append({
                     "fingerprint": dict(fp),
@@ -1474,6 +1509,7 @@ def generate_personal_syllabus() -> list:
                     "target": 5 + (5 - i)
                 })
 
+            conn.commit()
             return syllabus
     except Exception:
         return []

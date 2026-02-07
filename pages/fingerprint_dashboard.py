@@ -64,7 +64,7 @@ def render_overview():
         return
 
     # Display summary cards
-    cols = st.columns(len(summary))
+    cols = st.columns(min(len(summary), 4))
 
     category_icons = {
         "verb_tense": "Tense",

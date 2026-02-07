@@ -396,9 +396,12 @@ def render_cloze_practice(item: dict, index: int):
     words = phrase.split()
 
     if len(words) > 1:
-        # Hide a random word
-        import random
-        hidden_idx = random.randint(0, len(words) - 1)
+        # Stabilize hidden word across reruns
+        cloze_key = f"cloze_hidden_{index}"
+        if cloze_key not in st.session_state:
+            import random
+            st.session_state[cloze_key] = random.randint(0, len(words) - 1)
+        hidden_idx = st.session_state[cloze_key]
         hidden_word = words[hidden_idx]
         display_phrase = " ".join(["___" if i == hidden_idx else w for i, w in enumerate(words)])
     else:

@@ -610,7 +610,7 @@ def render_daily_missions_page():
             <div class="card">
                 <h4>{today_mission.get('mission_type', 'Mission').title()}</h4>
                 <p>{today_mission.get('prompt', '')}</p>
-                <p><strong>Your score:</strong> {today_mission.get('score', 0):.0f}/100</p>
+                <p><strong>Your score:</strong> {(today_mission.get('score') or 0):.0f}/100</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -625,9 +625,9 @@ def render_daily_missions_page():
             # Generate or load mission
             if st.session_state.dm_mission is None:
                 seed = seed_for_day(date.today(), "mission")
-                random.seed(seed)
+                rng = random.Random(seed)
                 all_missions = get_all_mission_templates()
-                st.session_state.dm_mission = random.choice(all_missions)
+                st.session_state.dm_mission = rng.choice(all_missions)
 
             mission = st.session_state.dm_mission
             render_mission(mission)

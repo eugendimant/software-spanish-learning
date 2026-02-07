@@ -156,7 +156,7 @@ def render_all_profiles():
             }
             icon = icon_map.get(activity_type, "📌")
 
-            score_text = f" - Score: {score:.0f}%" if score else ""
+            score_text = f" - Score: {(score or 0):.0f}%" if score else ""
             st.markdown(f"""
             <div style="padding: 0.5rem 0; border-bottom: 1px solid #E5E5EA;">
                 <span>{icon}</span>
@@ -187,10 +187,13 @@ def render_profile_section():
         )
 
         # Level
+        level_options = ["B2", "C1", "C2"]
+        level_default = profile.get("level", "C1")
+        level_idx = level_options.index(level_default) if level_default in level_options else level_options.index("C1")
         level = st.selectbox(
             "Target Level",
-            ["B2", "C1", "C2"],
-            index=["B2", "C1", "C2"].index(profile.get("level", "C1"))
+            level_options,
+            index=level_idx
         )
 
         # Weekly goal
@@ -222,7 +225,7 @@ def render_profile_section():
         stats = get_total_stats()
 
         st.metric("Total Vocab", stats.get("total_vocab", 0))
-        st.metric("Speaking Minutes", f"{stats.get('total_speaking', 0):.0f}")
+        st.metric("Speaking Minutes", f"{(stats.get('total_speaking', 0) or 0):.0f}")
         st.metric("Errors Fixed", stats.get("total_errors", 0))
         st.metric("Missions Done", stats.get("total_missions", 0))
 
@@ -230,7 +233,7 @@ def render_profile_section():
         if profile.get("placement_completed"):
             st.success("✅ Placement Complete")
             if profile.get("placement_score"):
-                st.caption(f"Score: {profile['placement_score']:.0f}%")
+                st.caption(f"Score: {(profile['placement_score'] or 0):.0f}%")
         else:
             st.warning("⚠️ Placement Pending")
 
@@ -265,7 +268,7 @@ def render_placement_test():
     profile = get_user_profile()
 
     if profile.get("placement_completed"):
-        st.success(f"🎉 You've completed the placement test! Score: {profile.get('placement_score', 0):.0f}%")
+        st.success(f"🎉 You've completed the placement test! Score: {(profile.get('placement_score', 0) or 0):.0f}%")
 
         if st.button("Retake Placement Test", key="key_retake_placement_test"):
             update_user_profile({**profile, "placement_completed": 0, "placement_score": None})
@@ -379,10 +382,13 @@ def render_preferences():
     # Dialect preference
     st.markdown("### Regional Spanish Preference")
 
+    dialect_options = list(DIALECT_MODULES.keys())
+    dialect_default = profile.get("dialect_preference", "Spain")
+    dialect_idx = dialect_options.index(dialect_default) if dialect_default in dialect_options else 0
     dialect = st.selectbox(
         "Primary dialect exposure:",
-        list(DIALECT_MODULES.keys()),
-        index=list(DIALECT_MODULES.keys()).index(profile.get("dialect_preference", "Spain"))
+        dialect_options,
+        index=dialect_idx
     )
 
     # Show dialect info
@@ -439,10 +445,13 @@ def render_preferences():
     st.markdown("### Grading Strictness")
     st.caption("Control how strictly your answers are evaluated")
 
+    grading_options = ["strict", "balanced", "lenient"]
+    grading_default = profile.get("grading_mode", "balanced")
+    grading_idx = grading_options.index(grading_default) if grading_default in grading_options else grading_options.index("balanced")
     grading_mode = st.radio(
         "Grading mode:",
-        ["strict", "balanced", "lenient"],
-        index=["strict", "balanced", "lenient"].index(profile.get("grading_mode", "balanced")),
+        grading_options,
+        index=grading_idx,
         horizontal=True,
         help="Strict: exact spelling required. Balanced: minor typos forgiven. Lenient: meaning-first, focus on concepts."
     )

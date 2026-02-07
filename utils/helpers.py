@@ -1180,6 +1180,8 @@ def check_text_for_mistakes(text: str) -> list[dict]:
     - Preposition errors
     - False friends and calques
     """
+    if not text or not text.strip():
+        return []
     mistakes_found = []
     text_lower = text.lower()
 
@@ -1468,7 +1470,7 @@ def check_text_for_mistakes(text: str) -> list[dict]:
         (r"\btambién\s+no\b", "tampoco", "word_order",
          "'También no' no es correcto. Usa 'tampoco' para negaciones. Ej: 'Yo tampoco'",
          ["Yo tampoco quiero", "Ella tampoco fue"]),
-        (r"\bno\s+(?:nada|nadie|nunca|ninguno)\b", "doble negación OK", "word_order", None),  # This is correct in Spanish
+        (r"\bno\s+(?:nada|nadie|nunca|ninguno)\b", "doble negación OK", "word_order", None, []),  # This is correct in Spanish
         (r"\bnunca\s+no\b", "nunca", "word_order",
          "Doble negación incorrecta. Usa solo 'nunca' o 'no... nunca'",
          ["Nunca voy allí", "No voy nunca allí"]),
@@ -1640,20 +1642,17 @@ def check_text_for_mistakes(text: str) -> list[dict]:
         (r"\bvalla\b(?!\s+(?:publicitaria|de|del))", "vaya (subjuntivo de ir)", "spelling",
          "'Vaya' (subjuntivo de ir) vs 'valla' (cerca/barrera).",
          ["Espero que vaya bien", "La valla del jardín"]),
-        (r"\bhecho\b(?=\s+de\s+menos)", "echo de menos", "spelling",
+        (r"\bhecho de menos\b", "echo de menos", "spelling",
          "'Echar de menos' (to miss) se escribe sin 'h'. 'Hecho' es participio de 'hacer'.",
          ["Te echo de menos", "Está hecho (it's done)"]),
-        (r"\bhaber\s+(?:echo|ido|tenido)\b", "haber hecho/ido", "spelling",
+        (r"\bhaber\s+echo\b", "haber hecho", "spelling",
          "El participio de 'hacer' es 'hecho' con 'h'.",
-         ["Debería haber hecho eso", "Podría haber ido"]),
+         ["Debería haber hecho eso", "He hecho la tarea"]),
         (r"\bporque\b(?=\s*\?)", "por qué", "spelling",
          "'Por qué' (separado, con tilde) para preguntas. 'Porque' para respuestas.",
          ["¿Por qué no vienes?", "Porque estoy ocupado"]),
-        (r"(?<!\¿)(?<!\?)\bpor qué\b(?!\s*\?)", "porque/porqué", "spelling",
-         "'Porque' (junto, sin tilde) para explicaciones. '¿Por qué?' para preguntas.",
-         ["No voy porque llueve", "¿Por qué no vienes?"]),
-        (r"\bsi no\b(?=\s+(?:es|era|fue|será|sería|fuera))", "sino", "spelling",
-         "'Sino' (but rather) vs 'si no' (if not). Diferentes usos.",
+        (r"\bno\s+(?:es|era|fue|será|sería)\s+\w+\s*,?\s*si no\b", "sino", "spelling",
+         "'Sino' (but rather) after negation. 'Si no' (if not) for conditionals.",
          ["No es rojo, sino azul", "Si no llueve, iremos"]),
     ]
 
@@ -1984,6 +1983,13 @@ def format_time_ago(date_str: Optional[str]) -> str:
 
 def generate_exercise_feedback(user_answer: str, correct_answer: str, explanation: str) -> dict:
     """Generate feedback for an exercise answer."""
+    if not user_answer or not correct_answer:
+        return {
+            "correct": False,
+            "message": f"La respuesta correcta es: {correct_answer or ''}",
+            "explanation": explanation or "",
+            "type": "error",
+        }
     is_correct = user_answer.strip().lower() == correct_answer.strip().lower()
 
     if is_correct:
@@ -2031,9 +2037,13 @@ def get_streak_days(history: Optional[list[dict]] = None) -> int:
             continue
         date_val = h.get("metric_date") or h.get("date")
         if date_val:
-            # Handle datetime strings that might include time
-            if isinstance(date_val, str):
+            # Handle datetime strings that might include time, or date objects
+            if isinstance(date_val, date):
+                date_val = date_val.isoformat()
+            elif isinstance(date_val, str):
                 date_val = date_val[:10]  # Take only YYYY-MM-DD portion
+            else:
+                continue
             dates.add(date_val)
 
     if not dates:
@@ -2144,8 +2154,16 @@ def _generate_vocabulary_hint(
     correct: str, user: str, context: Optional[dict], severity: str
 ) -> dict:
     """Generate hint for vocabulary exercises."""
-    correct_normalized = correct.lower().strip()
-    user_normalized = user.lower().strip()
+    correct_normalized = (correct or "").lower().strip()
+    user_normalized = (user or "").lower().strip()
+
+    if not correct_normalized:
+        return {
+            "hint": "Try again with the correct spelling.",
+            "hint_type": "generic",
+            "severity": severity,
+            "suggestion": None
+        }
 
     # Check if it's an accent issue
     if normalize_accents(user_normalized) == normalize_accents(correct_normalized):

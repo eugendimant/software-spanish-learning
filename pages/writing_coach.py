@@ -1163,13 +1163,13 @@ def render_constraint_rewrites():
     if "constraint_seed" not in st.session_state:
         st.session_state.constraint_seed = seed_for_day(date.today())
 
-    random.seed(st.session_state.constraint_seed)
+    rng = random.Random(st.session_state.constraint_seed)
 
     if selected_constraint == "Random":
-        exercise = random.choice(constraints)
+        exercise = rng.choice(constraints)
     else:
         filtered = [c for c in constraints if c.get("constraint") == selected_constraint]
-        exercise = random.choice(filtered) if filtered else random.choice(constraints)
+        exercise = rng.choice(filtered) if filtered else rng.choice(constraints)
 
     constraint_type = exercise.get("constraint", "")
 

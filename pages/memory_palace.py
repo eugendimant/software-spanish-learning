@@ -344,11 +344,14 @@ def render_recall_test():
                 icon = "✅" if user_ans.lower() == correct.lower() else "❌"
                 st.markdown(f"{icon} {q.get('room_name', 'Location')}: **{correct}** (you said: {user_ans})")
 
-            record_progress({"vocab_reviewed": score})
-            log_activity("memory_palace", "recall_test", f"Score: {score}/{total}")
+            if "test_recorded" not in st.session_state:
+                record_progress({"vocab_reviewed": score})
+                log_activity("memory_palace", "recall_test", f"Score: {score}/{total}")
+                st.session_state["test_recorded"] = True
 
             if st.button("New Test", use_container_width=True, key="key_new_recall_test"):
                 st.session_state.test_questions = None
+                st.session_state.pop("test_recorded", None)
                 st.rerun()
         else:
             # Show current question

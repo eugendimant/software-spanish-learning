@@ -649,10 +649,14 @@ def _render_recognition_exercise(item: dict, all_items: list, difficulty: str):
 
     # Generate distractors based on difficulty
     num_options = {"Easy": 3, "Medium": 4, "Hard": 5}[difficulty]
-    options = _generate_mcq_options(item, all_items, num_options - 1)
 
-    # Shuffle options
-    random.shuffle(options)
+    # Stabilize options across reruns using session state
+    options_key = f"mcq_options_{item['term']}"
+    if options_key not in st.session_state or st.session_state.get("td_refresh_practice"):
+        options = _generate_mcq_options(item, all_items, num_options - 1)
+        random.shuffle(options)
+        st.session_state[options_key] = options
+    options = st.session_state[options_key]
 
     # Display options
     selected = st.radio(
@@ -725,8 +729,11 @@ def _render_production_exercise(item: dict, difficulty: str):
     contexts = item.get("contexts", [])
 
     if contexts:
-        # Use a context with the word blanked out
-        context = random.choice(contexts)
+        # Stabilize context selection across reruns
+        ctx_key = f"prod_ctx_{item['term']}"
+        if ctx_key not in st.session_state or st.session_state.get("td_refresh_practice"):
+            st.session_state[ctx_key] = random.choice(contexts)
+        context = st.session_state[ctx_key]
         blanked = context.replace(item["term"], "_____").replace(item["term"].capitalize(), "_____")
         st.markdown(f"### Fill in the blank:")
         st.markdown(f"*{blanked}*")
