@@ -423,7 +423,7 @@ VERB_CHOICE_STUDIO = [
             {"verb": "afrontar", "register": "formal", "intensity": "alta",
              "implication": "enfrentar con determinacion", "objects": "problema, reto, situación"},
             {"verb": "lidiar con", "register": "neutral", "intensity": "media",
-             "implication": "manejar algo complicado", "objects": "problemas, situaciónes"},
+             "implication": "manejar algo complicado", "objects": "problemas, situaciones"},
             {"verb": "tratar", "register": "neutral", "intensity": "baja",
              "implication": "ocuparse de forma general", "objects": "temas, asuntos"},
         ],
@@ -633,7 +633,7 @@ VOCAB_CONTEXT_UNITS = [
             "sentence": "Después de analizarlo, ___ una decisión rapida.",
             "options": ["tomamos", "hicimos", "dimos"],
             "answer": "tomamos",
-            "explanation": "Tomar es el verbo natural para decisiónes en español.",
+            "explanation": "Tomar es el verbo natural para decisiones en español.",
         },
         "scenario": "Escribe una frase en la que decidas algo en un contexto laboral.",
         "swap": {"base": "Tomamos una decisión prudente para evitar el riesgo.", "choices": ["medida", "postura", "ruta"]},
@@ -1449,7 +1449,7 @@ FALSE_FRIENDS = {
 COLLOCATIONS = {
     "tomar": [
         {"chunk": "tomar un café", "meaning": "have a coffee", "context": "¿Quieres tomar un café?"},
-        {"chunk": "tomar una decisión", "meaning": "make a decisión", "context": "Necesito tomar una decisión importante."},
+        {"chunk": "tomar una decisión", "meaning": "make a decision", "context": "Necesito tomar una decisión importante."},
         {"chunk": "tomar el autobús", "meaning": "take the bus", "context": "Siempre tomo el autobús al trabajo."},
         {"chunk": "tomar el sol", "meaning": "sunbathe", "context": "Me gusta tomar el sol en la playa."},
         {"chunk": "tomar nota", "meaning": "take notes", "context": "Voy a tomar nota de esto."},
