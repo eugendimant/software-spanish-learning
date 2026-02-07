@@ -91,6 +91,7 @@ def get_css() -> str:
        GLOBAL RESET & BASE
        ============================================ */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap');
 
     :root {
         --primary: #10B981;
@@ -892,6 +893,338 @@ def get_css() -> str:
         padding: 0.1rem 0.3rem !important;
         border-radius: 0.2rem !important;
         text-decoration: line-through !important;
+    }
+
+    /* ============================================
+       FIX: Material Symbols icon text leak
+       Streamlit's sidebar toggle uses Material Symbols.
+       When the font fails to load, raw text like
+       "keyboard_double_arrow_right" leaks through.
+       ============================================ */
+    [data-testid="stSidebarCollapsedControl"] {
+        overflow: hidden !important;
+    }
+    [data-testid="stSidebarCollapsedControl"] button {
+        overflow: hidden !important;
+        max-width: 2.75rem !important;
+        max-height: 2.75rem !important;
+        min-width: 2.5rem !important;
+        min-height: 2.5rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 0.5rem !important;
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: var(--shadow-sm) !important;
+    }
+    [data-testid="stSidebarCollapsedControl"] button span {
+        overflow: hidden !important;
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+        display: block !important;
+        text-overflow: clip !important;
+    }
+    /* Hide sidebar nav collapse button text leak too */
+    [data-testid="stSidebarNavCollapseButton"],
+    [data-testid="stSidebarCollapseButton"] {
+        overflow: hidden !important;
+    }
+    [data-testid="stSidebarNavCollapseButton"] button,
+    [data-testid="stSidebarCollapseButton"] button {
+        overflow: hidden !important;
+        max-width: 2.5rem !important;
+        max-height: 2.5rem !important;
+    }
+    [data-testid="stSidebarNavCollapseButton"] button span,
+    [data-testid="stSidebarCollapseButton"] button span {
+        overflow: hidden !important;
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+        display: block !important;
+    }
+
+    /* ============================================
+       MOBILE RESPONSIVE - TABLETS (max-width: 768px)
+       ============================================ */
+    @media (max-width: 768px) {
+        /* Main container - reduce padding */
+        .main .block-container {
+            padding: 1rem 0.75rem 3rem 0.75rem !important;
+            max-width: 100% !important;
+        }
+
+        /* Force column containers to wrap */
+        [data-testid="stHorizontalBlock"] {
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+        }
+        /* Columns become 2-per-row on tablets */
+        [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+            flex: 1 1 calc(50% - 0.5rem) !important;
+            min-width: calc(50% - 0.5rem) !important;
+        }
+
+        /* Hero sections */
+        .vl-hero, .hero {
+            padding: 1.25rem 1rem !important;
+            border-radius: 0.75rem !important;
+            margin-bottom: 1rem !important;
+        }
+        .vl-hero-title, .hero-title {
+            font-size: 1.25rem !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        .vl-hero-subtitle, .hero-subtitle {
+            font-size: 0.875rem !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        .vl-hero::before {
+            display: none !important;
+        }
+
+        /* Stat / Metric cards - compact */
+        .vl-stat-card, .metric-card, .stat-card {
+            padding: 0.625rem 0.5rem !important;
+            border-radius: 0.75rem !important;
+        }
+        .vl-stat-value, .metric-value, .stat-value {
+            font-size: 1.25rem !important;
+        }
+        .vl-stat-icon {
+            font-size: 1.25rem !important;
+            margin-bottom: 0.25rem !important;
+        }
+        .vl-stat-label, .metric-label, .stat-label {
+            font-size: 0.6rem !important;
+            letter-spacing: 0.04em !important;
+        }
+
+        /* Cards - reduced padding */
+        .vl-card, .card, .exercise-card {
+            padding: 0.875rem !important;
+            margin-bottom: 0.5rem !important;
+            border-radius: 0.75rem !important;
+        }
+        .card-muted {
+            padding: 0.75rem !important;
+        }
+        .vl-feature-card {
+            padding: 0.875rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        .vl-action-card {
+            padding: 0.75rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        /* Sidebar width */
+        [data-testid="stSidebar"] {
+            min-width: 0 !important;
+            max-width: 280px !important;
+        }
+
+        /* Typography scaling */
+        h1, .stMarkdown h1 { font-size: 1.5rem !important; }
+        h2, .stMarkdown h2 { font-size: 1.25rem !important; }
+        h3, .stMarkdown h3 { font-size: 1.1rem !important; }
+        h4, .stMarkdown h4 { font-size: 1rem !important; }
+
+        .vl-section-title, .section-title {
+            font-size: 1.1rem !important;
+        }
+
+        /* Buttons - touch friendly */
+        .stButton > button {
+            min-height: 2.75rem !important;
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.8rem !important;
+        }
+
+        /* Exercise prompt */
+        .exercise-prompt {
+            font-size: 1rem !important;
+            padding: 0.75rem !important;
+        }
+
+        /* Chat bubbles */
+        .chat-bubble {
+            max-width: 90% !important;
+            padding: 0.625rem 0.875rem !important;
+        }
+
+        /* Radio buttons - allow wrapping */
+        div[role="radiogroup"] {
+            flex-wrap: wrap !important;
+        }
+        div[role="radiogroup"] label[data-baseweb="radio"] {
+            margin-bottom: 0.375rem !important;
+            padding: 0.375rem 0.625rem !important;
+            font-size: 0.8rem !important;
+        }
+
+        /* Feedback boxes */
+        .vl-feedback, .feedback-box {
+            padding: 0.75rem !important;
+            font-size: 0.875rem !important;
+        }
+
+        /* Progress track */
+        .vl-progress-track {
+            height: 0.375rem !important;
+        }
+
+        /* Tabs */
+        .stTabs [data-baseweb="tab-list"] {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: none !important;
+        }
+        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {
+            display: none !important;
+        }
+        .stTabs [data-baseweb="tab"] {
+            padding: 0.375rem 0.75rem !important;
+            font-size: 0.8rem !important;
+            white-space: nowrap !important;
+        }
+
+        /* Pill / Badge */
+        .vl-pill, .pill {
+            font-size: 0.65rem !important;
+            padding: 0.2rem 0.5rem !important;
+        }
+
+        /* Tip card */
+        .vl-tip {
+            padding: 0.75rem !important;
+        }
+
+        /* Selection cards */
+        .vl-selection-card {
+            padding: 0.75rem !important;
+        }
+
+        /* Empty state */
+        .vl-empty-state {
+            padding: 2rem 1rem !important;
+        }
+        .vl-empty-icon {
+            font-size: 2rem !important;
+        }
+
+        /* Lesson card */
+        div[style*="linear-gradient"][style*="border-radius: 1rem"] {
+            padding: 1rem !important;
+        }
+
+        /* Streak badge */
+        .vl-streak-badge {
+            padding: 0.375rem 0.75rem !important;
+            font-size: 0.875rem !important;
+        }
+
+        /* Expander */
+        .streamlit-expanderHeader {
+            font-size: 0.875rem !important;
+            padding: 0.625rem !important;
+        }
+
+        /* Inline HTML grids - force 2 cols max */
+        div[style*="grid-template-columns: 1fr 1fr 1fr"] {
+            grid-template-columns: 1fr 1fr !important;
+        }
+        div[style*="grid-template-columns: repeat"] {
+            grid-template-columns: 1fr 1fr !important;
+        }
+
+        /* Profile card in sidebar - compact */
+        [data-testid="stSidebar"] .vl-card {
+            padding: 0.75rem !important;
+        }
+
+        /* Scrollable containers */
+        .stDataFrame {
+            overflow-x: auto !important;
+        }
+
+        /* Form inputs */
+        .stTextInput > div > div > input,
+        .stTextArea > div > div > textarea {
+            font-size: 16px !important; /* Prevents iOS zoom on focus */
+        }
+    }
+
+    /* ============================================
+       MOBILE RESPONSIVE - PHONES (max-width: 480px)
+       ============================================ */
+    @media (max-width: 480px) {
+        /* Tighter padding */
+        .main .block-container {
+            padding: 0.5rem 0.5rem 2rem 0.5rem !important;
+        }
+
+        /* Force single column on phones */
+        [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+            flex: 0 0 100% !important;
+            min-width: 100% !important;
+        }
+
+        /* Hero - even more compact */
+        .vl-hero, .hero {
+            padding: 1rem 0.75rem !important;
+            border-radius: 0.625rem !important;
+        }
+        .vl-hero-title, .hero-title {
+            font-size: 1.125rem !important;
+        }
+        .vl-hero-subtitle, .hero-subtitle {
+            font-size: 0.8rem !important;
+        }
+
+        /* Stats - even more compact */
+        .vl-stat-value, .metric-value, .stat-value {
+            font-size: 1.125rem !important;
+        }
+        .vl-stat-card, .metric-card, .stat-card {
+            padding: 0.5rem !important;
+        }
+
+        /* Cards */
+        .vl-card, .card, .exercise-card {
+            padding: 0.75rem !important;
+            border-radius: 0.625rem !important;
+        }
+        .vl-feature-card {
+            padding: 0.75rem !important;
+        }
+
+        /* Typography */
+        h1, .stMarkdown h1 { font-size: 1.25rem !important; }
+        h2, .stMarkdown h2 { font-size: 1.125rem !important; }
+        h3, .stMarkdown h3 { font-size: 1rem !important; }
+
+        .vl-section-title, .section-title {
+            font-size: 1rem !important;
+        }
+
+        /* Buttons */
+        .stButton > button {
+            min-height: 2.625rem !important;
+            font-size: 0.8rem !important;
+        }
+
+        /* Sidebar */
+        [data-testid="stSidebar"] {
+            max-width: 260px !important;
+        }
+
+        /* Inline HTML grids - force single col */
+        div[style*="grid-template-columns"] {
+            grid-template-columns: 1fr !important;
+        }
     }
 
     </style>

@@ -32,7 +32,7 @@ st.set_page_config(
     page_title="VivaLingo",
     page_icon="https://em-content.zobj.net/source/twitter/408/flag-spain_1f1ea-1f1f8.png",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="auto"
 )
 
 # Apply theme (CSS + auto-clean HTML monkey-patch)
@@ -932,37 +932,43 @@ def render_progress_page():
         except (ValueError, TypeError):
             pass
 
-    day_cols = st.columns(7)
+    # Build day cells as inline HTML flexbox (stays horizontal on mobile)
+    day_cells = []
     for i, (day_name, data) in enumerate(activity_by_day.items()):
-        with day_cols[i]:
-            is_today = i == 6
-            if data['active']:
-                bg_color = "var(--primary)"
-                text_color = "#FFFFFF"
-                content = "✓"
-            elif is_today:
-                bg_color = "var(--orange-light)"
-                text_color = "#92400E"
-                content = "?"
-            else:
-                bg_color = "var(--surface-alt)"
-                text_color = "var(--text-muted)"
-                content = day_name[0]
+        is_today = i == 6
+        if data['active']:
+            bg_color = "var(--primary)"
+            text_color = "#FFFFFF"
+            content = "&#10003;"
+        elif is_today:
+            bg_color = "var(--orange-light)"
+            text_color = "#92400E"
+            content = "?"
+        else:
+            bg_color = "var(--surface-alt)"
+            text_color = "var(--text-muted)"
+            content = day_name[0]
 
-            border = "2px solid var(--primary)" if is_today else "none"
-            items_html = f'<div style="font-size: 0.65rem; color: var(--primary);">{data["items"]} items</div>' if data['active'] else ''
+        border = "2px solid var(--primary)" if is_today else "none"
+        items_html = f'<div style="font-size: 0.6rem; color: var(--primary);">{data["items"]}</div>' if data['active'] else ''
 
-            render_html(f"""
-                <div style="text-align: center;">
-                    <div style="width: 3rem; height: 3rem; border-radius: 0.75rem; background: {bg_color};
-                                display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem;
-                                border: {border};">
-                        <span style="color: {text_color}; font-weight: 600; font-size: 0.875rem;">{content}</span>
-                    </div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">{day_name}</div>
-                    {items_html}
+        day_cells.append(f"""
+            <div style="text-align: center; flex: 1; min-width: 0;">
+                <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.625rem; background: {bg_color};
+                            display: flex; align-items: center; justify-content: center; margin: 0 auto 0.375rem;
+                            border: {border};">
+                    <span style="color: {text_color}; font-weight: 600; font-size: 0.8rem;">{content}</span>
                 </div>
-            """)
+                <div style="font-size: 0.65rem; color: var(--text-muted);">{day_name}</div>
+                {items_html}
+            </div>
+        """)
+
+    render_html(f"""
+        <div style="display: flex; gap: 0.25rem; justify-content: space-between; padding: 0.5rem 0;">
+            {''.join(day_cells)}
+        </div>
+    """)
 
     render_html('<hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">')
 
